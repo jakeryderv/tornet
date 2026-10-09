@@ -19,10 +19,13 @@ declare -A RECORDS=(
   [2018]=12655187 [2019]=12655716 [2020]=12655717 [2021]=12655718 [2022]=12655719
 )
 
-if ! command -v zenodo_get >/dev/null 2>&1; then
-  echo "[$(date -Is)] installing zenodo_get"
-  pip install --quiet zenodo_get
+# zenodo_get runs via uv so the script does not depend on the image's Python or pip.
+if ! command -v uv >/dev/null 2>&1; then
+  echo "[$(date -Is)] installing uv"
+  curl -LsSf https://astral.sh/uv/install.sh | sh >/dev/null
 fi
+export PATH="$HOME/.local/bin:$PATH"
+ZENODO_GET=(uvx zenodo_get)
 
 for year in $(printf '%s\n' "${!RECORDS[@]}" | sort); do
   rec="${RECORDS[$year]}"
@@ -33,7 +36,7 @@ for year in $(printf '%s\n' "${!RECORDS[@]}" | sort); do
   fi
   echo "[$(date -Is)] $year: downloading record $rec"
   # zenodo_get verifies md5 checksums and resumes partial files on retry.
-  zenodo_get -r "$rec" -o . 
+  "${ZENODO_GET[@]}" -r "$rec" -o .
   archive="tornet_${year}.tar.gz"
   echo "[$(date -Is)] $year: extracting $archive"
   tar -xzf "$archive"

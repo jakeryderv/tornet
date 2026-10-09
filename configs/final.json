@@ -1,0 +1,30 @@
+{
+    "_note": "Retrain on both years with no validation set, as the paper does after CV. Evaluate the last checkpoint with: uv run tornet-test --model_path <ckpt> --years 2013 2014",
+    "epochs": 15,
+    "batch_size": 128,
+    "train_years": [
+        2013,
+        2014
+    ],
+    "val_years": [],
+    "start_filters": 48,
+    "learning_rate": 0.0001,
+    "decay_steps": 165,
+    "decay_rate": 0.958,
+    "l2_reg": 1e-05,
+    "wN": 1.0,
+    "w0": 1.0,
+    "w1": 1.0,
+    "w2": 2.0,
+    "wW": 0.5,
+    "label_smooth": 0,
+    "loss": "cce",
+    "head": "maxpool",
+    "exp_name": "tornet_final",
+    "dataloader": "keras",
+    "exp_dir": "experiments",
+    "dataloader_kwargs": {
+        "workers": 4,
+        "use_multiprocessing": false
+    }
+}

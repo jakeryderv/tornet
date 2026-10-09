@@ -96,6 +96,29 @@ export TORNET_ROOT=/path/to/tornet
 uv run tornet-train configs/tornado_baseline.json
 ```
 
+### Local iteration on a subset
+
+You do not need the full dataset to develop against the baseline. Every yearly archive contains both
+`train/` and `test/` files, so any subset of years gives you a held-out test set for free. The
+configs in `configs/` set up a two-fold cross validation over 2013 and 2014 (about 18 GB), mirroring
+the paper's year-pair folds:
+
+```
+uv run tornet-train configs/fold_a.json   # train 2013, validate 2014
+uv run tornet-train configs/fold_b.json   # train 2014, validate 2013
+uv run tornet-train configs/final.json    # retrain on both, no validation
+```
+
+Each run writes `results.json`, `history.csv` and per-epoch checkpoints under `experiments/`. Average
+the two folds' validation AUC to compare model variants, then evaluate the final checkpoint on the
+subset's test files:
+
+```
+uv run tornet-test --model_path experiments/latest/checkpoints/tornadoDetector_015.keras --years 2013 2014 --output scores.json
+```
+
+Scaling to the full dataset is the same commands with all ten years listed in the config.
+
 ## Evaluate trained model
 To evaluate this model on the test set, run
 
@@ -103,7 +126,7 @@ To evaluate this model on the test set, run
 # Set path to dataset
 export TORNET_ROOT=/path/to/tornet  
 
-# Evaluate trained model
+# Evaluate trained model on all test years (use --years to restrict, --output to save JSON)
 uv run tornet-test
 ```
 

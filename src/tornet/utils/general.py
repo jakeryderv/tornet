@@ -1,4 +1,6 @@
 """
+Utils for importing modules from string
+
 DISTRIBUTION STATEMENT A. Approved for public release. Distribution is unlimited.
 
 This material is based upon work supported by the Department of the Air Force under Air Force Contract No. FA8702-15-D-0001. Any opinions, findings, conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the Department of the Air Force.
@@ -11,10 +13,6 @@ The software/firmware is provided to you on an As-Is basis
 Delivered to the U.S. Government with Unlimited Rights, as defined in DFARS Part 252.227-7013 or 7014 (Feb 2014). Notwithstanding any copyright notice, U.S. Government rights in this work are defined by DFARS 252.227-7013 or DFARS 252.227-7014 as detailed above. Use of this work other than as specifically authorized by the U.S. Government may violate any copyrights that exist in this work.
 """
 
-"""
-Utils for importing modules from string
-"""
-
 import datetime
 import os
 
@@ -25,16 +23,15 @@ def make_exp_dir(
     """
     Creates a dated directory for an experiement, and also creates a symlink
     """
-    linked_dir = exp_dir + "/%s" % symlink_name
-    dated_dir = prefix + "%s-%s-%s" % (
+    linked_dir = exp_dir + f"/{symlink_name}"
+    dated_dir = prefix + "{}-{}-{}".format(
         datetime.datetime.now().strftime("%y%m%d%H%M%S"),
         os.getenv("SLURM_JOB_ID"),
         os.getenv("SLURM_ARRAY_TASK_ID"),
     )
-    try:
-        dated_dir = os.path.join(os.getenv("SLURM_ARRAY_JOB_ID"), dated_dir)
-    except:
-        pass
+    array_job_id = os.getenv("SLURM_ARRAY_JOB_ID")
+    if array_job_id:
+        dated_dir = os.path.join(array_job_id, dated_dir)
     os.makedirs(os.path.join(exp_dir, dated_dir))
     if os.path.islink(linked_dir):
         os.unlink(linked_dir)

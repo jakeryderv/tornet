@@ -69,6 +69,6 @@ def create_image(data, score, filename, vars_to_plot):
         n_cols=3,
     )
     fname = os.path.basename(filename)
-    fig.text(0.5, 0.05, "%s, score=%f" % (fname, score), ha="center")
+    fig.text(0.5, 0.05, f"{fname}, score={score:f}", ha="center")
 
     return fig

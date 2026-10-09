@@ -13,6 +13,7 @@ Delivered to the U.S. Government with Unlimited Rights, as defined in DFARS Part
 
 import math
 import os
+from collections.abc import Sequence
 
 import keras
 import numpy as np
@@ -43,7 +44,7 @@ class KerasDataLoader(keras.utils.PyDataset):
         self,
         data_root: str,
         data_type: str = "train",
-        years: list = list(range(2013, 2023)),
+        years: Sequence[int] = tuple(range(2013, 2023)),
         catalog: pd.DataFrame = None,
         batch_size: int = 128,
         weights: dict = None,

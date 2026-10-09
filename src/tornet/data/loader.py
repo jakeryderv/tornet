@@ -1,4 +1,6 @@
 """
+Tools to read tornado samples
+
 DISTRIBUTION STATEMENT A. Approved for public release. Distribution is unlimited.
 
 This material is based upon work supported by the Department of the Air Force under Air Force Contract No. FA8702-15-D-0001. Any opinions, findings, conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the Department of the Air Force.
@@ -11,9 +13,6 @@ The software/firmware is provided to you on an As-Is basis
 Delivered to the U.S. Government with Unlimited Rights, as defined in DFARS Part 252.227-7013 or 7014 (Feb 2014). Notwithstanding any copyright notice, U.S. Government rights in this work are defined by DFARS 252.227-7013 or DFARS 252.227-7014 as detailed above. Use of this work other than as specifically authorized by the U.S. Government may violate any copyrights that exist in this work.
 """
 
-"""
-Tools to read tornado samples
-"""
 import datetime
 import os
 from collections.abc import Callable
@@ -73,9 +72,8 @@ def read_file(
             )
             end_time = datetime.datetime.strptime(ds.attrs["tornado_end_time"], "%Y-%m-%d %H:%M:%S")
             epoch = datetime.datetime(1970, 1, 1)
-            to_timestamp = lambda d: int((d - epoch).total_seconds())
-            start_time = to_timestamp(start_time)
-            end_time = to_timestamp(end_time)
+            start_time = int((start_time - epoch).total_seconds())
+            end_time = int((end_time - epoch).total_seconds())
         else:
             start_time = end_time = 0
         data["tornado_start_time"] = np.array([start_time]).astype(np.int64)

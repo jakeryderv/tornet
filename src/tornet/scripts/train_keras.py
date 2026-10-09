@@ -11,26 +11,27 @@ Delivered to the U.S. Government with Unlimited Rights, as defined in DFARS Part
 """
 
 import json
+import logging
 import os
 import shutil
 import sys
 
 import numpy as np
 
+# Keras must see the backend before it is imported anywhere, including via tornet.metrics.
 os.environ.setdefault("KERAS_BACKEND", "torch")
-import logging
 
-import keras
+import keras  # noqa: E402
+
+from tornet.data.constants import ALL_VARIABLES  # noqa: E402
+from tornet.data.loader import get_dataloader  # noqa: E402
+from tornet.data.preprocess import get_shape  # noqa: E402
+from tornet.metrics.keras import metrics as tfm  # noqa: E402
+from tornet.models.keras.cnn_baseline import build_model  # noqa: E402
+from tornet.models.keras.losses import mae_loss  # noqa: E402
+from tornet.utils.general import make_callback_dirs, make_exp_dir  # noqa: E402
 
 logging.basicConfig(level=logging.INFO)
-
-from tornet.data.constants import ALL_VARIABLES
-from tornet.data.loader import get_dataloader
-from tornet.data.preprocess import get_shape
-from tornet.metrics.keras import metrics as tfm
-from tornet.models.keras.cnn_baseline import build_model
-from tornet.models.keras.losses import mae_loss
-from tornet.utils.general import make_callback_dirs, make_exp_dir
 
 EXP_DIR = os.environ.get("EXP_DIR", ".")
 
@@ -133,9 +134,9 @@ def main(config):
     elif loss_fn.lower() == "hinge":
         loss = keras.losses.Hinge()  # automatically converts labels to -1,1
     elif loss_fn.lower() == "mae":
-        loss = lambda yt, yp: mae_loss(yt, yp)
+        loss = mae_loss
     else:
-        raise RuntimeError("unknown loss %s" % loss_fn)
+        raise RuntimeError(f"unknown loss {loss_fn}")
 
     opt = keras.optimizers.Adam(learning_rate=lr)
 

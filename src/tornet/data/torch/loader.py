@@ -10,6 +10,7 @@ The software/firmware is provided to you on an As-Is basis
 Delivered to the U.S. Government with Unlimited Rights, as defined in DFARS Part 252.227-7013 or 7014 (Feb 2014). Notwithstanding any copyright notice, U.S. Government rights in this work are defined by DFARS 252.227-7013 or DFARS 252.227-7014 as detailed above. Use of this work other than as specifically authorized by the U.S. Government may violate any copyrights that exist in this work.
 """
 
+from collections.abc import Sequence
 
 import numpy as np
 import torch
@@ -30,7 +31,7 @@ def numpy_to_torch(d: dict[str, np.ndarray]):
 def make_torch_loader(
     data_root: str,
     data_type: str = "train",  # or 'test'
-    years: list = list(range(2013, 2023)),
+    years: Sequence[int] = tuple(range(2013, 2023)),
     batch_size: int = 128,
     weights: dict = None,
     include_az: bool = False,
@@ -75,7 +76,6 @@ def make_torch_loader(
     if from_tfds:
         import tensorflow_datasets as tfds
 
-
         ds = tfds.data_source("tornet")
 
         transform_list = []
@@ -103,7 +103,7 @@ def make_torch_loader(
         # Dataset, with preprocessing
         transform = transforms.Compose(transform_list)
 
-        datasets = [TFDSTornadoDataset(ds["%s-%d" % (data_type, y)], transform) for y in years]
+        datasets = [TFDSTornadoDataset(ds[f"{data_type}-{y}"], transform) for y in years]
         dataset = torch.utils.data.ConcatDataset(datasets)
 
     else:

@@ -52,7 +52,9 @@ class LogTornadoImage(keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
 
         # for each file, run prediction
-        sigmoid = lambda x: 1 / (1 + np.exp(-x))
-        for (x, y), fname in zip(self.ds, self.filenames):
+        def sigmoid(x):
+            return 1 / (1 + np.exp(-x))
+
+        for (x, _), fname in zip(self.ds, self.filenames, strict=False):
             score = sigmoid(self.model.predict(x, verbose=0))
             log_image(x, score, fname, ALL_VARIABLES, self.file_writer, epoch)

@@ -1,4 +1,6 @@
 """
+Tools for visualizing data
+
 DISTRIBUTION STATEMENT A. Approved for public release. Distribution is unlimited.
 
 This material is based upon work supported by the Department of the Air Force under Air Force Contract No. FA8702-15-D-0001. Any opinions, findings, conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the Department of the Air Force.
@@ -11,12 +13,9 @@ The software/firmware is provided to you on an As-Is basis
 Delivered to the U.S. Government with Unlimited Rights, as defined in DFARS Part 252.227-7013 or 7014 (Feb 2014). Notwithstanding any copyright notice, U.S. Government rights in this work are defined by DFARS 252.227-7013 or DFARS 252.227-7014 as detailed above. Use of this work other than as specifically authorized by the U.S. Government may violate any copyrights that exist in this work.
 """
 
-"""
-Tools for visualizing data
-"""
-
 import pathlib
 import pickle
+from collections.abc import Sequence
 from typing import Any
 
 import matplotlib as mpl
@@ -27,7 +26,7 @@ from matplotlib.colors import LinearSegmentedColormap, ListedColormap
 
 def plot_radar(
     data: dict[str, Any],
-    channels: list[str] = ["DBZ", "VEL"],
+    channels: Sequence[str] = ("DBZ", "VEL"),
     fig: plt.Figure = None,
     batch_idx: int = 0,
     time_idx: int = -1,
@@ -52,11 +51,9 @@ def plot_radar(
     # if sweep index not provided assume lowest sweep
     if sweep_idx is None:
         sweep_idx = len(channels) * [0]
-    bidx = lambda a: a[time_idx] if batch_idx is None else a[batch_idx, time_idx]
 
-    event_id = np.int64(bidx(data["event_id"]))
-    ef_number = np.int64(bidx(data["ef_number"]))
-    time = np.int64(bidx(data["time"]))
+    def bidx(a):
+        return a[time_idx] if batch_idx is None else a[batch_idx, time_idx]
 
     az_min = np.float64(bidx(data["az_lower"])) * np.pi / 180
     az_max = np.float64(bidx(data["az_upper"])) * np.pi / 180

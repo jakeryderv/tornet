@@ -138,4 +138,4 @@ def normalize(x, name: str):
         ]
     )  # [n_sweeps,]
 
-    return keras.layers.Normalization(mean=offset, variance=var, name="Normalize_%s" % name)(x)
+    return keras.layers.Normalization(mean=offset, variance=var, name=f"Normalize_{name}")(x)

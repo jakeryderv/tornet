@@ -10,16 +10,17 @@ The software/firmware is provided to you on an As-Is basis
 Delivered to the U.S. Government with Unlimited Rights, as defined in DFARS Part 252.227-7013 or 7014 (Feb 2014). Notwithstanding any copyright notice, U.S. Government rights in this work are defined by DFARS 252.227-7013 or DFARS 252.227-7014 as detailed above. Use of this work other than as specifically authorized by the U.S. Government may violate any copyrights that exist in this work.
 """
 
-import os
-
-os.environ.setdefault("KERAS_BACKEND", "torch")
 import argparse
 import logging
+import os
 
-import keras
+# Keras must see the backend before it is imported anywhere, including via tornet.metrics.
+os.environ.setdefault("KERAS_BACKEND", "torch")
 
-from tornet.data.loader import get_dataloader
-from tornet.metrics.keras import metrics as tfm
+import keras  # noqa: E402
+
+from tornet.data.loader import get_dataloader  # noqa: E402
+from tornet.metrics.keras import metrics as tfm  # noqa: E402
 
 logging.basicConfig(level=logging.INFO)
 

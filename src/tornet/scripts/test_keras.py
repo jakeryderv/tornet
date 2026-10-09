@@ -11,6 +11,7 @@ Delivered to the U.S. Government with Unlimited Rights, as defined in DFARS Part
 """
 
 import os
+os.environ.setdefault("KERAS_BACKEND", "torch")
 import keras
 import tqdm
 
@@ -21,11 +22,7 @@ import argparse
 import logging
 logging.basicConfig(level=logging.INFO)
 
-data_root=os.environ['TORNET_ROOT']
-logging.info('TORNET_ROOT='+data_root)
-
 def main():
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_path",
                         help="Pretrained model to test (.keras)",
@@ -37,6 +34,9 @@ def main():
         choices=["keras", "tensorflow", "tensorflow-tfds", "torch", "torch-tfds"],
     )
     args = parser.parse_args()
+
+    data_root=os.environ['TORNET_ROOT']
+    logging.info('TORNET_ROOT='+data_root)
 
     trained_model = args.model_path
     if trained_model is None:

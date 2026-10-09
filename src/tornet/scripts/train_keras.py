@@ -15,6 +15,8 @@ import os
 import numpy as np
 import json
 import shutil
+
+os.environ.setdefault("KERAS_BACKEND", "torch")
 import keras
 
 import logging
@@ -33,8 +35,6 @@ from tornet.metrics.keras import metrics as tfm
 from tornet.utils.general import make_exp_dir, make_callback_dirs
 
 EXP_DIR=os.environ.get('EXP_DIR','.')
-DATA_ROOT=os.environ['TORNET_ROOT']
-logging.info('TORNET_ROOT='+DATA_ROOT)
 
 DEFAULT_CONFIG={
     'epochs':10,
@@ -63,6 +63,9 @@ DEFAULT_CONFIG={
 }
 
 def main(config):
+    DATA_ROOT=os.environ['TORNET_ROOT']
+    logging.info('TORNET_ROOT='+DATA_ROOT)
+
     # Gather all hyperparams
     epochs=config.get('epochs')
     batch_size=config.get('batch_size')
@@ -191,9 +194,15 @@ def main(config):
     return {'AUC':best_auc,'AUCPR':best_aucpr}
 
 
-if __name__=='__main__':
-    config=DEFAULT_CONFIG
+def cli():
+    """Entry point for `tornet-train [params.json]`."""
+    config=dict(DEFAULT_CONFIG)
     # Load param file if given
     if len(sys.argv)>1:
-        config.update(json.load(open(sys.argv[1],'r')))
+        with open(sys.argv[1],'r') as f:
+            config.update(json.load(f))
     main(config)
+
+
+if __name__=='__main__':
+    cli()

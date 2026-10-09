@@ -41,28 +41,26 @@ After downloading, there should be 11 files, `catalog.csv`, and 10 files named a
 
 ## Setup
 
-Basic python requirements are listed in `requirements/basic.txt`.
-
-The `tornet` package can then installed into your environment by running
-
-`pip install .`
-
-In this repo.  To do ML with TorNet, additional installs may be necessary depending on library of choice.  See e.g., `requirements/tensorflow.txt`, `requirements/torch.txt` and/or `requirements/jax.txt`.  
-
-Please note that we did not exhaustively test all combinations of operating systems, data loaders, deep learning frameworks, and GPU usage.  If you are using the latest version of `keras`, then I recommend you follow setup instructions on the keras webpage [https://keras.io/getting_started/](https://keras.io/getting_started/).  Feel free to describe any issues you are having under the issues tab.  
-
-### Conda
-
-If using conda
+This fork uses [uv](https://docs.astral.sh/uv/) and a standard `pyproject.toml`. Python 3.11 or newer is required.
 
 ```
-conda create -n tornet-{backend} python=3.10
-conda activate tornet-{backend}
-pip install -r requirements/{backend}.txt
+uv sync --extra torch --group dev
 ```
 
-Replace {backend} with tensorflow, torch or jax.
+Extras:
 
+* `torch`: Keras 3 on the torch backend, plus the standalone Lightning port in `tornet.models.torch`. This is the only backend locked in `uv.lock`.
+* `keras`: Keras 3 only, bring your own backend.
+* `hf`: `huggingface_hub`, for downloading the pretrained weights.
+* `notebooks`: Jupyter.
+
+The tensorflow and jax code paths remain in the tree but are not locked. Install those frameworks yourself if you need them.
+
+Run the tests. Tests that need the dataset are skipped unless `TORNET_ROOT` is set.
+
+```
+uv run pytest
+```
 
 ## Loading and visualizing TorNet
 
@@ -76,19 +74,21 @@ To run inference on TorNet samples using a pretrained model,  look at `notebooks
 The model uses Keras 3 which supports multiple backends. The environment variable
 KERAS_BACKEND can be used to choose the backend. 
 
+The `tornet-train` and `tornet-test` commands default to `torch` when the variable is unset.
+
 ```
-export KERAS_BACKEND=tensorflow
-# export KERAS_BACKEND=torch
+export KERAS_BACKEND=torch
+# export KERAS_BACKEND=tensorflow
 # export KERAS_BACKEND=jax
 ```
 
-The following trains the CNN baseline model described in the paper using `tensorflow`.  If you run this out-of-the-box, it will run very slowly because it uses the basic dataloader.  Read the DataLoader notebook for tips on how to optimize the data loader.
+The following trains the CNN baseline model described in the paper.  If you run this out-of-the-box, it will run very slowly because it uses the basic dataloader.  Read the DataLoader notebook for tips on how to optimize the data loader.
 ```
 # Set path to dataset
 export TORNET_ROOT=/path/to/tornet     
 
 # Run training
-python scripts/tornado_detection/train_tornado_keras.py scripts/tornado_detection/config/params.json
+uv run tornet-train configs/tornado_baseline.json
 ```
 
 ## Evaluate trained model
@@ -99,7 +99,7 @@ To evaluate this model on the test set, run
 export TORNET_ROOT=/path/to/tornet  
 
 # Evaluate trained model
-python scripts/tornado_detection/test_tornado_keras.py 
+uv run tornet-test
 ```
 
 This will compute and print various metrics computed on the test set.  Note that this script will attempt to download pretrained weights from huggingface, so ensure there is internet connectivity.  Alternatively, manually download the pretrained yourself and provide with `--model_path`

@@ -18,15 +18,18 @@ that the tornet dataset and your python environment are set up properly.
 
 import unittest
 import os
+import pytest
 import pandas as pd
 import xarray as xr
 
 import keras
 import logging
 
-if 'TORNET_ROOT' not in os.environ:
-    raise RuntimeError('TORNET_ROOT must be defined for unit tests')
-DATA_ROOT=os.environ['TORNET_ROOT'] 
+pytestmark = pytest.mark.skipif(
+    'TORNET_ROOT' not in os.environ,
+    reason='TORNET_ROOT must point at the TorNet dataset for these tests',
+)
+DATA_ROOT=os.environ.get('TORNET_ROOT', '')
 
 try:
     from tornet.data.loader import read_file, TornadoDataLoader

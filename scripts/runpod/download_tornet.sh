@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
 # Download and extract the full TorNet dataset from Zenodo into $TORNET_ROOT.
 #
-# Idempotent: each year is skipped once its .done marker exists, so the script can be
-# re-run after an interruption. Archives are deleted after extraction to cap disk use
-# at roughly the extracted size plus one archive.
+# Zenodo throttles to a few MB/s per client, so each archive is fetched with aria2c using
+# many parallel connections, resumed if interrupted, and verified against the MD5 that
+# Zenodo publishes for the file. Idempotent: a year is skipped once its .done marker
+# exists, so the script can simply be re-run after any failure.
 #
-# Usage (on a RunPod pod with the network volume mounted at /workspace):
+# Usage (on a pod with the network volume mounted at /workspace):
 #   TORNET_ROOT=/workspace/tornet nohup bash download_tornet.sh > /workspace/tornet/download.log 2>&1 &
 set -euo pipefail
 
 TORNET_ROOT="${TORNET_ROOT:-/workspace/tornet}"
+CONNECTIONS="${CONNECTIONS:-16}"
 mkdir -p "$TORNET_ROOT"
 cd "$TORNET_ROOT"
 
@@ -19,13 +21,28 @@ declare -A RECORDS=(
   [2018]=12655187 [2019]=12655716 [2020]=12655717 [2021]=12655718 [2022]=12655719
 )
 
-# zenodo_get runs via uv so the script does not depend on the image's Python or pip.
-if ! command -v uv >/dev/null 2>&1; then
-  echo "[$(date -Is)] installing uv"
-  curl -LsSf https://astral.sh/uv/install.sh | sh >/dev/null
-fi
-export PATH="$HOME/.local/bin:$PATH"
-ZENODO_GET=(uvx zenodo_get)
+for tool in aria2c python3 curl tar; do
+  if ! command -v "$tool" >/dev/null 2>&1; then
+    echo "[$(date -Is)] installing $tool"
+    apt-get update -qq && apt-get install -y -qq aria2 python3 curl >/dev/null
+  fi
+done
+
+# Print "name md5 url" for every file in a Zenodo record.
+record_files() {
+  curl -sfL "https://zenodo.org/api/records/$1" | python3 -c '
+import json, sys
+for f in json.load(sys.stdin)["files"]:
+    print(f["key"], f["checksum"].removeprefix("md5:"), f["links"]["self"])
+'
+}
+
+fetch() {  # fetch <name> <md5> <url>
+  aria2c --continue=true --max-tries=0 --retry-wait=30 --timeout=60 \
+    -x "$CONNECTIONS" -s "$CONNECTIONS" -k 1M --file-allocation=none \
+    --checksum="md5=$2" --console-log-level=warn --summary-interval=120 \
+    -d . -o "$1" "$3"
+}
 
 for year in $(printf '%s\n' "${!RECORDS[@]}" | sort); do
   rec="${RECORDS[$year]}"
@@ -34,13 +51,16 @@ for year in $(printf '%s\n' "${!RECORDS[@]}" | sort); do
     echo "[$(date -Is)] $year already done, skipping"
     continue
   fi
-  echo "[$(date -Is)] $year: downloading record $rec"
-  # zenodo_get verifies md5 checksums and resumes partial files on retry.
-  "${ZENODO_GET[@]}" -r "$rec" -o .
-  archive="tornet_${year}.tar.gz"
-  echo "[$(date -Is)] $year: extracting $archive"
-  tar -xzf "$archive"
-  rm -f "$archive"
+  echo "[$(date -Is)] $year: listing record $rec"
+  while read -r name md5 url; do
+    echo "[$(date -Is)] $year: fetching $name"
+    fetch "$name" "$md5" "$url"
+    if [[ "$name" == *.tar.gz ]]; then
+      echo "[$(date -Is)] $year: extracting $name"
+      tar -xzf "$name"
+      rm -f "$name"
+    fi
+  done < <(record_files "$rec")
   touch "$marker"
   echo "[$(date -Is)] $year: done; disk used: $(du -sh . | cut -f1)"
 done

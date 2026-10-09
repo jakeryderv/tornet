@@ -45,6 +45,11 @@ Weights = "https://huggingface.co/tornet-ml/tornado_detector_baseline_v1"
 
 [dependency-groups]
 dev = ["pytest>=8", "ruff"]
+# Pulls in the torch extra by default so `uv sync` and `uv run` give a working backend.
+torch = ["tornet[torch]"]
+
+[tool.uv]
+default-groups = ["dev", "torch"]
 
 [build-system]
 requires = ["hatchling"]
@@ -61,3 +66,12 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+extend-exclude = ["notebooks"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+# Line length is enforced by the formatter; the license headers contain long legal lines.
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["tornet"]

@@ -85,10 +85,10 @@ def make_tf_loader(
     data_type: str = "train",  # or 'test'
     years: Sequence[int] = tuple(range(2013, 2023)),
     batch_size: int = 128,
-    weights: dict = None,
+    weights: dict | None = None,
     include_az: bool = False,
     random_state: int = 1234,
-    select_keys: list = None,
+    select_keys: list | None = None,
     tilt_last: bool = True,
     from_tfds: bool = False,
     tfds_data_version: str = "1.1.0",
@@ -152,9 +152,9 @@ def make_tf_loader(
 
 def preproc(
     ds: tf.data.Dataset,
-    weights: dict = None,
+    weights: dict | None = None,
     include_az: bool = False,
-    select_keys: list = None,
+    select_keys: list | None = None,
     tilt_last: bool = True,
 ):
     """

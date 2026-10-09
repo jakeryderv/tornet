@@ -33,10 +33,10 @@ def make_torch_loader(
     data_type: str = "train",  # or 'test'
     years: Sequence[int] = tuple(range(2013, 2023)),
     batch_size: int = 128,
-    weights: dict = None,
+    weights: dict | None = None,
     include_az: bool = False,
     random_state: int = 1234,
-    select_keys: list = None,
+    select_keys: list | None = None,
     tilt_last: bool = True,
     from_tfds: bool = False,
     workers: int = 8,

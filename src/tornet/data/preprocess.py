@@ -98,7 +98,7 @@ def add_batch_dim(data: dict[str, np.ndarray]):
     return data
 
 
-def select_keys(x: dict[str, np.ndarray], keys: list[str] = None):
+def select_keys(x: dict[str, np.ndarray], keys: list[str] | None = None):
     """
     Selects list of keys from input data
     """

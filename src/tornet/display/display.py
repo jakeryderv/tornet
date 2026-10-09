@@ -27,14 +27,14 @@ from matplotlib.colors import LinearSegmentedColormap, ListedColormap
 def plot_radar(
     data: dict[str, Any],
     channels: Sequence[str] = ("DBZ", "VEL"),
-    fig: plt.Figure = None,
+    fig: plt.Figure | None = None,
     batch_idx: int = 0,
     time_idx: int = -1,
-    sweep_idx: list = None,
+    sweep_idx: list | None = None,
     include_cbar: bool = False,
     include_title: bool = True,
-    n_rows: int = None,
-    n_cols: int = None,
+    n_rows: int | None = None,
+    n_cols: int | None = None,
 ):
     """
     Creates a visualization of radar data.

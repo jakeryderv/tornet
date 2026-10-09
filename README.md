@@ -56,11 +56,16 @@ Extras:
 
 The tensorflow and jax code paths remain in the tree but are not locked. Install those frameworks yourself if you need them.
 
-Run the tests. Tests that need the dataset are skipped unless `TORNET_ROOT` is set.
+### Development checks
 
 ```
-uv run pytest
+uv run ruff format      # format
+uv run ruff check       # lint
+uv run ty check         # type check (advisory)
+uv run pytest           # tests
 ```
+
+Tests that need the real dataset are skipped unless `TORNET_ROOT` is set. The rest run against small synthetic NetCDF files built in `tests/conftest.py`.
 
 ## Loading and visualizing TorNet
 

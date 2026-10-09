@@ -95,7 +95,7 @@ def query_catalog(
     data_type: str,
     years: list[int],
     random_state: int,
-    catalog: pd.DataFrame = None,
+    catalog: pd.DataFrame | None = None,
 ) -> list[str]:
     """Obtain file names that match criteria.
     If catalog is not provided, this loads and parses the
@@ -144,7 +144,7 @@ class TornadoDataLoader:
         n_frames: int = 1,
         shuffle: bool = False,
         tilt_last: bool = True,
-        transform: Callable = None,
+        transform: Callable | None = None,
     ):
         if shuffle:
             np.random.shuffle(file_list)
@@ -192,7 +192,7 @@ def get_dataloader(
     years: list[int],
     data_type: str,
     batch_size: int,
-    weights: dict[str, float] = None,
+    weights: dict[str, float] | None = None,
     **kwargs,
 ):
     """Creates a dataloader for keras, torch or tensorflow

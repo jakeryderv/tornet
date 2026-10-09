@@ -44,7 +44,11 @@ Dataset = "https://doi.org/10.5281/zenodo.12636522"
 Weights = "https://huggingface.co/tornet-ml/tornado_detector_baseline_v1"
 
 [dependency-groups]
-dev = ["pytest>=8", "ruff"]
+dev = [
+    "pytest>=8",
+    "ruff",
+    "ty>=0.0.85",
+]
 # Pulls in the torch extra by default so `uv sync` and `uv run` give a working backend.
 torch = ["tornet[torch]"]
 
@@ -75,3 +79,19 @@ ignore = ["E501"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["tornet"]
+
+[tool.ty.src]
+include = ["src", "tests"]
+
+# ty is advisory while the package is still mostly unannotated. Rules below fire on the
+# upstream code and are warnings so `uv run ty check` reports them without failing.
+[tool.ty.rules]
+invalid-argument-type = "warn"
+unresolved-import = "warn"
+unresolved-attribute = "warn"
+unknown-argument = "warn"
+invalid-method-override = "warn"
+invalid-assignment = "warn"
+invalid-return-type = "warn"
+too-many-positional-arguments = "warn"
+index-out-of-bounds = "warn"

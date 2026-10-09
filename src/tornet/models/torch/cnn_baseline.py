@@ -38,7 +38,7 @@ class TornadoClassifier(L.LightningModule):
         lr_decay_steps=1,
         label_smoothing: float = 0.2,
         weight_decay: float = 0.001,
-        metrics: MetricCollection = None,
+        metrics: MetricCollection | None = None,
     ):
         super().__init__()
         self.model = model

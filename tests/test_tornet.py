@@ -28,6 +28,17 @@ pytestmark = pytest.mark.skipif(
 )
 DATA_ROOT = os.environ.get("TORNET_ROOT", "")
 
+
+def available_years():
+    """Years that are actually present under TORNET_ROOT/train, so a subset download works."""
+    train_dir = os.path.join(DATA_ROOT, "train")
+    if not os.path.isdir(train_dir):
+        return []
+    return sorted(int(d) for d in os.listdir(train_dir) if d.isdigit())
+
+
+YEARS = available_years()
+
 try:
     from tornet.data.keras.loader import KerasDataLoader
     from tornet.data.loader import TornadoDataLoader, get_dataloader
@@ -49,7 +60,8 @@ class DataLoading(unittest.TestCase):
         DataLoading.read_catalog()
 
     def test_read_file(self):
-        catalog = DataLoading.read_catalog().iloc[:100]
+        catalog = DataLoading.read_catalog()
+        catalog = catalog[catalog.start_time.dt.year.isin(YEARS)].iloc[:100]
         file_list = [os.path.join(DATA_ROOT, f) for f in catalog.filename]
         with xr.open_dataset(file_list[0]):
             pass
@@ -69,7 +81,7 @@ class KerasTests(unittest.TestCase):
         ds = KerasDataLoader(
             data_root=DATA_ROOT,
             data_type="train",
-            years=[2018, 2019],
+            years=YEARS[:2],
             batch_size=2,
             workers=1,
             use_multiprocessing=False,
@@ -83,9 +95,7 @@ class KerasTests(unittest.TestCase):
         ds_train = get_dataloader(
             dataloader,
             DATA_ROOT,
-            [
-                2014,
-            ],
+            YEARS[:1],
             "train",
             4,
             **dataloader_kwargs,
@@ -93,9 +103,7 @@ class KerasTests(unittest.TestCase):
         ds_val = get_dataloader(
             dataloader,
             DATA_ROOT,
-            [
-                2015,
-            ],
+            YEARS[-1:],
             "train",
             4,
             **dataloader_kwargs,

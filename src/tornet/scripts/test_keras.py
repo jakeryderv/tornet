@@ -11,6 +11,7 @@ Delivered to the U.S. Government with Unlimited Rights, as defined in DFARS Part
 """
 
 import argparse
+import json
 import logging
 import os
 
@@ -34,6 +35,15 @@ def main():
         default="keras",
         choices=["keras", "tensorflow", "tensorflow-tfds", "torch", "torch-tfds"],
     )
+    parser.add_argument(
+        "--years",
+        type=int,
+        nargs="+",
+        default=list(range(2013, 2023)),
+        help="Test years to evaluate on (default: all, 2013-2022)",
+    )
+    parser.add_argument("--batch_size", type=int, default=64)
+    parser.add_argument("--output", help="Optional path to write scores as JSON", default=None)
     args = parser.parse_args()
 
     data_root = os.environ["TORNET_ROOT"]
@@ -64,9 +74,14 @@ def main():
     model = keras.saving.load_model(trained_model, compile=False)
 
     ## Set up data loader
-    test_years = range(2013, 2023)
+    logging.info(f"Evaluating on test years {args.years}")
     ds_test = get_dataloader(
-        dataloader, data_root, test_years, "test", 64, select_keys=list(model.input.keys())
+        dataloader,
+        data_root,
+        args.years,
+        "test",
+        args.batch_size,
+        select_keys=list(model.input.keys()),
     )
 
     # Compute various metrics
@@ -82,9 +97,15 @@ def main():
     model.compile(metrics=metrics)
 
     scores = model.evaluate(ds_test)
-    scores = {m.name: scores[k + 1] for k, m in enumerate(metrics)}
+    scores = {m.name: float(scores[k + 1]) for k, m in enumerate(metrics)}
+    scores["model_path"] = str(trained_model)
+    scores["years"] = list(args.years)
 
     logging.info(scores)
+    if args.output:
+        with open(args.output, "w") as f:
+            json.dump(scores, f, indent=2)
+        logging.info(f"wrote {args.output}")
 
 
 if __name__ == "__main__":

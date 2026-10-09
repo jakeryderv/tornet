@@ -10,6 +10,7 @@ The software/firmware is provided to you on an As-Is basis
 Delivered to the U.S. Government with Unlimited Rights, as defined in DFARS Part 252.227-7013 or 7014 (Feb 2014). Notwithstanding any copyright notice, U.S. Government rights in this work are defined by DFARS 252.227-7013 or DFARS 252.227-7014 as detailed above. Use of this work other than as specifically authorized by the U.S. Government may violate any copyrights that exist in this work.
 """
 
+import copy
 import json
 import logging
 import os
@@ -88,7 +89,7 @@ def main(config):
     train_years = config.get("train_years")
     val_years = config.get("val_years")
     dataloader = config.get("dataloader")
-    dataloader_kwargs = config.get("dataloader_kwargs")
+    dataloader_kwargs = copy.deepcopy(config.get("dataloader_kwargs") or {})
 
     logging.info(f"Using {keras.config.backend()} backend")
     logging.info(f"Using {dataloader} dataloader")
@@ -104,9 +105,13 @@ def main(config):
     ds_train = get_dataloader(
         dataloader, DATA_ROOT, train_years, "train", batch_size, weights, **dataloader_kwargs
     )
-    ds_val = get_dataloader(
-        dataloader, DATA_ROOT, val_years, "train", batch_size, weights, **dataloader_kwargs
-    )
+    ds_val = None
+    if val_years:
+        ds_val = get_dataloader(
+            dataloader, DATA_ROOT, val_years, "train", batch_size, weights, **dataloader_kwargs
+        )
+    else:
+        logging.info("No val_years given: training without a validation set")
 
     x, _, _ = next(iter(ds_train))
     in_shapes = (None, None, get_shape(x)[-1])
@@ -176,7 +181,9 @@ def main(config):
     checkpoint_name = os.path.join(checkpoints_dir, "tornadoDetector" + "_{epoch:03d}.keras")
 
     callbacks = [
-        keras.callbacks.ModelCheckpoint(checkpoint_name, monitor="val_loss", save_best_only=False),
+        keras.callbacks.ModelCheckpoint(
+            checkpoint_name, monitor="val_loss" if ds_val else "loss", save_best_only=False
+        ),
         keras.callbacks.CSVLogger(os.path.join(expdir, "history.csv")),
         keras.callbacks.TerminateOnNaN(),
     ]
@@ -192,19 +199,29 @@ def main(config):
         ds_train, epochs=epochs, validation_data=ds_val, callbacks=callbacks, verbose=1
     )
 
-    # At the end,  report the best score observed over all epochs
-    if len(history.history["val_AUC"]) > 0:
-        best_auc = np.max(history.history["val_AUC"])
-        best_aucpr = np.max(history.history["val_AUCPR"])
+    # At the end, report the best validation score observed over all epochs
+    val_auc = history.history.get("val_AUC", [])
+    if val_auc:
+        best_epoch = int(np.argmax(val_auc)) + 1
+        results = {
+            "AUC": float(val_auc[best_epoch - 1]),
+            "AUCPR": float(history.history["val_AUCPR"][best_epoch - 1]),
+            "best_epoch": best_epoch,
+        }
     else:
-        best_auc, best_aucpr = 0.5, 0.0
+        results = {"AUC": None, "AUCPR": None, "best_epoch": None}
+    results["epochs_run"] = len(history.history["loss"])
+    results["expdir"] = expdir
+    with open(os.path.join(expdir, "results.json"), "w") as f:
+        json.dump(results, f, indent=2)
+    logging.info(f"results: {results}")
 
-    return {"AUC": best_auc, "AUCPR": best_aucpr}
+    return results
 
 
 def cli():
     """Entry point for `tornet-train [params.json]`."""
-    config = dict(DEFAULT_CONFIG)
+    config = copy.deepcopy(DEFAULT_CONFIG)
     # Load param file if given
     if len(sys.argv) > 1:
         with open(sys.argv[1]) as f:

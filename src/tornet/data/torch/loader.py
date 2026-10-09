@@ -76,6 +76,8 @@ def make_torch_loader(
     if from_tfds:
         import tensorflow_datasets as tfds
 
+        import tornet.data.tfds.tornet.tornet_dataset_builder  # noqa: F401  (registers 'tornet' with tfds)
+
         ds = tfds.data_source("tornet")
 
         transform_list = []

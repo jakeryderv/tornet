@@ -133,6 +133,8 @@ def make_tf_loader(
     if from_tfds:  # fast loader
         import tensorflow_datasets as tfds
 
+        import tornet.data.tfds.tornet.tornet_dataset_builder  # noqa: F401  (registers 'tornet' with tfds)
+
         ds = tfds.load(
             f"tornet:{tfds_data_version}",
             split="+".join([f"{data_type}-{y}" for y in years]),

@@ -54,6 +54,9 @@ def read_file(
             ds["range_folded_mask"].values[-n_frames:, :, :, :].astype(np.float32)
         )  # only two channels for vel,width
         data["label"] = ds["frame_labels"].values[-n_frames:]  # 1 if tornado, 0 otherwise
+        # All frame labels regardless of n_frames, shaped [1, n_total_frames] so the leading
+        # axis batches like every other field. Used for auxiliary targets.
+        data["frame_labels"] = ds["frame_labels"].values[None, :].astype(np.int64)
         data["category"] = np.array(
             [{"TOR": 0, "NUL": 1, "WRN": 2}[ds.attrs["category"]]], dtype=np.int64
         )  # tornadic, null (random), or warning

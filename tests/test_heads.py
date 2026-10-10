@@ -84,3 +84,19 @@ def test_build_model_head_option():
     assert n(base) == n(hybrid) == n(control) == 10
     with pytest.raises(ValueError, match="unknown head"):
         build_model(start_filters=4, head="mlp")
+
+
+def test_heads_can_emit_named_extra_outputs():
+    x = np.random.randn(2, *SHAPE).astype(np.float32)
+    for head, kw in [
+        ("maxpool", {}),
+        ("transformer", {"depth": 1, "num_heads": 4, "pool": "cls"}),
+        ("transformer", {"depth": 1, "num_heads": 4, "pool": "max"}),
+        ("token_mlp", {"depth": 1}),
+    ]:
+        m = heads.build_head_model(SHAPE, head, outputs=("logit", "aux"), **kw)
+        out = m.predict(x, verbose=0)
+        assert set(out) == {"logit", "aux"} and out["logit"].shape == out["aux"].shape == (2, 1)
+    # the single-output maxpool head keeps upstream's "heatmap" layer name
+    single = heads.build_head_model(SHAPE, "maxpool")
+    assert "heatmap" in [layer.name for layer in single.layers]

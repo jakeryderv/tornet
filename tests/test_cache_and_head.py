@@ -202,3 +202,54 @@ def test_train_head_without_validation_or_test(trained, tmp_path, monkeypatch):
     )
     assert r["AUC"] is None and r["best_checkpoint"] is None and "test_AUC" not in r
     assert os.path.exists(r["last_checkpoint"])
+
+
+def test_train_head_with_auxiliary_target(trained, tmp_path, monkeypatch):
+    exp, checkpoint = trained
+    out = tmp_path / "features"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "tornet-cache-features",
+            "--model_path",
+            checkpoint,
+            "--years",
+            "2013",
+            "2014",
+            "--out",
+            str(out),
+            "--batch_size",
+            "2",
+            "--workers",
+            "1",
+        ],
+    )
+    cache_features.main()
+    meta = pd.read_csv(out / "train_2013_meta.csv")
+    assert {"minutes_to_start", "minutes_since_end", "frame_fraction"} <= set(meta.columns)
+    tor = meta[meta["category"] == "TOR"].iloc[0]
+    assert np.isfinite(tor["minutes_to_start"]) and 0 < tor["frame_fraction"] <= 1
+    nul = meta[meta["category"] == "NUL"].iloc[0]
+    assert np.isnan(nul["minutes_to_start"]) and nul["frame_fraction"] == 0
+
+    cfg = {
+        **train_head.DEFAULT_CONFIG,
+        "features_dir": str(out),
+        "train_years": [2013],
+        "val_years": [2014],
+        "test_years": [2014],
+        "head": "token_mlp",
+        "head_kwargs": {"depth": 1},
+        "epochs": 2,
+        "batch_size": 2,
+        "exp_dir": str(exp),
+    }
+    prox = train_head.aux_targets(meta, {**cfg, "aux_target": "proximity"})
+    assert prox.min() >= -1 and prox.max() <= 0 and prox[meta["category"] == "NUL"].min() == -1
+    for target in ("proximity", "frame_fraction"):
+        r = train_head.main({**cfg, "aux_target": target, "exp_name": f"head_aux_{target}_fold_x"})
+        assert r["aux_target"] == target and r["best_epoch"] in (1, 2)
+        assert 0.0 <= r["test_AUC"] <= 1.0
+        preds = pd.read_csv(os.path.join(r["expdir"], "predictions.csv"))
+        assert "logit" in preds.columns and np.isfinite(preds["logit"]).all()

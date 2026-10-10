@@ -1,0 +1,30 @@
+{
+    "_note": "transformer_s_cls with an auxiliary frame_fraction regression output (Huber, weight 1.0). Fold B.",
+    "train_years": [
+        2013,
+        2015
+    ],
+    "val_years": [
+        2014
+    ],
+    "test_years": [
+        2013,
+        2014,
+        2015
+    ],
+    "epochs": 30,
+    "batch_size": 256,
+    "learning_rate": 0.0003,
+    "label_smooth": 0.1,
+    "seed": 1234,
+    "head": "transformer",
+    "head_kwargs": {
+        "depth": 2,
+        "num_heads": 6,
+        "pool": "cls"
+    },
+    "exp_name": "head_transformer_s_cls_aux_frame_fraction_fold_b",
+    "aux_target": "frame_fraction",
+    "aux_weight": 1.0,
+    "aux_window": 60.0
+}

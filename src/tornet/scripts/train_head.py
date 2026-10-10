@@ -47,6 +47,12 @@ DEFAULT_CONFIG = {
     "w2": 2.0,
     "wW": 0.5,
     "label_smooth": 0.1,
+    # Optional auxiliary regression target trained jointly with the binary logit:
+    #   "proximity": -min(minutes to the tornado interval, window)/window, in [-1, 0]; nulls -1
+    #   "frame_fraction": share of the sample's frames that are tornadic, in [0, 1]
+    "aux_target": None,
+    "aux_weight": 1.0,
+    "aux_window": 60.0,
     "seed": 1234,
     "exp_name": "head",
     "exp_dir": os.environ.get("EXP_DIR", "experiments"),
@@ -68,12 +74,34 @@ def load_features(features_dir: str, partition: str, years: list[int]):
     return np.concatenate(feats), pd.concat(metas, ignore_index=True)
 
 
-class FeatureBatches(keras.utils.PyDataset):
-    """Batches of (features float32, label, sample weight) from in-memory float16 features."""
+def aux_targets(meta: pd.DataFrame, config) -> np.ndarray | None:
+    """Auxiliary regression target per sample, or None when the config has none."""
+    target = config.get("aux_target")
+    if not target:
+        return None
+    if target == "frame_fraction":
+        return meta["frame_fraction"].to_numpy(dtype=np.float32)
+    if target == "proximity":
+        window = float(config["aux_window"])
+        before = meta["minutes_to_start"].to_numpy(dtype=np.float64)
+        after = meta["minutes_since_end"].to_numpy(dtype=np.float64)
+        # distance to the tornado interval: positive before onset, positive after end, 0 during
+        dist = np.maximum(np.nan_to_num(before, nan=window), 0) + np.maximum(
+            np.nan_to_num(after, nan=window), 0
+        )
+        dist = np.where(np.isnan(before) | np.isnan(after), window, dist)
+        return (-np.minimum(dist, window) / window).astype(np.float32)
+    raise ValueError(f"unknown aux_target {target!r}")
 
-    def __init__(self, features, labels, weights, batch_size, shuffle, seed=0, **kwargs):
+
+class FeatureBatches(keras.utils.PyDataset):
+    """Batches of (features float32, targets, sample weights) from in-memory float16 features.
+
+    With `aux` given, targets and weights are dicts keyed "logit" and "aux"."""
+
+    def __init__(self, features, labels, weights, batch_size, shuffle, seed=0, aux=None, **kwargs):
         super().__init__(**kwargs)
-        self.features, self.labels, self.weights = features, labels, weights
+        self.features, self.labels, self.weights, self.aux = features, labels, weights, aux
         self.batch_size, self.shuffle = batch_size, shuffle
         self.rng = np.random.default_rng(seed)
         self.order = np.arange(len(labels))
@@ -86,7 +114,13 @@ class FeatureBatches(keras.utils.PyDataset):
     def __getitem__(self, idx):
         sel = self.order[idx * self.batch_size : (idx + 1) * self.batch_size]
         x = self.features[sel].astype(np.float32)
-        return x, self.labels[sel], self.weights[sel]
+        if self.aux is None:
+            return x, self.labels[sel], self.weights[sel]
+        return (
+            x,
+            {"logit": self.labels[sel], "aux": self.aux[sel]},
+            {"logit": self.weights[sel], "aux": self.weights[sel]},
+        )
 
     def on_epoch_end(self):
         if self.shuffle:
@@ -106,14 +140,14 @@ def sample_weights(meta: pd.DataFrame, config) -> np.ndarray:
 
 
 def predict_features(model, features, batch_size=512) -> np.ndarray:
-    return np.concatenate(
-        [
-            np.asarray(
-                model.predict_on_batch(features[i : i + batch_size].astype(np.float32))
-            ).reshape(-1)
-            for i in range(0, len(features), batch_size)
-        ]
-    )
+    """Binary logits for cached features; takes the "logit" output of a multi-output head."""
+    out = []
+    for i in range(0, len(features), batch_size):
+        p = model.predict_on_batch(features[i : i + batch_size].astype(np.float32))
+        if isinstance(p, dict):
+            p = p["logit"]
+        out.append(np.asarray(p).reshape(-1))
+    return np.concatenate(out)
 
 
 def main(config):
@@ -125,11 +159,19 @@ def main(config):
     logging.info(f"Using {keras.config.backend()} backend")
     logging.info(config)
 
+    aux = config.get("aux_target")
+    outputs = ("logit", "aux") if aux else ("logit",)
     x_train, m_train = load_features(features_dir, "train", config["train_years"])
     y_train = m_train["label"].to_numpy(dtype=np.float32)
     w_train = sample_weights(m_train, config)
     ds_train = FeatureBatches(
-        x_train, y_train, w_train, config["batch_size"], shuffle=True, seed=seed or 0
+        x_train,
+        y_train,
+        w_train,
+        config["batch_size"],
+        shuffle=True,
+        seed=seed or 0,
+        aux=aux_targets(m_train, config),
     )
     ds_val = None
     if config["val_years"]:
@@ -140,24 +182,37 @@ def main(config):
             sample_weights(m_val, config),
             config["batch_size"],
             shuffle=False,
+            aux=aux_targets(m_val, config),
         )
     logging.info(f"train {x_train.shape}, val {None if ds_val is None else x_val.shape}")
 
-    model = build_head_model(tuple(x_train.shape[1:]), config["head"], **config["head_kwargs"])
+    model = build_head_model(
+        tuple(x_train.shape[1:]), config["head"], outputs=outputs, **config["head_kwargs"]
+    )
     logging.info(f"head {config['head']} {config['head_kwargs']}: {model.count_params():,} params")
 
     decay_steps = config["decay_steps"] or len(ds_train)
     lr = keras.optimizers.schedules.ExponentialDecay(
         config["learning_rate"], decay_steps, config["decay_rate"], staircase=False
     )
-    model.compile(
-        loss=keras.losses.BinaryCrossentropy(
-            from_logits=True, label_smoothing=config["label_smooth"]
-        ),
-        optimizer=keras.optimizers.Adam(learning_rate=lr),
-        metrics=build_metrics(),
-        weighted_metrics=[],
-    )
+    bce = keras.losses.BinaryCrossentropy(from_logits=True, label_smoothing=config["label_smooth"])
+    if aux:
+        model.compile(
+            loss={"logit": bce, "aux": keras.losses.Huber()},
+            loss_weights={"logit": 1.0, "aux": float(config["aux_weight"])},
+            optimizer=keras.optimizers.Adam(learning_rate=lr),
+            metrics={"logit": build_metrics()},
+            weighted_metrics=[],
+        )
+        metric_prefix = "logit_"
+    else:
+        model.compile(
+            loss=bce,
+            optimizer=keras.optimizers.Adam(learning_rate=lr),
+            metrics=build_metrics(),
+            weighted_metrics=[],
+        )
+        metric_prefix = ""
 
     expdir = make_exp_dir(exp_dir=config["exp_dir"], prefix=config["exp_name"])
     git_commit, git_dirty = git_revision()
@@ -183,7 +238,10 @@ def main(config):
             best_checkpoint = os.path.join(checkpoints_dir, "best.keras")
             callbacks.append(
                 keras.callbacks.ModelCheckpoint(
-                    best_checkpoint, monitor="val_AUC", mode="max", save_best_only=True
+                    best_checkpoint,
+                    monitor=f"val_{metric_prefix}AUC",
+                    mode="max",
+                    save_best_only=True,
                 )
             )
 
@@ -191,12 +249,12 @@ def main(config):
         ds_train, epochs=config["epochs"], validation_data=ds_val, callbacks=callbacks, verbose=2
     )
 
-    val_auc = history.history.get("val_AUC", [])
+    val_auc = history.history.get(f"val_{metric_prefix}AUC", [])
     if val_auc:
         best_epoch = int(np.argmax(val_auc)) + 1
         results = {
             "AUC": float(val_auc[best_epoch - 1]),
-            "AUCPR": float(history.history["val_AUCPR"][best_epoch - 1]),
+            "AUCPR": float(history.history[f"val_{metric_prefix}AUCPR"][best_epoch - 1]),
             "best_epoch": best_epoch,
         }
     else:
@@ -207,6 +265,8 @@ def main(config):
             "exp_name": config["exp_name"],
             "head": config["head"],
             "head_kwargs": config["head_kwargs"],
+            "aux_target": aux,
+            "aux_weight": float(config["aux_weight"]) if aux else None,
             "params": int(model.count_params()),
             "seed": seed,
             "train_years": list(config["train_years"]),

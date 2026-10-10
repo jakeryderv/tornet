@@ -24,6 +24,7 @@ def test_read_file_default_last_frame(tornet_root):
     assert data["range_folded_mask"].dtype == np.float32
 
     assert data["label"].tolist() == [1]
+    assert data["frame_labels"].shape == (1, FRAMES)  # every frame, batchable leading axis
     assert data["category"].tolist() == [0]  # TOR
     assert data["ef_number"].tolist() == [1]
     assert data["event_id"].tolist() == [1]

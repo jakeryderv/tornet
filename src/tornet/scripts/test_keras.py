@@ -32,7 +32,17 @@ logging.basicConfig(level=logging.INFO)
 
 
 # Per-sample metadata carried alongside the model inputs so predictions can be scored offline.
-META_KEYS = ["category", "ef_number", "event_id", "time", "rng_lower", "rng_upper"]
+META_KEYS = [
+    "category",
+    "ef_number",
+    "event_id",
+    "time",
+    "rng_lower",
+    "rng_upper",
+    "tornado_start_time",
+    "tornado_end_time",
+    "frame_labels",
+]
 CATEGORY_NAMES = {0: "TOR", 1: "NUL", 2: "WRN"}
 
 
@@ -50,7 +60,8 @@ def build_metrics(from_logits=True):
 def batch_metadata(x, y, files, data_root) -> list[dict]:
     """One metadata row per sample in a loader batch, for predictions and feature caches."""
     n = len(files)
-    meta = {k: np.asarray(x[k]).reshape(n, -1)[:, 0] for k in META_KEYS}
+    meta = {k: np.asarray(x[k]).reshape(n, -1)[:, 0] for k in META_KEYS if k != "frame_labels"}
+    frame_labels = np.asarray(x["frame_labels"]).reshape(n, -1)
     labels = np.asarray(y).reshape(-1)
     rows = []
     for j, f in enumerate(files):
@@ -63,6 +74,15 @@ def batch_metadata(x, y, files, data_root) -> list[dict]:
                 "event_id": int(meta["event_id"][j]),
                 "time": int(meta["time"][j]),
                 "rng_center_km": float((meta["rng_lower"][j] + meta["rng_upper"][j]) / 2e3),
+                # Minutes from this frame to tornado onset / since tornado end (v1.1 fields);
+                # NaN for samples without a tornado.
+                "minutes_to_start": (float(meta["tornado_start_time"][j] - meta["time"][j]) / 60)
+                if meta["tornado_start_time"][j] > 0
+                else float("nan"),
+                "minutes_since_end": (float(meta["time"][j] - meta["tornado_end_time"][j]) / 60)
+                if meta["tornado_end_time"][j] > 0
+                else float("nan"),
+                "frame_fraction": float(frame_labels[j].mean()),
             }
         )
     return rows

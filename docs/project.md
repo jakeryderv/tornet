@@ -168,11 +168,14 @@ hybrid shares every line of input and backbone code with the baseline.
 ### Things to control for
 
 - **Capacity.** The baseline head is ~330k parameters; a two-layer transformer at width 384 is
-  ~3.5M, nearly doubling the model. Run `head='mlp'` (already in the code) as a same-budget control
-  so a win is attributable to attention rather than size.
+  ~3.5M, nearly doubling the model. The existing `head='mlp'` is not a usable control (it flattens
+  the feature map into a 4096-unit dense layer, ~165M parameters). **Decision:** build a
+  parameter-matched no-attention head alongside the transformer head: the same per-token MLP width
+  and depth and the same pooling, minus attention, so a win is attributable to attention.
 - **Full-scan inference.** Paper section 4 runs the CNN fully convolutionally on whole radar scans,
   which works because max-pool is size-agnostic. Learned 2D positional embeddings fixed to 7 × 15
-  break that; relative or convolutional position encoding keeps it.
+  break that. **Decision:** convolutional position encoding (a depthwise 3 × 3 conv over the token
+  grid added to the tokens), which is size-agnostic.
 - **Class imbalance and overfitting** as the model grows; the EF breakdown from `tornet-score` is
   the diagnostic.
 
@@ -182,7 +185,7 @@ hybrid shares every line of input and backbone code with the baseline.
 
 | Stage | Where | What |
 |---|---|---|
-| Development | Laptop, RTX 5070 Ti (12 GB) | Branch `jake/dev`, torch backend, 2013–2015 subset at `~/data/tornet` |
+| Development | Laptop, RTX 5070 Ti (12 GB) | Branch `jake/dev`, torch backend, 2013–2015 subset at `~/data/tornet` (40,666 train / 7,021 test files) |
 | Full runs | RunPod, US-NE-1 | Network volume `xqc3pvmwyr` with all ten years; GPU ladder from PRO 6000 MIG 24 GB (0.69/hr) to H100 |
 
 **Backend: torch everywhere.** PyPI tensorflow wheels carry no Blackwell kernels, so tensorflow runs
@@ -194,13 +197,14 @@ Keras ops, so the architecture is identical on either backend and the weights lo
 
 ```
 export TORNET_ROOT=~/data/tornet
-uv run tornet-test --years 2013 2014 --output ... --predictions ...   # pretrained reference (done)
-uv run tornet-train configs/fold_a.json       # train 2013, validate 2014
-uv run tornet-train configs/fold_b.json       # train 2014, validate 2013
+uv run tornet-test --years 2013 2014 2015 --output ... --predictions ...   # pretrained reference (done)
+uv run tornet-train configs/fold_a.json       # hold out 2013
+uv run tornet-train configs/fold_b.json       # hold out 2014
+uv run tornet-train configs/fold_c.json       # hold out 2015
 uv run tornet-results --group                 # fold-averaged AUC per experiment
-uv run tornet-train configs/final.json        # retrain on both, no validation
-uv run tornet-test --model_path experiments/latest/checkpoints/last.keras --years 2013 2014 --predictions preds.csv
-uv run tornet-score results/predictions_pretrained_2013_2014.csv preds.csv
+uv run tornet-train configs/final.json        # retrain on all three, no validation
+uv run tornet-test --model_path experiments/latest/checkpoints/last.keras --years 2013 2014 2015 --predictions preds.csv
+uv run tornet-score results/predictions_pretrained_2013_2015.csv preds.csv
 ```
 
 A variant is a new `exp_name` prefix on the same configs. Subset scores sit below the paper's because
@@ -208,8 +212,9 @@ of less training data and a higher tornado base rate (13% vs 6%); compare the hy
 baseline on the same subset, never against the published numbers. The bootstrap CI on the subset
 NC AUC is about ±0.016, which is the noise floor a variant has to clear.
 
-**Config notes.** `decay_steps` in the fold configs is an estimate; set it to the real steps per
-epoch after the first run. Batch 128 may not fit in 12 GB; drop to 64 and halve `decay_steps`.
+**Config notes.** `decay_steps` in each config equals that config's steps per epoch at batch 128,
+matching the paper's one-epoch decay period. Batch 128 may not fit in 12 GB; if so, drop to 64 and
+double `decay_steps`.
 
 ---
 

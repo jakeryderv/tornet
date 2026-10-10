@@ -79,17 +79,18 @@ ours. Unknown keys are ignored, so configs carry a `_note`.
 
 The paper's protocol is five year-pair folds inside the training partition for hyperparameter
 selection, then a retrain on all training years, then one evaluation on the test partition. The
-configs mirror that on 2013–2014:
+configs mirror that on 2013–2015 as three folds, each holding out one year:
 
 ```
 export TORNET_ROOT=~/data/tornet
 uv run pytest                                   # dataset tests run when the catalog is present
-uv run tornet-test --years 2013 2014 --output scores_pretrained.json --predictions preds_pretrained.csv
-uv run tornet-train configs/fold_a.json         # train 2013, validate 2014
-uv run tornet-train configs/fold_b.json         # train 2014, validate 2013
+uv run tornet-test --years 2013 2014 2015 --output scores_pretrained.json --predictions preds_pretrained.csv
+uv run tornet-train configs/fold_a.json         # train 2014+2015, validate 2013
+uv run tornet-train configs/fold_b.json         # train 2013+2015, validate 2014
+uv run tornet-train configs/fold_c.json         # train 2013+2014, validate 2015
 uv run tornet-results --group                   # baseline score = fold-averaged validation AUC
-uv run tornet-train configs/final.json          # retrain on both years, no validation
-uv run tornet-test --model_path experiments/latest/checkpoints/last.keras --years 2013 2014 --predictions preds_final.csv
+uv run tornet-train configs/final.json          # retrain on all three years, no validation
+uv run tornet-test --model_path experiments/latest/checkpoints/last.keras --years 2013 2014 2015 --predictions preds_final.csv
 uv run tornet-score preds_pretrained.csv preds_final.csv
 ```
 

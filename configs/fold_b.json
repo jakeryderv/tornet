@@ -1,16 +1,17 @@
 {
-    "_note": "Two-fold local CV, fold B. decay_steps ~ one epoch of 2014 at batch 128.",
+    "_note": "Three-fold local CV, fold B: hold out 2014.",
     "epochs": 15,
     "batch_size": 128,
     "train_years": [
-        2014
+        2013,
+        2015
     ],
     "val_years": [
-        2013
+        2014
     ],
     "start_filters": 48,
     "learning_rate": 0.0001,
-    "decay_steps": 135,
+    "decay_steps": 182,
     "decay_rate": 0.958,
     "l2_reg": 1e-05,
     "wN": 1.0,

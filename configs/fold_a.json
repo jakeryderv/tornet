@@ -1,16 +1,17 @@
 {
-    "_note": "Two-fold local CV, fold A. 2013 is a thin year (~1/5 size), so this fold is noisier. decay_steps is scaled to roughly one epoch of steps at batch 128.",
+    "_note": "Three-fold local CV, fold A: hold out 2013. decay_steps = steps per epoch at batch 128.",
     "epochs": 15,
     "batch_size": 128,
     "train_years": [
-        2013
+        2014,
+        2015
     ],
     "val_years": [
-        2014
+        2013
     ],
     "start_filters": 48,
     "learning_rate": 0.0001,
-    "decay_steps": 30,
+    "decay_steps": 291,
     "decay_rate": 0.958,
     "l2_reg": 1e-05,
     "wN": 1.0,

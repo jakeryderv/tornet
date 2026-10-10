@@ -88,10 +88,11 @@ at run time rather than at import.
 - `configs/tornado_baseline.json` is the authors' config, moved from
   `scripts/tornado_detection/config/params.json`; its hyperparameters are unchanged (only the
   obsolete `dataloader` key was dropped).
-- `configs/fold_a.json`, `fold_b.json`, `final.json` (new): a two-fold local cross-validation on
-  2013–2014 mirroring the paper's year-pair folds, plus the all-years retrain. They differ from the
-  baseline config in year lists, `decay_steps` scaled to the subset, `label_smooth` 0.1 (the paper
-  reports 10–20% helped; the shipped config has 0), loader workers, and output directory.
+- `configs/fold_a.json`, `fold_b.json`, `fold_c.json`, `final.json` (new): a three-fold local
+  cross-validation on 2013–2015, each fold holding out one year, plus the all-years retrain. They
+  differ from the baseline config in year lists, `decay_steps` set to each run's steps per epoch,
+  `label_smooth` 0.1 (the paper reports 10–20% helped; the shipped config has 0), loader workers,
+  and output directory.
 
 ## Tests
 

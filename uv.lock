@@ -4738,6 +4738,9 @@ dev = [
     { name = "ruff" },
     { name = "ty" },
 ]
+hf = [
+    { name = "tornet", extra = ["hf"] },
+]
 tensorflow = [
     { name = "tornet", extra = ["tensorflow"] },
 ]
@@ -4773,6 +4776,7 @@ dev = [
     { name = "ruff" },
     { name = "ty", specifier = ">=0.0.85" },
 ]
+hf = [{ name = "tornet", extras = ["hf"] }]
 tensorflow = [{ name = "tornet", extras = ["tensorflow"] }]
 torch = [{ name = "tornet", extras = ["torch"] }]
 

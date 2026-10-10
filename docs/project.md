@@ -216,6 +216,11 @@ NC AUC is about ±0.016, which is the noise floor a variant has to clear.
 matching the paper's one-epoch decay period. Batch 128 may not fit in 12 GB; if so, drop to 64 and
 double `decay_steps`.
 
+**Loader throughput** (measured 2026-10-10, 2014 train files, batch 128): single-threaded 58 files/s;
+threaded `workers > 1` **segfaults** (NetCDF/HDF5 is not thread-safe); multiprocessing 4 workers
+156 files/s, 8 workers 248 files/s, more workers no better. Configs use 8 worker processes, giving
+roughly 3 minutes per fold-A epoch and about 2.5 hours for the whole three-fold-plus-final protocol.
+
 ---
 
 ## 6. References

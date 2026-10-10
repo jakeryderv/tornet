@@ -25,7 +25,7 @@
     "exp_name": "baseline_fold_a",
     "exp_dir": "experiments",
     "dataloader_kwargs": {
-        "workers": 4,
-        "use_multiprocessing": false
+        "workers": 8,
+        "use_multiprocessing": true
     }
 }

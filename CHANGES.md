@@ -91,8 +91,9 @@ at run time rather than at import.
 - `configs/fold_a.json`, `fold_b.json`, `fold_c.json`, `final.json` (new): a three-fold local
   cross-validation on 2013–2015, each fold holding out one year, plus the all-years retrain. They
   differ from the baseline config in year lists, `decay_steps` set to each run's steps per epoch,
-  `label_smooth` 0.1 (the paper reports 10–20% helped; the shipped config has 0), loader workers,
-  and output directory.
+  `label_smooth` 0.1 (the paper reports 10–20% helped; the shipped config has 0), eight loader
+  worker processes (threaded workers segfault in NetCDF/HDF5; processes give ~4x the throughput of a
+  single thread), and output directory.
 
 ## Tests
 

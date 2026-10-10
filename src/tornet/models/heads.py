@@ -216,9 +216,135 @@ HEADS = {
 
 def build_head_model(
     feature_shape, head: str = "maxpool", outputs: tuple[str, ...] = ("logit",), **head_kwargs
-) -> keras.Model:
+) -> keras.Model:  # noqa: E302
     """A standalone model from a cached feature map to a logit (or a dict of named outputs when
     more than one is requested), for head-only training."""
     inputs = keras.Input(feature_shape, name="features")
     out = HEADS[head](inputs, outputs=tuple(outputs), **head_kwargs)
     return keras.Model(inputs=inputs, outputs=out, name=head)
+
+
+# --------------------------------------------------------------------------------------------
+# Metric-learning head: an L2-normalised embedding plus a logit from learned class prototypes.
+# --------------------------------------------------------------------------------------------
+
+
+@keras.saving.register_keras_serializable()
+class L2Normalize(keras.layers.Layer):
+    def call(self, x):
+        return x / (ops.sqrt(ops.sum(ops.square(x), axis=-1, keepdims=True)) + 1e-8)
+
+
+@keras.saving.register_keras_serializable()
+class PrototypeLogit(keras.layers.Layer):
+    """Logit = (cos(e, p_tornado) - cos(e, p_null)) / temperature with two learned prototypes.
+
+    A scalar score derived from distances to class centres, so it can be trained with the usual
+    binary loss, thresholded, and scored like any other logit.
+    """
+
+    def __init__(self, temperature: float = 0.1, **kwargs):
+        super().__init__(**kwargs)
+        self.temperature = temperature
+
+    def build(self, input_shape):
+        self.prototypes = self.add_weight(
+            shape=(2, input_shape[-1]),
+            initializer="glorot_uniform",
+            trainable=True,
+            name="prototypes",
+        )
+
+    def call(self, e):
+        p = self.prototypes / (
+            ops.sqrt(ops.sum(ops.square(self.prototypes), axis=-1, keepdims=True)) + 1e-8
+        )
+        cos = ops.matmul(e, ops.transpose(p))  # (batch, 2): [tornado, null]
+        return (cos[:, 0:1] - cos[:, 1:2]) / self.temperature
+
+    def compute_output_shape(self, input_shape):
+        return (input_shape[0], 1)
+
+    def get_config(self):
+        return {**super().get_config(), "temperature": self.temperature}
+
+
+def embedding_head(
+    x,
+    depth: int = 2,
+    num_heads: int = 6,
+    mlp_ratio: float = 4.0,
+    dropout: float = 0.1,
+    pool: str = "cls",
+    dim: int | None = None,
+    embed_dim: int = 128,
+    temperature: float = 0.1,
+    outputs: tuple[str, ...] = ("logit", "embedding"),
+):
+    """Transformer tokens -> pooled -> normalised embedding; the logit comes from prototypes.
+
+    Always returns a dict with "logit" and "embedding" (the `outputs` argument is accepted for
+    interface symmetry with the other heads but the two outputs are fixed).
+    """
+    channels = x.shape[-1]
+    if dim is not None and dim != channels:
+        x = keras.layers.Conv2D(dim, 1)(x)
+        channels = dim
+    x = keras.layers.Add()([x, keras.layers.DepthwiseConv2D(3, padding="same")(x)])
+    tokens = ToTokens()(x)
+    if pool == "cls":
+        tokens = ClassToken()(tokens)
+    for _ in range(depth):
+        y = keras.layers.LayerNormalization(epsilon=1e-6)(tokens)
+        y = keras.layers.MultiHeadAttention(
+            num_heads=num_heads, key_dim=channels // num_heads, dropout=dropout
+        )(y, y)
+        y = keras.layers.Dropout(dropout)(y)
+        tokens = keras.layers.Add()([tokens, y])
+        tokens = _ffn(tokens, int(mlp_ratio * channels), channels, dropout)
+    tokens = keras.layers.LayerNormalization(epsilon=1e-6)(tokens)
+    if pool == "cls":
+        pooled = TakeToken(0)(tokens)
+    elif pool == "mean":
+        pooled = keras.layers.GlobalAveragePooling1D()(tokens)
+    else:
+        raise ValueError("embedding head supports pool='cls' or 'mean'")
+    pooled = keras.layers.Dropout(dropout)(pooled)
+    embedding = L2Normalize(name="embedding")(keras.layers.Dense(embed_dim)(pooled))
+    logit = PrototypeLogit(temperature=temperature, name="logit")(embedding)
+    return {"logit": logit, "embedding": embedding}
+
+
+HEADS["embedding"] = embedding_head
+
+
+@keras.saving.register_keras_serializable()
+class SoftSupervisedContrastive(keras.losses.Loss):
+    """Supervised contrastive loss over a batch of normalised embeddings with soft positives.
+
+    `y_true` is one scalar target per sample (a label, or a continuous value such as the proximity
+    target); the positive weight of pair (i, j) is exp(-|t_i - t_j| / sigma), so samples with
+    equal targets are full positives and the weight decays smoothly with target distance. With
+    binary labels and small sigma this reduces to standard supervised contrastive loss. Returns
+    one loss value per anchor.
+    """
+
+    def __init__(self, temperature: float = 0.1, sigma: float = 0.25, name="soft_supcon", **kw):
+        super().__init__(name=name, **kw)
+        self.temperature = temperature
+        self.sigma = sigma
+
+    def call(self, y_true, y_pred):
+        t = ops.reshape(ops.cast(y_true, y_pred.dtype), (-1, 1))
+        n = ops.shape(y_pred)[0]
+        sim = ops.matmul(y_pred, ops.transpose(y_pred)) / self.temperature
+        not_self = 1.0 - ops.eye(n, dtype=y_pred.dtype)
+        sim = sim - (1.0 - not_self) * 1e9  # exclude self from the softmax
+        log_prob = sim - ops.logsumexp(sim, axis=1, keepdims=True)
+        w = ops.exp(-ops.abs(t - ops.transpose(t)) / self.sigma) * not_self
+        denom = ops.sum(w, axis=1)
+        loss = -ops.sum(w * log_prob, axis=1) / ops.maximum(denom, 1e-8)
+        return ops.where(denom > 0, loss, ops.zeros_like(loss))
+
+    def get_config(self):
+        return {**super().get_config(), "temperature": self.temperature, "sigma": self.sigma}

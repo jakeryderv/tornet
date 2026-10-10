@@ -36,6 +36,13 @@ classification head and to tooling around cached features:
   `aux_target` `proximity` (distance in minutes to the tornado interval, clipped to a window, so
   nulls sit at the far edge) or `frame_fraction`, with a Huber loss and a weight. The binary logit
   remains the scored output, so every comparison is unchanged.
+- Metric-learning head (`head='embedding'`): transformer tokens pooled to an L2-normalised
+  embedding, with the logit computed from two learned prototypes (cosine margin over a
+  temperature) so it trains, thresholds and scores like any other logit. Trained jointly with a
+  soft supervised contrastive loss whose positive weights decay with the distance between a scalar
+  target per sample (`contrastive_target`: the label, or `proximity`). `tornet-embeddings` (new)
+  inspects a run's test embeddings: PCA scatters by category, EF and year, centroid cosines,
+  nearest-centroid rates, and a k-means cross-tab against the categories.
 
 Known paper/code discrepancy, not altered: the paper describes 2, 3, 3, 3 convolutions per block,
 while the code and the pretrained weights have 2, 2, 3, 3. See `docs/project.md` section 3.
@@ -87,7 +94,7 @@ The two scripts under `scripts/tornado_detection/` are now console commands in `
   year, a reliability table, and a paired bootstrap of the AUC difference between models.
 - `tornet-results` (new): tabulates `results.json` files under `experiments/`, optionally averaging
   folds that share an experiment name.
-- `tornet-cache-features` and `tornet-train-head` (new): see Modeling above.
+- `tornet-cache-features`, `tornet-train-head` and `tornet-embeddings` (new): see Modeling above.
 
 Both original commands default `KERAS_BACKEND` to `torch` when it is unset, and read `TORNET_ROOT`
 at run time rather than at import.

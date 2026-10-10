@@ -1,0 +1,32 @@
+{
+    "_note": "Metric-learning head (soft contrastive: positives weighted by closeness in time-to-tornado); logit from learned prototypes. Fold B.",
+    "train_years": [
+        2013,
+        2015
+    ],
+    "val_years": [
+        2014
+    ],
+    "test_years": [
+        2013,
+        2014,
+        2015
+    ],
+    "epochs": 30,
+    "batch_size": 256,
+    "learning_rate": 0.0003,
+    "label_smooth": 0.1,
+    "seed": 1234,
+    "head": "embedding",
+    "head_kwargs": {
+        "depth": 2,
+        "num_heads": 6,
+        "pool": "cls",
+        "embed_dim": 128
+    },
+    "exp_name": "head_embedding_proximity_fold_b",
+    "contrastive_target": "proximity",
+    "contrastive_weight": 1.0,
+    "contrastive_sigma": 0.25,
+    "temperature": 0.1
+}

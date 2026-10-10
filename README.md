@@ -72,7 +72,8 @@ extraction `TORNET_ROOT` should contain `catalog.csv`, `train/` and `test/`.
 | `tornet-score <preds.csv> [...]` | Score prediction files offline: the paper's three test views, bootstrap CIs, best-threshold CSI, recall by EF rating, AUC by year, and a paired comparison between models. |
 | `tornet-results [--group]` | Tabulate every `results.json` under `experiments/`, averaging folds per experiment. |
 | `tornet-cache-features` | Cut a model at the backbone and cache its feature maps per year and partition, so heads train in seconds per epoch. `--verify` checks the cache reproduces the full model. |
-| `tornet-train-head <config.json>` | Train a head (`maxpool`, `transformer`, or the no-attention control `token_mlp`) on cached features; writes the same run layout as `tornet-train` plus test predictions. |
+| `tornet-train-head <config.json>` | Train a head (`maxpool`, `transformer`, the no-attention control `token_mlp`, or the metric-learning `embedding`) on cached features, optionally with an auxiliary target; writes the same run layout as `tornet-train` plus test predictions. |
+| `tornet-embeddings <run>` | Inspect an embedding head's test embeddings: PCA plots and a cluster report. |
 
 All configs live in `configs/`. `tornado_baseline.json` is the authors' hyperparameters; the rest are
 ours. Unknown keys are ignored, so configs carry a `_note`.
@@ -106,10 +107,10 @@ the same commands with all ten years in the config.
 ```
 src/tornet/
 ├── data/        loader.py (NetCDF reader, catalog query), preprocess.py, keras_loader.py, constants.py
-├── models/      cnn_baseline.py (build_model), heads.py (maxpool, transformer, token_mlp), layers.py, losses.py
+├── models/      cnn_baseline.py (build_model), heads.py (maxpool, transformer, token_mlp, embedding), layers.py, losses.py
 ├── metrics.py   logit-aware precision, recall, F1
 ├── display/     radar plotting
-├── scripts/     the six commands
+├── scripts/     the seven commands
 └── utils/       experiment directories, git revision
 configs/         training configs; configs/heads/ is the head sweep
 tests/           synthetic-data tests (no download needed) plus dataset tests

@@ -253,3 +253,48 @@ def test_train_head_with_auxiliary_target(trained, tmp_path, monkeypatch):
         assert 0.0 <= r["test_AUC"] <= 1.0
         preds = pd.read_csv(os.path.join(r["expdir"], "predictions.csv"))
         assert "logit" in preds.columns and np.isfinite(preds["logit"]).all()
+
+
+def test_train_embedding_head(trained, tmp_path, monkeypatch):
+    exp, checkpoint = trained
+    out = tmp_path / "features"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "tornet-cache-features",
+            "--model_path",
+            checkpoint,
+            "--years",
+            "2013",
+            "2014",
+            "--out",
+            str(out),
+            "--batch_size",
+            "2",
+            "--workers",
+            "1",
+        ],
+    )
+    cache_features.main()
+    for target in ("label", "proximity"):
+        r = train_head.main(
+            {
+                **train_head.DEFAULT_CONFIG,
+                "features_dir": str(out),
+                "train_years": [2013],
+                "val_years": [2014],
+                "test_years": [2014],
+                "head": "embedding",
+                "head_kwargs": {"depth": 1, "num_heads": 4, "embed_dim": 8},
+                "contrastive_target": target,
+                "epochs": 2,
+                "batch_size": 2,
+                "exp_dir": str(exp),
+                "exp_name": f"head_embedding_{target}_fold_x",
+            }
+        )
+        assert r["contrastive_target"] == target and 0.0 <= r["test_AUC"] <= 1.0
+        embs = np.load(os.path.join(r["expdir"], "embeddings_test.npy"))
+        n_test = sum(1 for _rel, kind, *_ in SYNTHETIC_SAMPLES if kind == "test")
+        assert embs.shape == (n_test, 8)

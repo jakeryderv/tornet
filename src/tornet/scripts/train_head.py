@@ -23,7 +23,7 @@ os.environ.setdefault("KERAS_BACKEND", "torch")
 import keras  # noqa: E402
 
 from tornet.data import preprocess as pp  # noqa: E402
-from tornet.models.heads import build_head_model  # noqa: E402
+from tornet.models.heads import SoftSupervisedContrastive, build_head_model  # noqa: E402
 from tornet.scripts.test_keras import build_metrics, finish_predictions, score_predictions  # noqa: E402
 from tornet.utils.general import git_revision, make_callback_dirs, make_exp_dir  # noqa: E402
 
@@ -53,6 +53,13 @@ DEFAULT_CONFIG = {
     "aux_target": None,
     "aux_weight": 1.0,
     "aux_window": 60.0,
+    # For head "embedding": contrastive supervision on the embedding output. The target is a
+    # scalar per sample ("label", or an aux_target name such as "proximity"); pairs with equal
+    # targets are positives, decaying with |t_i - t_j| / sigma.
+    "contrastive_target": "label",
+    "contrastive_weight": 1.0,
+    "contrastive_sigma": 0.25,
+    "temperature": 0.1,
     "seed": 1234,
     "exp_name": "head",
     "exp_dir": os.environ.get("EXP_DIR", "experiments"),
@@ -72,6 +79,17 @@ def load_features(features_dir: str, partition: str, years: list[int]):
         feats.append(np.load(path))
         metas.append(pd.read_csv(os.path.join(features_dir, f"{partition}_{year}_meta.csv")))
     return np.concatenate(feats), pd.concat(metas, ignore_index=True)
+
+
+def second_target(meta: pd.DataFrame, config) -> np.ndarray | None:
+    """Target for the second output: the contrastive target for the embedding head, else the
+    auxiliary regression target (or None)."""
+    if config["head"] == "embedding":
+        t = config.get("contrastive_target", "label")
+        if t == "label":
+            return meta["label"].to_numpy(dtype=np.float32)
+        return aux_targets(meta, {**config, "aux_target": t})
+    return aux_targets(meta, config)
 
 
 def aux_targets(meta: pd.DataFrame, config) -> np.ndarray | None:
@@ -99,9 +117,21 @@ class FeatureBatches(keras.utils.PyDataset):
 
     With `aux` given, targets and weights are dicts keyed "logit" and "aux"."""
 
-    def __init__(self, features, labels, weights, batch_size, shuffle, seed=0, aux=None, **kwargs):
+    def __init__(
+        self,
+        features,
+        labels,
+        weights,
+        batch_size,
+        shuffle,
+        seed=0,
+        aux=None,
+        aux_name="aux",
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.features, self.labels, self.weights, self.aux = features, labels, weights, aux
+        self.aux_name = aux_name or "aux"
         self.batch_size, self.shuffle = batch_size, shuffle
         self.rng = np.random.default_rng(seed)
         self.order = np.arange(len(labels))
@@ -118,8 +148,8 @@ class FeatureBatches(keras.utils.PyDataset):
             return x, self.labels[sel], self.weights[sel]
         return (
             x,
-            {"logit": self.labels[sel], "aux": self.aux[sel]},
-            {"logit": self.weights[sel], "aux": self.weights[sel]},
+            {"logit": self.labels[sel], self.aux_name: self.aux[sel]},
+            {"logit": self.weights[sel], self.aux_name: np.ones_like(self.weights[sel])},
         )
 
     def on_epoch_end(self):
@@ -160,7 +190,9 @@ def main(config):
     logging.info(config)
 
     aux = config.get("aux_target")
-    outputs = ("logit", "aux") if aux else ("logit",)
+    embedding = config["head"] == "embedding"
+    outputs = ("logit", "embedding") if embedding else (("logit", "aux") if aux else ("logit",))
+    second_name = outputs[1] if len(outputs) > 1 else None
     x_train, m_train = load_features(features_dir, "train", config["train_years"])
     y_train = m_train["label"].to_numpy(dtype=np.float32)
     w_train = sample_weights(m_train, config)
@@ -171,7 +203,8 @@ def main(config):
         config["batch_size"],
         shuffle=True,
         seed=seed or 0,
-        aux=aux_targets(m_train, config),
+        aux=second_target(m_train, config),
+        aux_name=second_name,
     )
     ds_val = None
     if config["val_years"]:
@@ -182,12 +215,16 @@ def main(config):
             sample_weights(m_val, config),
             config["batch_size"],
             shuffle=False,
-            aux=aux_targets(m_val, config),
+            aux=second_target(m_val, config),
+            aux_name=second_name,
         )
     logging.info(f"train {x_train.shape}, val {None if ds_val is None else x_val.shape}")
 
+    head_kwargs = dict(config["head_kwargs"])
+    if embedding:
+        head_kwargs.setdefault("temperature", config["temperature"])
     model = build_head_model(
-        tuple(x_train.shape[1:]), config["head"], outputs=outputs, **config["head_kwargs"]
+        tuple(x_train.shape[1:]), config["head"], outputs=outputs, **head_kwargs
     )
     logging.info(f"head {config['head']} {config['head_kwargs']}: {model.count_params():,} params")
 
@@ -196,7 +233,21 @@ def main(config):
         config["learning_rate"], decay_steps, config["decay_rate"], staircase=False
     )
     bce = keras.losses.BinaryCrossentropy(from_logits=True, label_smoothing=config["label_smooth"])
-    if aux:
+    if embedding:
+        model.compile(
+            loss={
+                "logit": bce,
+                "embedding": SoftSupervisedContrastive(
+                    temperature=config["temperature"], sigma=config["contrastive_sigma"]
+                ),
+            },
+            loss_weights={"logit": 1.0, "embedding": float(config["contrastive_weight"])},
+            optimizer=keras.optimizers.Adam(learning_rate=lr),
+            metrics={"logit": build_metrics()},
+            weighted_metrics=[],
+        )
+        metric_prefix = "logit_"
+    elif aux:
         model.compile(
             loss={"logit": bce, "aux": keras.losses.Huber()},
             loss_weights={"logit": 1.0, "aux": float(config["aux_weight"])},
@@ -266,6 +317,7 @@ def main(config):
             "head": config["head"],
             "head_kwargs": config["head_kwargs"],
             "aux_target": aux,
+            "contrastive_target": config["contrastive_target"] if embedding else None,
             "aux_weight": float(config["aux_weight"]) if aux else None,
             "params": int(model.count_params()),
             "seed": seed,
@@ -296,6 +348,16 @@ def main(config):
         scores["checkpoint"] = chosen
         with open(os.path.join(expdir, "scores.json"), "w") as f:
             json.dump(scores, f, indent=2)
+        if embedding:
+            embs = np.concatenate(
+                [
+                    np.asarray(
+                        model.predict_on_batch(x_test[i : i + 512].astype(np.float32))["embedding"]
+                    )
+                    for i in range(0, len(x_test), 512)
+                ]
+            )
+            np.save(os.path.join(expdir, "embeddings_test.npy"), embs.astype(np.float16))
         results["test_AUC"] = scores["AUC"]
         results["test_AUCPR"] = scores["AUCPR"]
         results["predictions"] = os.path.join(expdir, "predictions.csv")

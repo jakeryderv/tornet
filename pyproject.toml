@@ -34,6 +34,7 @@ tornet-results = "tornet.scripts.results:main"
 tornet-score = "tornet.scripts.score:main"
 tornet-cache-features = "tornet.scripts.cache_features:main"
 tornet-train-head = "tornet.scripts.train_head:cli"
+tornet-embeddings = "tornet.scripts.embeddings:main"
 
 [project.urls]
 Homepage = "https://github.com/mit-ll/tornet"

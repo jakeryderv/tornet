@@ -100,3 +100,21 @@ def test_heads_can_emit_named_extra_outputs():
     # the single-output maxpool head keeps upstream's "heatmap" layer name
     single = heads.build_head_model(SHAPE, "maxpool")
     assert "heatmap" in [layer.name for layer in single.layers]
+
+
+def test_embedding_head_and_contrastive_loss():
+    m = heads.build_head_model(SHAPE, "embedding", depth=1, num_heads=4, embed_dim=16)
+    out = m.predict(np.random.randn(4, *SHAPE).astype(np.float32), verbose=0)
+    assert set(out) == {"logit", "embedding"} and out["embedding"].shape == (4, 16)
+    np.testing.assert_allclose(np.linalg.norm(out["embedding"], axis=1), 1.0, atol=1e-4)
+
+    loss = heads.SoftSupervisedContrastive(temperature=0.1, sigma=0.01)
+    y = np.array([[1], [1], [0], [0]], np.float32)
+    separated = np.array([[1, 0], [1, 0], [0, 1], [0, 1]], np.float32)
+    mixed = np.array([[1, 0], [0, 1], [1, 0], [0, 1]], np.float32)
+    assert float(keras.ops.mean(loss(y, separated))) < 0.01
+    assert float(keras.ops.mean(loss(y, mixed))) > 5
+    # soft targets: closer targets are stronger positives
+    soft = heads.SoftSupervisedContrastive(temperature=0.1, sigma=0.5)
+    t = np.array([[0.0], [0.1], [-1.0], [-1.0]], np.float32)
+    assert float(keras.ops.mean(soft(t, separated))) < float(keras.ops.mean(soft(t, mixed)))

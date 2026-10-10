@@ -29,6 +29,13 @@ classification head and to tooling around cached features:
   metrics, checkpointing and `results.json` layout as `tornet-train`, then scores the selected
   checkpoint on cached test features into `predictions.csv` and `scores.json`.
 - `configs/heads/*.json`: a head sweep on fold B (train 2013+2015, validate 2014).
+- Auxiliary regression targets: the loader now carries all four frame labels, and prediction and
+  cache metadata include `minutes_to_start`, `minutes_since_end` (from the v1.1 tornado times) and
+  `frame_fraction`. Heads accept `outputs=(...)` to emit named extra scalar outputs from the shared
+  representation. `tornet-train-head` can train a second output jointly with the binary logit:
+  `aux_target` `proximity` (distance in minutes to the tornado interval, clipped to a window, so
+  nulls sit at the far edge) or `frame_fraction`, with a Huber loss and a weight. The binary logit
+  remains the scored output, so every comparison is unchanged.
 
 Known paper/code discrepancy, not altered: the paper describes 2, 3, 3, 3 convolutions per block,
 while the code and the pretrained weights have 2, 2, 3, 3. See `docs/project.md` section 3.

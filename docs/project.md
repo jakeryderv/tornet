@@ -166,6 +166,31 @@ every line of input and backbone code.
    then from scratch at full scale.
 2. **Temporal**, optional: add the earlier frames with light mixing, since there are only four.
 
+### Experiment 1 result: heads on frozen pretrained features (fold B, 2026-10-10)
+
+Seven heads trained on cached block-4 features (`results/head_sweep_fold_b_*`). On the 2013–2015
+test partition every head lands within 0.005 AUC of the pretrained reference (0.8946), and the
+no-attention control matches or beats every transformer variant. Max-pooled transformers overfit
+early (best epoch 5–9). The only faint positive signal is the class-token transformer: best EF0 and
+EF1 recall (0.40 / 0.63 vs 0.35 / 0.58) and best warnings-view AUC (0.8315 vs 0.8270), within noise.
+
+Interpretation: the backbone was trained jointly with the max-pool head, so its features are already
+local and "strongest spot wins"; a head on frozen features cannot build relational context. The head
+shape alone is not the lever. Next: change the training signal (auxiliary targets), then let the head
+train with the backbone.
+
+### Training-signal ideas (agreed order: A then B)
+
+- **A. Continuous auxiliary targets, not EF-based** (EF ratings are survey-based, inconsistent at the
+  low end). `proximity`: minutes to the tornado interval from the v1.1 start/end times, clipped to a
+  window; `frame_fraction`: share of the four frames that are tornadic. Trained jointly with the
+  binary loss on cached features. Implemented in `tornet-train-head`.
+- **B. Metric learning**: an embedding head with a contrastive loss (similarity from time-to-event),
+  classification by distance to learned tornado/null prototypes, with inspection tooling to see
+  whether warned nulls form their own cluster. Motivation: label-noise robustness. Not built yet.
+- Later, end to end: rotation-strength auxiliary (azimuthal shear computed from VEL) only makes sense
+  when the backbone trains; temporal attention over the four frames after the full run.
+
 ### Things to control for
 
 - **Capacity.** The baseline head is ~330k parameters; a two-layer transformer at width 384 is

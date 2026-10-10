@@ -20,6 +20,7 @@ os.environ.setdefault("KERAS_BACKEND", "torch")
 
 import keras  # noqa: E402
 
+import tornet.models.keras.layers  # noqa: E402, F401  (registers CoordConv2D etc. for load_model)
 from tornet.data.loader import get_dataloader  # noqa: E402
 from tornet.metrics.keras import metrics as tfm  # noqa: E402
 

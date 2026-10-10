@@ -1,6 +1,8 @@
 """End-to-end runs of the train and test commands on the synthetic dataset."""
 
 import json
+import os
+import subprocess
 import sys
 
 import pytest
@@ -125,3 +127,42 @@ def test_evaluate_checkpoint_on_subset_years(env, tmp_path, monkeypatch):
     assert scores["model_path"] == str(checkpoint)
     for name in ("AUC", "AUCPR", "BinaryAccuracy", "Precision", "Recall", "F1"):
         assert 0.0 <= scores[name] <= 1.0
+
+
+def test_tornet_test_cli_loads_checkpoint_in_fresh_process(env, tmp_path):
+    """Custom layers must be registered by the command itself, not by whatever imported them earlier."""
+    config = {
+        **train_keras.DEFAULT_CONFIG,
+        **TINY,
+        "epochs": 1,
+        "exp_dir": str(env),
+        "train_years": [2013],
+        "val_years": [2014],
+    }
+    results = train_keras.main(config)
+    checkpoint = (
+        env / results["expdir"].split("/")[-1] / "checkpoints" / "tornadoDetector_001.keras"
+    )
+    out = tmp_path / "scores.json"
+
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "tornet.scripts.test_keras",
+            "--model_path",
+            str(checkpoint),
+            "--years",
+            "2014",
+            "--batch_size",
+            "2",
+            "--output",
+            str(out),
+        ],
+        env={**os.environ, "TORNET_ROOT": os.environ["TORNET_ROOT"]},
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert proc.returncode == 0, proc.stderr[-2000:]
+    assert 0.0 <= json.loads(out.read_text())["AUC"] <= 1.0

@@ -54,7 +54,19 @@ Extras:
 * `hf`: `huggingface_hub`, for downloading the pretrained weights.
 * `notebooks`: Jupyter.
 
-The tensorflow and jax code paths remain in the tree but are not locked. Install those frameworks yourself if you need them.
+* `tensorflow`: Keras 3 on the tensorflow backend, the authors' original stack, plus the TFDS reformat path.
+
+Torch is the default because PyPI tensorflow wheels carry no kernels for Blackwell GPUs such as the
+RTX 50 series, so tensorflow falls back to CPU there. For a full-scale run on an H100-class GPU
+that matches the paper's stack exactly:
+
+```
+uv sync --no-group torch --group tensorflow
+export KERAS_BACKEND=tensorflow
+```
+
+The model is written against Keras ops, so the architecture is identical on either backend and the
+pretrained weights load on both. The jax path remains in the tree but is not locked.
 
 ### Development checks
 

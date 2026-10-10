@@ -110,6 +110,10 @@ at run time rather than at import.
 - An empty `val_years` list trains without a validation set, for the final all-years retrain.
 - The config is deep-copied so repeated runs in one process do not share loader state.
 
+- A per-epoch garbage-collection callback in both trainers. Keras on the torch backend leaves
+  reference cycles holding GPU tensors between epochs; with multi-output heads this grew by about
+  0.15 GB per epoch until an out-of-memory error. Collecting at epoch end keeps memory flat.
+
 ## Evaluation behavior
 
 - `tornet-test` runs the model once, keeps every logit, and derives the same six metrics from

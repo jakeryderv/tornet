@@ -17,6 +17,8 @@ import datetime
 import os
 import subprocess
 
+import keras
+
 
 def make_exp_dir(
     exp_dir="../experiments", prefix="", symlink_name="latest", task_type=None, task_id=0
@@ -62,3 +64,18 @@ def make_callback_dirs(logdir):
     checkpoints_dir = os.path.join(logdir, "checkpoints")
     os.makedirs(checkpoints_dir, exist_ok=True)
     return checkpoints_dir
+
+
+class CollectGarbage(keras.callbacks.Callback):
+    """Keras on the torch backend can leave reference cycles holding GPU tensors between epochs,
+    which grows memory until an OOM (seen with multi-output heads). Collect at each epoch end."""
+
+    def on_epoch_end(self, epoch, logs=None):
+        import gc
+
+        gc.collect()
+        if keras.config.backend() == "torch":
+            import torch
+
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()

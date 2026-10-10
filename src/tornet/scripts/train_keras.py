@@ -30,7 +30,12 @@ from tornet.data.loader import get_dataloader  # noqa: E402
 from tornet.data.preprocess import get_shape  # noqa: E402
 from tornet.models.cnn_baseline import build_model  # noqa: E402
 from tornet.models.losses import mae_loss  # noqa: E402
-from tornet.utils.general import git_revision, make_callback_dirs, make_exp_dir  # noqa: E402
+from tornet.utils.general import (  # noqa: E402
+    CollectGarbage,
+    git_revision,
+    make_callback_dirs,
+    make_exp_dir,
+)
 
 logging.basicConfig(level=logging.INFO)
 
@@ -193,6 +198,7 @@ def main(config):
     callbacks = [
         keras.callbacks.CSVLogger(os.path.join(expdir, "history.csv")),
         keras.callbacks.TerminateOnNaN(),
+        CollectGarbage(),
     ]
     best_checkpoint = last_checkpoint = None
     if config.get("save_all_checkpoints"):

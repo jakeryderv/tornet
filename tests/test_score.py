@@ -23,8 +23,8 @@ def test_roc_auc_known_values():
 def test_average_precision_known_values():
     y = np.array([0, 0, 1, 1])
     assert score.average_precision(y, np.array([0.1, 0.2, 0.8, 0.9])) == 1.0
-    # ranking: pos, neg, pos, neg -> precisions at hits 1/1 and 2/3
-    assert score.average_precision(y, np.array([0.4, 0.2, 0.9, 0.6])) == pytest.approx(
+    # ranked by score: pos(0.9), neg(0.7), pos(0.6), neg(0.2) -> precisions at hits 1/1 and 2/3
+    assert score.average_precision(y, np.array([0.7, 0.2, 0.9, 0.6])) == pytest.approx(
         (1 + 2 / 3) / 2
     )
     assert np.isnan(score.average_precision(np.zeros(3), np.array([0.1, 0.2, 0.3])))

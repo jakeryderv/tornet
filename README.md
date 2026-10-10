@@ -132,11 +132,18 @@ Tabulate runs, averaging folds that share an experiment name:
 uv run tornet-results --group
 ```
 
-Then evaluate the final checkpoint on the subset's test files:
+Then evaluate the final checkpoint on the subset's test files, keeping per-sample predictions:
 
 ```
-uv run tornet-test --model_path experiments/latest/checkpoints/last.keras --years 2013 2014 --output scores.json
+uv run tornet-test --model_path experiments/latest/checkpoints/last.keras --years 2013 2014 \
+    --output scores.json --predictions preds_variant.csv
+uv run tornet-score results/predictions_pretrained_2013_2014.csv preds_variant.csv
 ```
+
+`tornet-score` reports the paper's three test views (all nulls, random nulls only, warnings only),
+AUC with bootstrap confidence intervals, CSI at the best threshold, recall by EF rating, AUC by
+year, and a reliability table. Given two or more prediction files it also bootstraps the paired AUC
+difference against the first, which is the right test for "is my variant actually better".
 
 Scaling to the full dataset is the same commands with all ten years listed in the config.
 

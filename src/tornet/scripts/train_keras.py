@@ -30,7 +30,7 @@ from tornet.data.preprocess import get_shape  # noqa: E402
 from tornet.metrics.keras import metrics as tfm  # noqa: E402
 from tornet.models.keras.cnn_baseline import build_model  # noqa: E402
 from tornet.models.keras.losses import mae_loss  # noqa: E402
-from tornet.utils.general import make_callback_dirs, make_exp_dir  # noqa: E402
+from tornet.utils.general import git_revision, make_callback_dirs, make_exp_dir  # noqa: E402
 
 logging.basicConfig(level=logging.INFO)
 
@@ -60,6 +60,8 @@ DEFAULT_CONFIG = {
     "exp_dir": EXP_DIR,
     "dataloader": "keras",
     "dataloader_kwargs": {},
+    # False keeps only checkpoints/best.keras (by val AUC) and checkpoints/last.keras
+    "save_all_checkpoints": False,
 }
 
 
@@ -163,12 +165,19 @@ def main(config):
 
     ## Setup experiment directory and model callbacks
     expdir = make_exp_dir(exp_dir=exp_dir, prefix=exp_name)
-    logging.info("expdir=" + expdir)
+    git_commit, git_dirty = git_revision()
+    logging.info(f"expdir={expdir} (git {git_commit}{'+dirty' if git_dirty else ''})")
 
     # Copy the properties that were used
     with open(os.path.join(expdir, "data.json"), "w") as f:
         json.dump(
-            {"data_root": DATA_ROOT, "train_data": list(train_years), "val_data": list(val_years)},
+            {
+                "data_root": DATA_ROOT,
+                "train_data": list(train_years),
+                "val_data": list(val_years),
+                "git_commit": git_commit,
+                "git_dirty": git_dirty,
+            },
             f,
         )
     with open(os.path.join(expdir, "params.json"), "w") as f:
@@ -178,15 +187,28 @@ def main(config):
 
     # Callbacks
     tboard_dir, checkpoints_dir = make_callback_dirs(expdir)
-    checkpoint_name = os.path.join(checkpoints_dir, "tornadoDetector" + "_{epoch:03d}.keras")
-
     callbacks = [
-        keras.callbacks.ModelCheckpoint(
-            checkpoint_name, monitor="val_loss" if ds_val else "loss", save_best_only=False
-        ),
         keras.callbacks.CSVLogger(os.path.join(expdir, "history.csv")),
         keras.callbacks.TerminateOnNaN(),
     ]
+    best_checkpoint = last_checkpoint = None
+    if config.get("save_all_checkpoints"):
+        callbacks.append(
+            keras.callbacks.ModelCheckpoint(
+                os.path.join(checkpoints_dir, "tornadoDetector_{epoch:03d}.keras"),
+                save_best_only=False,
+            )
+        )
+    else:
+        last_checkpoint = os.path.join(checkpoints_dir, "last.keras")
+        callbacks.append(keras.callbacks.ModelCheckpoint(last_checkpoint, save_best_only=False))
+        if ds_val is not None:
+            best_checkpoint = os.path.join(checkpoints_dir, "best.keras")
+            callbacks.append(
+                keras.callbacks.ModelCheckpoint(
+                    best_checkpoint, monitor="val_AUC", mode="max", save_best_only=True
+                )
+            )
 
     # TensorBoard callback requires tensorflow backend
     if keras.config.backend() == "tensorflow":
@@ -210,8 +232,19 @@ def main(config):
         }
     else:
         results = {"AUC": None, "AUCPR": None, "best_epoch": None}
-    results["epochs_run"] = len(history.history["loss"])
-    results["expdir"] = expdir
+    results.update(
+        {
+            "epochs_run": len(history.history["loss"]),
+            "exp_name": exp_name,
+            "train_years": list(train_years),
+            "val_years": list(val_years),
+            "git_commit": git_commit,
+            "git_dirty": git_dirty,
+            "best_checkpoint": best_checkpoint,
+            "last_checkpoint": last_checkpoint,
+            "expdir": expdir,
+        }
+    )
     with open(os.path.join(expdir, "results.json"), "w") as f:
         json.dump(results, f, indent=2)
     logging.info(f"results: {results}")

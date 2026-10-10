@@ -40,6 +40,7 @@ notebooks = ["jupyter"]
 [project.scripts]
 tornet-train = "tornet.scripts.train_keras:cli"
 tornet-test = "tornet.scripts.test_keras:main"
+tornet-results = "tornet.scripts.results:main"
 
 [project.urls]
 Homepage = "https://github.com/mit-ll/tornet"

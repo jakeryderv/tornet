@@ -21,7 +21,7 @@
     "label_smooth": 0.1,
     "loss": "cce",
     "head": "maxpool",
-    "exp_name": "tornet_fold_b",
+    "exp_name": "baseline_fold_b",
     "dataloader": "keras",
     "exp_dir": "experiments",
     "dataloader_kwargs": {

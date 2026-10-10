@@ -1,7 +1,8 @@
-"""End-to-end runs of the train and test commands on the synthetic dataset."""
+"""End-to-end runs of the train, test and results commands on the synthetic dataset."""
 
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -11,14 +12,9 @@ from .conftest import SYNTHETIC_SAMPLES
 
 keras = pytest.importorskip("keras")
 
-from tornet.scripts import test_keras, train_keras  # noqa: E402
+from tornet.scripts import results, test_keras, train_keras  # noqa: E402
 
-TINY = {
-    "epochs": 2,
-    "batch_size": 2,
-    "start_filters": 4,
-    "dataloader_kwargs": {},
-}
+TINY = {"epochs": 2, "batch_size": 2, "start_filters": 4, "dataloader_kwargs": {}}
 
 
 @pytest.fixture
@@ -29,79 +25,60 @@ def env(tornet_root, tmp_path, monkeypatch):
     return exp_dir
 
 
+def train(env, **overrides):
+    config = {**train_keras.DEFAULT_CONFIG, **TINY, "exp_dir": str(env), **overrides}
+    return train_keras.main(config)
+
+
 def test_train_with_validation_writes_results_and_checkpoints(env):
-    config = dict(
-        train_keras.DEFAULT_CONFIG,
-        **TINY,
-        exp_name="fold",
-        exp_dir=str(env),
-        train_years=[2013],
-        val_years=[2014],
-    )
-    results = train_keras.main(config)
+    r = train(env, exp_name="baseline_fold_a", train_years=[2013], val_years=[2014])
 
-    assert results["epochs_run"] == 2
-    assert results["best_epoch"] in (1, 2)
-    assert 0.0 <= results["AUC"] <= 1.0
+    assert r["epochs_run"] == 2
+    assert r["best_epoch"] in (1, 2)
+    assert 0.0 <= r["AUC"] <= 1.0
+    assert r["train_years"] == [2013] and r["val_years"] == [2014]
+    assert "git_commit" in r and "git_dirty" in r
 
-    expdir = env / results["expdir"].split("/")[-1]
-    assert json.loads((expdir / "results.json").read_text()) == results
-    assert json.loads((expdir / "data.json").read_text())["train_data"] == [2013]
+    expdir = env / os.path.basename(r["expdir"])
+    assert re.fullmatch(r"baseline_fold_a_\d{6}_\d{6}", expdir.name)
+    assert json.loads((expdir / "results.json").read_text()) == r
+    assert json.loads((expdir / "data.json").read_text())["git_commit"] == r["git_commit"]
     assert sorted(p.name for p in (expdir / "checkpoints").iterdir()) == [
-        "tornadoDetector_001.keras",
-        "tornadoDetector_002.keras",
+        "best.keras",
+        "last.keras",
     ]
+    assert r["best_checkpoint"] == str(expdir / "checkpoints" / "best.keras")
     assert (expdir / "history.csv").exists()
     assert (env / "latest").is_symlink()
 
 
-def test_train_without_validation_years(env):
-    config = dict(
-        train_keras.DEFAULT_CONFIG,
-        **TINY,
-        exp_name="final",
-        exp_dir=str(env),
-        train_years=[2013, 2014],
-        val_years=[],
-    )
-    results = train_keras.main(config)
-    assert results["AUC"] is None
-    assert results["best_epoch"] is None
-    assert results["epochs_run"] == 2
-    assert (
-        env / results["expdir"].split("/")[-1] / "checkpoints" / "tornadoDetector_002.keras"
-    ).exists()
+def test_train_without_validation_keeps_only_last(env):
+    r = train(env, exp_name="baseline_final", train_years=[2013, 2014], val_years=[])
+    assert r["AUC"] is None and r["best_epoch"] is None
+    assert r["epochs_run"] == 2
+    assert r["best_checkpoint"] is None
+    expdir = env / os.path.basename(r["expdir"])
+    assert [p.name for p in (expdir / "checkpoints").iterdir()] == ["last.keras"]
+
+
+def test_save_all_checkpoints_keeps_every_epoch(env):
+    r = train(env, train_years=[2013], val_years=[2014], save_all_checkpoints=True)
+    expdir = env / os.path.basename(r["expdir"])
+    assert sorted(p.name for p in (expdir / "checkpoints").iterdir()) == [
+        "tornadoDetector_001.keras",
+        "tornadoDetector_002.keras",
+    ]
 
 
 def test_main_does_not_mutate_defaults(env):
     before = json.dumps(train_keras.DEFAULT_CONFIG, sort_keys=True)
-    config = {
-        **train_keras.DEFAULT_CONFIG,
-        **TINY,
-        "epochs": 1,
-        "exp_dir": str(env),
-        "train_years": [2013],
-        "val_years": [2014],
-    }
-    train_keras.main(config)
+    train(env, epochs=1, train_years=[2013], val_years=[2014])
     assert json.dumps(train_keras.DEFAULT_CONFIG, sort_keys=True) == before
 
 
 def test_evaluate_checkpoint_on_subset_years(env, tmp_path, monkeypatch):
-    config = {
-        **train_keras.DEFAULT_CONFIG,
-        **TINY,
-        "epochs": 1,
-        "exp_dir": str(env),
-        "train_years": [2013],
-        "val_years": [2014],
-    }
-    results = train_keras.main(config)
-    checkpoint = (
-        env / results["expdir"].split("/")[-1] / "checkpoints" / "tornadoDetector_001.keras"
-    )
+    r = train(env, epochs=1, train_years=[2013], val_years=[2014])
     out = tmp_path / "scores.json"
-
     test_years = sorted(
         {int(rel.split("/")[1]) for rel, kind, *_ in SYNTHETIC_SAMPLES if kind == "test"}
     )
@@ -111,7 +88,7 @@ def test_evaluate_checkpoint_on_subset_years(env, tmp_path, monkeypatch):
         [
             "tornet-test",
             "--model_path",
-            str(checkpoint),
+            r["best_checkpoint"],
             "--years",
             *map(str, test_years),
             "--batch_size",
@@ -124,34 +101,22 @@ def test_evaluate_checkpoint_on_subset_years(env, tmp_path, monkeypatch):
 
     scores = json.loads(out.read_text())
     assert scores["years"] == test_years
-    assert scores["model_path"] == str(checkpoint)
+    assert scores["model_path"] == r["best_checkpoint"]
     for name in ("AUC", "AUCPR", "BinaryAccuracy", "Precision", "Recall", "F1"):
         assert 0.0 <= scores[name] <= 1.0
 
 
 def test_tornet_test_cli_loads_checkpoint_in_fresh_process(env, tmp_path):
     """Custom layers must be registered by the command itself, not by whatever imported them earlier."""
-    config = {
-        **train_keras.DEFAULT_CONFIG,
-        **TINY,
-        "epochs": 1,
-        "exp_dir": str(env),
-        "train_years": [2013],
-        "val_years": [2014],
-    }
-    results = train_keras.main(config)
-    checkpoint = (
-        env / results["expdir"].split("/")[-1] / "checkpoints" / "tornadoDetector_001.keras"
-    )
+    r = train(env, epochs=1, train_years=[2013], val_years=[2014])
     out = tmp_path / "scores.json"
-
     proc = subprocess.run(
         [
             sys.executable,
             "-m",
             "tornet.scripts.test_keras",
             "--model_path",
-            str(checkpoint),
+            r["last_checkpoint"],
             "--years",
             "2014",
             "--batch_size",
@@ -166,3 +131,19 @@ def test_tornet_test_cli_loads_checkpoint_in_fresh_process(env, tmp_path):
     )
     assert proc.returncode == 0, proc.stderr[-2000:]
     assert 0.0 <= json.loads(out.read_text())["AUC"] <= 1.0
+
+
+def test_results_table_and_fold_grouping(env, monkeypatch, capsys):
+    train(env, epochs=1, exp_name="baseline_fold_a", train_years=[2013], val_years=[2014])
+    train(env, epochs=1, exp_name="baseline_fold_b", train_years=[2014], val_years=[2013])
+
+    df = results.collect(str(env))
+    assert len(df) == 2  # the `latest` symlink is not double counted
+    assert set(df["exp_name"]) == {"baseline_fold_a", "baseline_fold_b"}
+    assert results.fold_group("baseline_fold_a") == "baseline"
+
+    monkeypatch.setattr(sys, "argv", ["tornet-results", str(env), "--group"])
+    results.main()
+    out = capsys.readouterr().out
+    assert "baseline_fold_a_" in out and "baseline_fold_b_" in out
+    assert "baseline" in out.splitlines()[-1] or "mean" in out

@@ -121,12 +121,21 @@ uv run tornet-train configs/fold_b.json   # train 2014, validate 2013
 uv run tornet-train configs/final.json    # retrain on both, no validation
 ```
 
-Each run writes `results.json`, `history.csv` and per-epoch checkpoints under `experiments/`. Average
-the two folds' validation AUC to compare model variants, then evaluate the final checkpoint on the
-subset's test files:
+Each run writes a directory `experiments/<exp_name>_<timestamp>/` containing `results.json` (best
+validation epoch, AUC, AUCPR, git commit), `history.csv` (every metric per epoch), the config used,
+and `checkpoints/best.keras` plus `checkpoints/last.keras` (set `save_all_checkpoints` to keep every
+epoch). `experiments/latest` always points at the most recent run.
+
+Tabulate runs, averaging folds that share an experiment name:
 
 ```
-uv run tornet-test --model_path experiments/latest/checkpoints/tornadoDetector_015.keras --years 2013 2014 --output scores.json
+uv run tornet-results --group
+```
+
+Then evaluate the final checkpoint on the subset's test files:
+
+```
+uv run tornet-test --model_path experiments/latest/checkpoints/last.keras --years 2013 2014 --output scores.json
 ```
 
 Scaling to the full dataset is the same commands with all ten years listed in the config.

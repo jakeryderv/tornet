@@ -1,5 +1,5 @@
 {
-    "_note": "Retrain on both years with no validation set, as the paper does after CV. Evaluate the last checkpoint with: uv run tornet-test --model_path <ckpt> --years 2013 2014",
+    "_note": "Retrain on both years with no validation set, as the paper does after CV. Evaluate the last checkpoint with: uv run tornet-test --model_path experiments/latest/checkpoints/last.keras --years 2013 2014",
     "epochs": 15,
     "batch_size": 128,
     "train_years": [
@@ -20,7 +20,7 @@
     "label_smooth": 0.1,
     "loss": "cce",
     "head": "maxpool",
-    "exp_name": "tornet_final",
+    "exp_name": "baseline_final",
     "dataloader": "keras",
     "exp_dir": "experiments",
     "dataloader_kwargs": {

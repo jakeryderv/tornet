@@ -68,7 +68,7 @@ all three views with bootstrap confidence intervals and a paired comparison betw
 
 ## 3. The baseline as it actually ships
 
-Verified against `src/tornet/models/keras/cnn_baseline.py`, `configs/tornado_baseline.json`, and the
+Verified against `src/tornet/models/cnn_baseline.py`, `configs/tornado_baseline.json`, and the
 layers of the Hugging Face weights `tornet-ml/tornado_detector_baseline_v1`.
 
 ```
@@ -186,9 +186,9 @@ hybrid shares every line of input and backbone code with the baseline.
 | Full runs | RunPod, US-NE-1 | Network volume `xqc3pvmwyr` with all ten years; GPU ladder from PRO 6000 MIG 24 GB (0.69/hr) to H100 |
 
 **Backend: torch everywhere.** PyPI tensorflow wheels carry no Blackwell kernels, so tensorflow runs
-on CPU on the laptop and on the PRO 6000 slices. A `tensorflow` dependency group exists for H100 runs
-if byte-for-byte parity with the authors' stack is ever needed. The model is pure Keras ops, so the
-architecture is identical on either backend and the weights load on both.
+on CPU on the laptop and on the PRO 6000 slices. The tensorflow-only code paths (tf.data loader, TFDS
+builder, TensorBoard callbacks) were removed from the fork; git history has them. The model is pure
+Keras ops, so the architecture is identical on either backend and the weights load on both.
 
 **Local loop**
 

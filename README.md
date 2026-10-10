@@ -1,171 +1,137 @@
-# TorNet
+# TorNet hybrid
 
-Software to work with the TorNet dataset as described in the paper [*A Benchmark Dataset for Tornado Detection and Prediction using Full-Resolution Polarimetric Weather Radar Data*](https://journals.ametsoc.org/view/journals/aies/4/1/AIES-D-24-0006.1.xml)
+Tornado detection on the [TorNet](https://doi.org/10.1175/AIES-D-24-0006.1) benchmark: the MIT Lincoln
+Laboratory CNN baseline, repackaged, plus work toward a CNN–transformer hybrid built on it.
 
-## Updates (7/9/24)
+This is a fork of [mit-ll/tornet](https://github.com/mit-ll/tornet). The data loaders, preprocessing,
+CNN baseline, metrics and plotting code are the authors' work and keep their license and
+distribution notices. What differs from upstream is recorded in [`CHANGES.md`](CHANGES.md); the
+original README is kept at [`references/upstream-README.md`](references/upstream-README.md).
 
-* The TorNet dataset has been updated to version 1.1.  This update fixes a small number of incorrectly labeled frames in v1 of the dataset, and fixes the event and episode IDs of the warning categoies.   Version 1.1 also provides the tornado start and end times in the metadata.  We recommend re-downloading the newer version of the data using the links below. 
+> Veillette, M. S., J. M. Kurdzo, P. M. Stepanian, J. Y. N. Cho, T. Reis, S. Samsi, J. McDonald, and
+> N. Chisler, 2025: A Benchmark Dataset for Tornado Detection and Prediction Using Full-Resolution
+> Polarimetric Weather Radar Data. *Artificial Intelligence for the Earth Systems*, 4(1), e240006.
+> [doi:10.1175/AIES-D-24-0006.1](https://doi.org/10.1175/AIES-D-24-0006.1)
 
-* The code and pretrained models are now compatible with `keras` 3.0.   Users can now select their deep learning backend from `tensorflow`, `torch`, or `jax`.  Backend-agnostic data loaders are also provided.  Read more about this library at [keras's website](https://keras.io/).  Users of `tf.keras` should use the `tf_keras` branch of this repo.  
+Pretrained baseline weights: [tornet-ml/tornado_detector_baseline_v1](https://huggingface.co/tornet-ml/tornado_detector_baseline_v1).
+Project notes, the verified baseline architecture, and the hybrid design: [`docs/project.md`](docs/project.md).
 
-* The pretrained CNN model is now available on [huggingface (tornet-ml/tornado_detector_baseline_v1)](https://huggingface.co/tornet-ml/tornado_detector_baseline_v1).   Instructions for downloading and using the pre-trained model can be found in `models/README.md` and in the `VisualizeSamples.ipynb` notebook.
-
-
-![Alt text](tornet_image.png?raw=true "sample")
-
-
-
-## Downloading the Data
-
-The TorNet dataset can be downloaded from the following location:
-
-#### Zenodo
-
-TorNet is split across 10 files, each containing 1 year of data. There is also a catalog CSV file that is used by some functions in this repository.    
-
-* Tornet 2013 (3 GB) and catalog: [https://doi.org/10.5281/zenodo.12636522](https://doi.org/10.5281/zenodo.12636522)
-* Tornet 2014 (15 GB): [https://doi.org/10.5281/zenodo.12637032](https://doi.org/10.5281/zenodo.12637032)
-* Tornet 2015 (17 GB): [https://doi.org/10.5281/zenodo.12655151](https://doi.org/10.5281/zenodo.12655151)
-* Tornet 2016 (16 GB): [https://doi.org/10.5281/zenodo.12655179](https://doi.org/10.5281/zenodo.12655179)
-* Tornet 2017 (15 GB): [https://doi.org/10.5281/zenodo.12655183](https://doi.org/10.5281/zenodo.12655183)
-* Tornet 2018 (12 GB): [https://doi.org/10.5281/zenodo.12655187](https://doi.org/10.5281/zenodo.12655187)
-* Tornet 2019 (18 GB): [https://doi.org/10.5281/zenodo.12655716](https://doi.org/10.5281/zenodo.12655716)
-* Tornet 2020 (17 GB): [https://doi.org/10.5281/zenodo.12655717](https://doi.org/10.5281/zenodo.12655717)
-* Tornet 2021 (18 GB): [https://doi.org/10.5281/zenodo.12655718](https://doi.org/10.5281/zenodo.12655718)
-* Tornet 2022 (19 GB): [https://doi.org/10.5281/zenodo.12655719](https://doi.org/10.5281/zenodo.12655719)
-
-If downloading through your browser is slow, we recommend downloading these using `zenodo_get` (https://gitlab.com/dvolgyes/zenodo_get).
-
-After downloading, there should be 11 files, `catalog.csv`, and 10 files named as `tornet_YYYY.tar.gz`.   Move and untar these into a target directory, which will be referenced using the `TORNET_ROOT` environment variable in the code.  After untarring the 10 files, this directory should contain `catalog.csv` along with sub-directories `train/` and `test/` filled with `.nc` files for each year in the dataset.
-
+![TorNet sample](docs/tornet_image.png)
 
 ## Setup
 
-This fork uses [uv](https://docs.astral.sh/uv/) and a standard `pyproject.toml`. Python 3.11 or newer is required.
+Requires [uv](https://docs.astral.sh/uv/) and Python 3.12 (pinned in `.python-version`).
 
 ```
-uv sync --extra torch --group dev
+uv sync
 ```
 
-Extras:
+That installs the package, Keras 3 on the torch backend, the Hugging Face client, and the dev tools.
+Add `--extra notebooks` for Jupyter. Torch is the backend everywhere: PyPI tensorflow wheels carry no
+kernels for Blackwell GPUs, and the model is pure Keras ops, so the architecture is identical on any
+backend.
 
-* `torch`: Keras 3 on the torch backend, plus the standalone Lightning port in `tornet.models.torch`. This is the only backend locked in `uv.lock`.
-* `keras`: Keras 3 only, bring your own backend.
-* `hf`: `huggingface_hub`, for downloading the pretrained weights.
-* `notebooks`: Jupyter.
+## Data
 
-* `tensorflow`: Keras 3 on the tensorflow backend, the authors' original stack, plus the TFDS reformat path.
+TorNet is distributed as one archive per year on Zenodo, about 150 GB in total. Each archive holds
+both `train/YYYY/` and `test/YYYY/`, so any subset of years carries its own held-out test files.
 
-Torch is the default because PyPI tensorflow wheels carry no kernels for Blackwell GPUs such as the
-RTX 50 series, so tensorflow falls back to CPU there. For a full-scale run on an H100-class GPU
-that matches the paper's stack exactly:
+| Year | Record | Size |
+|---|---|---|
+| 2013 + `catalog.csv` | [12636522](https://doi.org/10.5281/zenodo.12636522) | 3 GB |
+| 2014 | [12637032](https://doi.org/10.5281/zenodo.12637032) | 15 GB |
+| 2015 | [12655151](https://doi.org/10.5281/zenodo.12655151) | 17 GB |
+| 2016 | [12655179](https://doi.org/10.5281/zenodo.12655179) | 16 GB |
+| 2017 | [12655183](https://doi.org/10.5281/zenodo.12655183) | 15 GB |
+| 2018 | [12655187](https://doi.org/10.5281/zenodo.12655187) | 12 GB |
+| 2019 | [12655716](https://doi.org/10.5281/zenodo.12655716) | 18 GB |
+| 2020 | [12655717](https://doi.org/10.5281/zenodo.12655717) | 17 GB |
+| 2021 | [12655718](https://doi.org/10.5281/zenodo.12655718) | 18 GB |
+| 2022 | [12655719](https://doi.org/10.5281/zenodo.12655719) | 19 GB |
 
-```
-uv sync --no-group torch --group tensorflow
-export KERAS_BACKEND=tensorflow
-```
-
-The model is written against Keras ops, so the architecture is identical on either backend and the
-pretrained weights load on both. The jax path remains in the tree but is not locked.
-
-### Development checks
-
-```
-uv run ruff format      # format
-uv run ruff check       # lint
-uv run ty check         # type check (advisory)
-uv run pytest           # tests
-```
-
-Tests that need the real dataset are skipped unless `TORNET_ROOT` is set. The rest run against small synthetic NetCDF files built in `tests/conftest.py`.
-
-## Loading and visualizing TorNet
-
-Start with `notebooks/DataLoaders.ipynb` to get an overview on loading and visualizing the dataset.
-
-To run inference on TorNet samples using a pretrained model,  look at `notebooks/VisualizeSamples.ipynb`.
-
-## Train CNN baseline model
-
-### Multiple backend support with Keras 3
-The model uses Keras 3 which supports multiple backends. The environment variable
-KERAS_BACKEND can be used to choose the backend. 
-
-The `tornet-train` and `tornet-test` commands default to `torch` when the variable is unset.
+Zenodo throttles single connections; `aria2c` with many connections is 10–100× faster than a browser
+or `zenodo_get`:
 
 ```
-export KERAS_BACKEND=torch
-# export KERAS_BACKEND=tensorflow
-# export KERAS_BACKEND=jax
+mkdir -p ~/data/tornet && cd ~/data/tornet
+aria2c -x16 -s16 -k1M -o tornet_2013.tar.gz "https://zenodo.org/records/12636522/files/tornet_2013.tar.gz?download=1"
+aria2c -x16 -s16 -k1M -o catalog.csv        "https://zenodo.org/records/12636522/files/catalog.csv?download=1"
+tar -xzf tornet_2013.tar.gz
+export TORNET_ROOT=~/data/tornet
 ```
 
-The following trains the CNN baseline model described in the paper.  If you run this out-of-the-box, it will run very slowly because it uses the basic dataloader.  Read the DataLoader notebook for tips on how to optimize the data loader.
-```
-# Set path to dataset
-export TORNET_ROOT=/path/to/tornet     
+`scripts/runpod/download_tornet.sh` does all ten years unattended with checksum verification. After
+extraction `TORNET_ROOT` should contain `catalog.csv`, `train/` and `test/`.
 
-# Run training
-uv run tornet-train configs/tornado_baseline.json
-```
+## Commands
 
-### Local iteration on a subset
+| Command | What it does |
+|---|---|
+| `tornet-train <config.json>` | Train the CNN baseline. Writes `experiments/<exp_name>_<timestamp>/` with `results.json`, `history.csv`, and `checkpoints/best.keras` + `last.keras`. |
+| `tornet-test` | Evaluate a `.keras` model on the test partition. `--years` restricts years, `--output` saves scores, `--predictions` saves per-sample logits. Downloads the pretrained weights if no `--model_path` is given. |
+| `tornet-score <preds.csv> [...]` | Score prediction files offline: the paper's three test views, bootstrap CIs, best-threshold CSI, recall by EF rating, AUC by year, and a paired comparison between models. |
+| `tornet-results [--group]` | Tabulate every `results.json` under `experiments/`, averaging folds per experiment. |
 
-You do not need the full dataset to develop against the baseline. Every yearly archive contains both
-`train/` and `test/` files, so any subset of years gives you a held-out test set for free. The
-configs in `configs/` set up a two-fold cross validation over 2013 and 2014 (about 18 GB), mirroring
-the paper's year-pair folds:
+All configs live in `configs/`. `tornado_baseline.json` is the authors' hyperparameters; the rest are
+ours. Unknown keys are ignored, so configs carry a `_note`.
 
-```
-uv run tornet-train configs/fold_a.json   # train 2013, validate 2014
-uv run tornet-train configs/fold_b.json   # train 2014, validate 2013
-uv run tornet-train configs/final.json    # retrain on both, no validation
-```
+## Local iteration on a subset
 
-Each run writes a directory `experiments/<exp_name>_<timestamp>/` containing `results.json` (best
-validation epoch, AUC, AUCPR, git commit), `history.csv` (every metric per epoch), the config used,
-and `checkpoints/best.keras` plus `checkpoints/last.keras` (set `save_all_checkpoints` to keep every
-epoch). `experiments/latest` always points at the most recent run.
-
-Tabulate runs, averaging folds that share an experiment name:
+The paper's protocol is five year-pair folds inside the training partition for hyperparameter
+selection, then a retrain on all training years, then one evaluation on the test partition. The
+configs mirror that on 2013–2014:
 
 ```
-uv run tornet-results --group
+export TORNET_ROOT=~/data/tornet
+uv run pytest                                   # dataset tests run when the catalog is present
+uv run tornet-test --years 2013 2014 --output scores_pretrained.json --predictions preds_pretrained.csv
+uv run tornet-train configs/fold_a.json         # train 2013, validate 2014
+uv run tornet-train configs/fold_b.json         # train 2014, validate 2013
+uv run tornet-results --group                   # baseline score = fold-averaged validation AUC
+uv run tornet-train configs/final.json          # retrain on both years, no validation
+uv run tornet-test --model_path experiments/latest/checkpoints/last.keras --years 2013 2014 --predictions preds_final.csv
+uv run tornet-score preds_pretrained.csv preds_final.csv
 ```
 
-Then evaluate the final checkpoint on the subset's test files, keeping per-sample predictions:
+A model variant is the same configs under a new `exp_name` prefix. Subset scores sit below the
+paper's because there is less training data and a higher tornado base rate; compare variants against
+the baseline on the same subset, not against the published numbers. Scaling to the full dataset is
+the same commands with all ten years in the config.
+
+## Layout
 
 ```
-uv run tornet-test --model_path experiments/latest/checkpoints/last.keras --years 2013 2014 \
-    --output scores.json --predictions preds_variant.csv
-uv run tornet-score results/predictions_pretrained_2013_2014.csv preds_variant.csv
+src/tornet/
+├── data/        loader.py (NetCDF reader, catalog query), preprocess.py, keras_loader.py, constants.py
+├── models/      cnn_baseline.py (build_model), layers.py (CoordConv2D, FillNaNs), losses.py
+├── metrics.py   logit-aware precision, recall, F1
+├── display/     radar plotting
+├── scripts/     the four commands
+└── utils/       experiment directories, git revision
+configs/         training configs
+tests/           synthetic-data tests (no download needed) plus dataset tests
+notebooks/       DataLoaders.ipynb, VisualizeSamples.ipynb
+docs/            project.md, figures
+references/      the paper, the upstream README
+results/         pretrained-model predictions and scores on 2013–2014 (reference)
+scripts/runpod/  full-dataset download script
 ```
 
-`tornet-score` reports the paper's three test views (all nulls, random nulls only, warnings only),
-AUC with bootstrap confidence intervals, CSI at the best threshold, recall by EF rating, AUC by
-year, and a reliability table. Given two or more prediction files it also bootstraps the paired AUC
-difference against the first, which is the right test for "is my variant actually better".
-
-Scaling to the full dataset is the same commands with all ten years listed in the config.
-
-## Evaluate trained model
-To evaluate this model on the test set, run
+## Development checks
 
 ```
-# Set path to dataset
-export TORNET_ROOT=/path/to/tornet  
-
-# Evaluate trained model on all test years (use --years to restrict, --output to save JSON)
-uv run tornet-test
+uv run ruff format && uv run ruff check   # format and lint
+uv run ty check                           # type check (advisory)
+uv run pytest                             # 37 tests without the dataset, 41 with it
 ```
 
-This will compute and print various metrics computed on the test set.  Note that this script will attempt to download pretrained weights from huggingface, so ensure there is internet connectivity.  Alternatively, manually download the pretrained yourself and provide with `--model_path`
+## License
 
+MIT, see [`LICENSE`](LICENSE). The upstream code carries the following notice in each file:
 
-### Disclosure
-```
-DISTRIBUTION STATEMENT A. Approved for public release. Distribution is unlimited.
-This material is based upon work supported by the Department of the Air Force under Air Force Contract No. FA8702-15-D-0001. Any opinions, findings, conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the Department of the Air Force.
-© 2024 Massachusetts Institute of Technology.
-The software/firmware is provided to you on an As-Is basis
-Delivered to the U.S. Government with Unlimited Rights, as defined in DFARS Part 252.227-7013 or 7014 (Feb 2014). Notwithstanding any copyright notice, U.S. Government rights in this work are defined by DFARS 252.227-7013 or DFARS 252.227-7014 as detailed above. Use of this work other than as specifically authorized by the U.S. Government may violate any copyrights that exist in this work.
-```
+> DISTRIBUTION STATEMENT A. Approved for public release. Distribution is unlimited.
+> This material is based upon work supported by the Department of the Air Force under Air Force
+> Contract No. FA8702-15-D-0001. Any opinions, findings, conclusions or recommendations expressed in
+> this material are those of the author(s) and do not necessarily reflect the views of the Department
+> of the Air Force. © 2024 Massachusetts Institute of Technology. Delivered to the U.S. Government
+> with Unlimited Rights, as defined in DFARS Part 252.227-7013 or 7014 (Feb 2014).

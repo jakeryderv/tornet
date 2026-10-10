@@ -20,9 +20,33 @@ while the code and the pretrained weights have 2, 2, 3, 3. See `docs/project.md`
   `requirements/*.txt` files. Hatchling build, Python 3.11+, numpy 2.
 - Package moved from `tornet/` to `src/tornet/`.
 - Dependencies are split into extras: core (numpy, pandas, xarray, netCDF4, matplotlib, tqdm),
-  `torch`, `tensorflow`, `keras`, `hf`, `notebooks`. The `torch` and `hf` groups install by default;
-  `tensorflow` is opt-in because PyPI wheels have no Blackwell GPU kernels.
+  `torch`, `keras`, `hf`, `notebooks`. The `torch` and `hf` groups install by default. Torch is the
+  only backend supported, because PyPI tensorflow wheels have no Blackwell GPU kernels.
 - Dropped the unused `glob2` dependency and the conda-specific `fix_cuda_paths.sh`.
+
+## Layout
+
+- Package moved to `src/tornet/` and flattened now that Keras is the only framework:
+  `data/keras/loader.py` → `data/keras_loader.py`, `metrics/keras/metrics.py` → `metrics.py`,
+  `models/keras/*` → `models/*`. Models saved by this fork reference `tornet.models.layers`; the
+  published weights still load because the custom layers are found by their registered names.
+- `get_dataloader` takes no `dataloader` argument and always returns the Keras loader. The
+  `dataloader` config key is gone.
+
+## Removed
+
+All of this is in git history (last present at commit `34754a8`).
+
+- The TensorFlow-only paths: the `tf.data` loader (`data/tf/`), the TFDS dataset builder
+  (`data/tfds/`), `display/tboard.py`, and the TensorBoard image callback in `models/keras/callbacks.py`.
+  The TFDS builder was the authors' fast-loading option for full-scale training; if the basic loader
+  proves too slow on the full dataset, a numpy or zarr shard cache is the planned replacement.
+- The standalone PyTorch Lightning port of the model (`models/torch/`) and its torch `Dataset`
+  loader (`data/torch/`). Nothing in the pipeline used them.
+- The three `ModelTraining_*` notebooks; `tornet-train` covers them. `DataLoaders` and
+  `VisualizeSamples` remain, trimmed of the removed loaders and of `sys.path` hacks.
+- `models/README.md` (folded into the README) and the `tensorflow` dependency extra.
+- torchvision, torchmetrics and lightning from the `torch` extra; only the Lightning port used them.
 
 ## Commands
 
@@ -31,7 +55,7 @@ The two scripts under `scripts/tornado_detection/` are now console commands in `
 - `tornet-train <config.json>`: unchanged training loop, plus the behavior changes below.
 - `tornet-test`: unchanged metrics, plus `--years` to evaluate a subset of test years,
   `--batch_size`, `--output` for a JSON of scores, and `--predictions` for a per-sample CSV of
-  logits and metadata (keras loader only).
+  logits and metadata. The `--dataloader` option is gone with the other loaders.
 - `tornet-score` (new): scores prediction CSVs offline. Reports the paper's three test views,
   AUC with bootstrap confidence intervals, CSI at the best threshold, recall by EF rating, AUC by
   year, a reliability table, and a paired bootstrap of the AUC difference between models.
@@ -54,14 +78,16 @@ at run time rather than at import.
 
 ## Evaluation behavior
 
-- With the keras loader, `tornet-test` runs the model once, keeps every logit, and derives the same
-  six metrics from them. Verified identical to `model.evaluate` on the pretrained weights.
+- `tornet-test` runs the model once, keeps every logit, and derives the same six metrics from
+  them. Verified identical to `model.evaluate` on the pretrained weights.
 - The custom Keras layers are imported before loading a model. Upstream's test script could not load
   the published weights under current Keras without this.
 
 ## Configs
 
-- `configs/tornado_baseline.json` is the authors' config, moved from `scripts/tornado_detection/config/params.json` and unchanged.
+- `configs/tornado_baseline.json` is the authors' config, moved from
+  `scripts/tornado_detection/config/params.json`; its hyperparameters are unchanged (only the
+  obsolete `dataloader` key was dropped).
 - `configs/fold_a.json`, `fold_b.json`, `final.json` (new): a two-fold local cross-validation on
   2013–2014 mirroring the paper's year-pair folds, plus the all-years retrain. They differ from the
   baseline config in year lists, `decay_steps` scaled to the subset, `label_smooth` 0.1 (the paper
@@ -73,7 +99,8 @@ at run time rather than at import.
   which years are present rather than hardcoding four.
 - New data-free tests: a synthetic TorNet directory built in `tests/conftest.py` exercises the file
   reader, catalog query, loaders, every preprocessing function, both commands end to end, the
-  offline scorer, and the results table. 37 tests run without the dataset; 6 more run against real data when `TORNET_ROOT` points at it.
+  offline scorer, and the results table. 37 tests run without the dataset; 4 more run against real
+  data when `TORNET_ROOT` points at it.
 
 ## Code quality
 
@@ -95,16 +122,17 @@ at run time rather than at import.
 
 ## Documentation
 
-- README: setup section rewritten for `uv`, a "local iteration on a subset" section, and the new
-  commands. The rest is upstream's.
+- README rewritten for the fork: attribution and citation, setup, data download, commands, the
+  subset workflow, layout. The upstream README is archived verbatim at
+  `references/upstream-README.md`.
 - `docs/project.md`: project notes, verified baseline architecture, hybrid design, workflow,
   references. `references/`: the journal version of the TorNet paper.
 - `.gitignore`: notebooks under `notebooks/` are tracked again; `.venv`, tool caches and build output
   are ignored.
+- `tornet_image.png` moved to `docs/`.
 
 ## Not changed
 
-- The five notebooks.
-- The TFDS dataset builder and the tf and torch data loaders.
-- The standalone PyTorch Lightning port of the model in `tornet.models.torch`.
-- The license and the DFARS notices in every file.
+- `display/display.py`, the radar plotting code.
+- The `LICENSE` file and the DFARS distribution notice at the top of every upstream-derived file.
+  New files written for the fork do not carry the notice.

@@ -81,9 +81,9 @@ INPUTS (each 120 azimuth × 240 range × 2 sweeps)
 │ Block 1: 2× CoordConv 3×3,  48 filters, ReLU → MaxPool → Dropout(0.1)   → 60×120×48  │
 │ Block 2: 2× CoordConv 3×3,  96 filters          → MaxPool → Dropout      → 30×60×96   │
 │ Block 3: 3× CoordConv 3×3, 192 filters          → MaxPool → Dropout      → 15×30×192  │
-│ Block 4: 3× CoordConv 3×3, 384 filters          → MaxPool → Dropout      → 7×15×384   │
+│ Block 4: 3× CoordConv 3×3, 384 filters          → MaxPool → Dropout      → 8×15×384   │
 └─────────────────────────────────────────────────────────────────────────────────────┘
-                                        ▼  feature map: 7 × 15 × 384
+                                        ▼  feature map: 8 × 15 × 384 (max-pools use "same" padding: 120→60→30→15→8)
 ┌──────────────────────────── CUT: head='maxpool' ────────────────────────────────────┐
 │ 1×1 Conv, 512, ReLU                                                                 │
 │ 1×1 Conv, 256, ReLU                                                                 │
@@ -113,8 +113,8 @@ Total: 4.67M parameters. No batch norm; regularization is L2 (1e-5) + dropout (0
 
 ### Tap point
 
-Block 4's dropout layer (`dropout_11` in the pretrained model), output `7 × 15 × 384` →
-**105 tokens of dimension 384**.
+Block 4's dropout layer (`dropout_11` in the pretrained model), output `8 × 15 × 384` →
+**120 tokens of dimension 384**.
 
 ### Where the pretrained model is weak
 
@@ -146,8 +146,8 @@ EF2 and above. Weak tornadoes are the target.
 ### The head
 
 ```
-Block 4 output (7×15×384)
-  → reshape to 105 tokens × 384
+Block 4 output (8×15×384)
+  → reshape to 120 tokens × 384
   → (optional) Linear 384→256 to shrink
   → positional encoding (relative or convolutional; see note on full-scan inference)
   → Transformer encoder × 2–4 layers
@@ -155,13 +155,14 @@ Block 4 output (7×15×384)
   → Dense(1) → logit
 ```
 
-Implement it as a third branch of `build_model(head=...)` next to `maxpool` and `mlp`, so the
-hybrid shares every line of input and backbone code with the baseline.
+Implemented as `head='transformer'` in `build_model`, with `head='token_mlp'` as the matched
+control and `head='maxpool'` the authors' head; see `tornet.models.heads`. The three heads share
+every line of input and backbone code.
 
 ### Phases
 
 1. **Single frame**, direct comparison with the baseline. Frozen backbone with cached features
-   first (105 × 384 floats ≈ 160 KB per sample, ≈ 3.5 GB for 2013–2014 train), then fine-tune,
+   first (120 × 384 floats ≈ 90 KB per sample as float16, ≈ 4.3 GB for all of 2013–2015), then fine-tune,
    then from scratch at full scale.
 2. **Temporal**, optional: add the earlier frames with light mixing, since there are only four.
 
@@ -173,7 +174,7 @@ hybrid shares every line of input and backbone code with the baseline.
   parameter-matched no-attention head alongside the transformer head: the same per-token MLP width
   and depth and the same pooling, minus attention, so a win is attributable to attention.
 - **Full-scan inference.** Paper section 4 runs the CNN fully convolutionally on whole radar scans,
-  which works because max-pool is size-agnostic. Learned 2D positional embeddings fixed to 7 × 15
+  which works because max-pool is size-agnostic. Learned 2D positional embeddings fixed to 8 × 15
   break that. **Decision:** convolutional position encoding (a depthwise 3 × 3 conv over the token
   grid added to the tokens), which is size-agnostic.
 - **Class imbalance and overfitting** as the model grows; the EF breakdown from `tornet-score` is
@@ -205,6 +206,15 @@ uv run tornet-results --group                 # fold-averaged AUC per experiment
 uv run tornet-train configs/final.json        # retrain on all three, no validation
 uv run tornet-test --model_path experiments/latest/checkpoints/last.keras --years 2013 2014 2015 --predictions preds.csv
 uv run tornet-score results/predictions_pretrained_2013_2015.csv preds.csv
+```
+
+**Head experiments on cached features** (experiment 1):
+
+```
+uv run tornet-cache-features --years 2013 2014 2015 --verify results/predictions_pretrained_2013_2015.csv
+for c in configs/heads/*.json; do uv run tornet-train-head $c; done
+uv run tornet-results --group
+uv run tornet-score results/predictions_pretrained_2013_2015.csv experiments/<run>/predictions.csv
 ```
 
 A variant is a new `exp_name` prefix on the same configs. Subset scores sit below the paper's because

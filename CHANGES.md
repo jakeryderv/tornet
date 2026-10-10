@@ -7,12 +7,31 @@ record of how the fork differs from upstream. It is kept current as the work pro
 
 ## Modeling and data processing
 
-No changes yet. The model builder, layers, losses, metrics, loaders and preprocessing are the
-authors' code, byte-for-byte apart from formatting and type annotations. Any change to model or
-data logic will be recorded here first.
+The data loaders, preprocessing, CNN backbone, layers, losses and metrics are the authors' code,
+byte-for-byte apart from formatting and type annotations. Changes so far are confined to the
+classification head and to tooling around cached features:
+
+- `tornet.models.heads` (new): heads as functions from a feature map to a logit, attachable to the
+  backbone or to cached features. `maxpool` is the authors' head factored out unchanged.
+  `transformer` tokenises the feature map, adds a convolutional position encoding (depthwise 3x3
+  over the grid, so it stays size-agnostic), runs pre-norm encoder layers, and pools by max over
+  per-token logits, mean, or a class token. `token_mlp` is the no-attention control: the same
+  feed-forward blocks and pooling with no attention and no position encoding, its width chosen so
+  the parameter count matches the transformer at the same depth (within 0.2% at width 384).
+- `build_model(head=..., head_kwargs=...)` dispatches to those heads. The upstream `head='mlp'`
+  option is removed; it flattened the feature map into a 4096-unit dense layer (~165M parameters)
+  and was not a usable control.
+- `tornet-cache-features` (new): cuts a model at the last backbone dropout layer and writes float16
+  feature maps (8 x 15 x 384 for the baseline) plus metadata per year and partition. `--verify`
+  applies the model's own head to the cache and compares with saved full-model logits; on the
+  pretrained weights the difference is at most 4e-4 over 7,021 test samples.
+- `tornet-train-head` (new): trains any head on cached features with the same loss, sample weights,
+  metrics, checkpointing and `results.json` layout as `tornet-train`, then scores the selected
+  checkpoint on cached test features into `predictions.csv` and `scores.json`.
+- `configs/heads/*.json`: a head sweep on fold B (train 2013+2015, validate 2014).
 
 Known paper/code discrepancy, not altered: the paper describes 2, 3, 3, 3 convolutions per block,
-while the code and the pretrained weights have 2, 2, 3, 3. See `docs/project.md` §3.
+while the code and the pretrained weights have 2, 2, 3, 3. See `docs/project.md` section 3.
 
 ## Packaging and environment
 
@@ -61,6 +80,7 @@ The two scripts under `scripts/tornado_detection/` are now console commands in `
   year, a reliability table, and a paired bootstrap of the AUC difference between models.
 - `tornet-results` (new): tabulates `results.json` files under `experiments/`, optionally averaging
   folds that share an experiment name.
+- `tornet-cache-features` and `tornet-train-head` (new): see Modeling above.
 
 Both original commands default `KERAS_BACKEND` to `torch` when it is unset, and read `TORNET_ROOT`
 at run time rather than at import.
@@ -80,6 +100,8 @@ at run time rather than at import.
 
 - `tornet-test` runs the model once, keeps every logit, and derives the same six metrics from
   them. Verified identical to `model.evaluate` on the pretrained weights.
+- Evaluation and caching iterate the loader through Keras' own adapter, so `--workers` processes
+  apply there too (about 4x faster than the single-process path).
 - The custom Keras layers are imported before loading a model. Upstream's test script could not load
   the published weights under current Keras without this.
 

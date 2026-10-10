@@ -25,6 +25,7 @@ import keras  # noqa: E402
 
 import tornet.models.layers  # noqa: E402, F401  (registers CoordConv2D etc. for load_model)
 from tornet import metrics as tfm  # noqa: E402
+from tornet.data.keras_loader import iterate_batches  # noqa: E402
 from tornet.data.loader import get_dataloader  # noqa: E402
 
 logging.basicConfig(level=logging.INFO)
@@ -46,37 +47,46 @@ def build_metrics(from_logits=True):
     ]
 
 
-def predict_dataset(model, ds) -> pd.DataFrame:
-    """Run the model over a KerasDataLoader and return one row per sample with its logit."""
-    input_keys = list(model.input.keys())
+def batch_metadata(x, y, files, data_root) -> list[dict]:
+    """One metadata row per sample in a loader batch, for predictions and feature caches."""
+    n = len(files)
+    meta = {k: np.asarray(x[k]).reshape(n, -1)[:, 0] for k in META_KEYS}
+    labels = np.asarray(y).reshape(-1)
     rows = []
-    for i in range(len(ds)):
-        x, y = ds[i]
-        logits = keras.ops.convert_to_numpy(
-            model({k: x[k] for k in input_keys}, training=False)
-        ).reshape(-1)
-        files = ds.file_list[i * ds.batch_size : i * ds.batch_size + len(logits)]
-        meta = {k: np.asarray(x[k]).reshape(len(logits), -1)[:, 0] for k in META_KEYS}
-        labels = np.asarray(y).reshape(-1)
-        for j, f in enumerate(files):
-            rows.append(
-                {
-                    "filename": os.path.relpath(f, ds.data_root),
-                    "label": int(labels[j]),
-                    "category": CATEGORY_NAMES[int(meta["category"][j])],
-                    "ef_number": int(meta["ef_number"][j]),
-                    "event_id": int(meta["event_id"][j]),
-                    "time": int(meta["time"][j]),
-                    "rng_center_km": float((meta["rng_lower"][j] + meta["rng_upper"][j]) / 2e3),
-                    "logit": float(logits[j]),
-                }
-            )
-        if (i + 1) % 10 == 0 or i + 1 == len(ds):
-            logging.info(f"predicted {i + 1}/{len(ds)} batches")
+    for j, f in enumerate(files):
+        rows.append(
+            {
+                "filename": os.path.relpath(f, data_root),
+                "label": int(labels[j]),
+                "category": CATEGORY_NAMES[int(meta["category"][j])],
+                "ef_number": int(meta["ef_number"][j]),
+                "event_id": int(meta["event_id"][j]),
+                "time": int(meta["time"][j]),
+                "rng_center_km": float((meta["rng_lower"][j] + meta["rng_upper"][j]) / 2e3),
+            }
+        )
+    return rows
+
+
+def finish_predictions(rows: list[dict]) -> pd.DataFrame:
     df = pd.DataFrame(rows)
     df["prob"] = 1 / (1 + np.exp(-df["logit"]))
     df["year"] = pd.to_datetime(df["time"], unit="s").dt.year
     return df
+
+
+def predict_dataset(model, ds) -> pd.DataFrame:
+    """Run the model over a KerasDataLoader and return one row per sample with its logit."""
+    input_keys = list(model.input.keys())
+    rows = []
+    for i, (x, y) in enumerate(iterate_batches(ds)):
+        logits = np.asarray(model.predict_on_batch({k: x[k] for k in input_keys})).reshape(-1)
+        files = ds.file_list[i * ds.batch_size : i * ds.batch_size + len(logits)]
+        for row, logit in zip(batch_metadata(x, y, files, ds.data_root), logits, strict=True):
+            rows.append({**row, "logit": float(logit)})
+        if (i + 1) % 10 == 0 or i + 1 == len(ds):
+            logging.info(f"predicted {i + 1}/{len(ds)} batches")
+    return finish_predictions(rows)
 
 
 def score_predictions(df: pd.DataFrame) -> dict[str, float]:
@@ -101,6 +111,7 @@ def main():
         help="Test years to evaluate on (default: all, 2013-2022)",
     )
     parser.add_argument("--batch_size", type=int, default=64)
+    parser.add_argument("--workers", type=int, default=8, help="Loader worker processes")
     parser.add_argument("--output", help="Optional path to write scores as JSON", default=None)
     parser.add_argument(
         "--predictions",
@@ -133,7 +144,13 @@ def main():
 
     # Predict once, keep the logits, derive every metric from them.
     ds = get_dataloader(
-        data_root, args.years, "test", args.batch_size, select_keys=input_keys + META_KEYS
+        data_root,
+        args.years,
+        "test",
+        args.batch_size,
+        select_keys=input_keys + META_KEYS,
+        workers=args.workers,
+        use_multiprocessing=args.workers > 1,
     )
     preds = predict_dataset(model, ds)
     scores = score_predictions(preds)

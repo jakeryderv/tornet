@@ -15,6 +15,7 @@ import keras
 import numpy as np
 
 from tornet.data.constants import ALL_VARIABLES, CHANNEL_MIN_MAX
+from tornet.models.heads import HEADS
 from tornet.models.layers import CoordConv2D, FillNaNs
 
 
@@ -27,6 +28,7 @@ def build_model(
     background_flag: float = -3.0,
     include_range_folded: bool = True,
     head="maxpool",
+    head_kwargs=None,
 ):
     # Create input layers for each input_variables
     inputs = {}
@@ -70,30 +72,12 @@ def build_model(
     )  # (7,15)
     # x,c = vgg_block(x,c, filters=8*start_filters, ksize=3, l2_reg=l2_reg, n_convs=3)  # (3,7)
 
-    if head == "mlp":
-        # MLP head
-        x = keras.layers.Flatten()(x)
-        x = keras.layers.Dense(units=4096, activation="relu")(x)
-        x = keras.layers.Dense(units=2024, activation="relu")(x)
-        output = keras.layers.Dense(1)(x)
-    elif head == "maxpool":
-        # Per gridcell
-        x = keras.layers.Conv2D(
-            filters=512,
-            kernel_size=1,
-            kernel_regularizer=keras.regularizers.l2(l2_reg),
-            activation="relu",
-        )(x)
-        x = keras.layers.Conv2D(
-            filters=256,
-            kernel_size=1,
-            kernel_regularizer=keras.regularizers.l2(l2_reg),
-            activation="relu",
-        )(x)
-        x = keras.layers.Conv2D(filters=1, kernel_size=1, name="heatmap")(x)
-        # Max in scene
-        output = keras.layers.GlobalMaxPooling2D()(x)
-
+    if head not in HEADS:
+        raise ValueError(f"unknown head {head!r}; expected one of {sorted(HEADS)}")
+    head_kwargs = dict(head_kwargs or {})
+    if head == "maxpool":
+        head_kwargs.setdefault("l2_reg", l2_reg)
+    output = HEADS[head](x, **head_kwargs)
     return keras.Model(inputs=inputs, outputs=output)
 
 

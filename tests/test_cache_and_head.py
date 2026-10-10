@@ -1,0 +1,204 @@
+"""tornet-cache-features and tornet-train-head end to end on the synthetic dataset."""
+
+import json
+import os
+import sys
+
+import numpy as np
+import pandas as pd
+import pytest
+
+from .conftest import SYNTHETIC_SAMPLES
+
+keras = pytest.importorskip("keras")
+
+from tornet.scripts import cache_features, score, test_keras, train_head, train_keras  # noqa: E402
+
+TINY = {"epochs": 1, "batch_size": 2, "start_filters": 4, "dataloader_kwargs": {}}
+
+
+@pytest.fixture
+def trained(tornet_root, tmp_path, monkeypatch):
+    monkeypatch.setenv("TORNET_ROOT", str(tornet_root))
+    exp = tmp_path / "experiments"
+    exp.mkdir()
+    r = train_keras.main(
+        {
+            **train_keras.DEFAULT_CONFIG,
+            **TINY,
+            "exp_dir": str(exp),
+            "train_years": [2013],
+            "val_years": [2014],
+        }
+    )
+    return exp, r["last_checkpoint"]
+
+
+def test_cache_features_and_verify(trained, tmp_path, monkeypatch):
+    exp, checkpoint = trained
+    preds = tmp_path / "preds.csv"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "tornet-test",
+            "--model_path",
+            checkpoint,
+            "--years",
+            "2014",
+            "--batch_size",
+            "2",
+            "--workers",
+            "1",
+            "--output",
+            str(tmp_path / "s.json"),
+            "--predictions",
+            str(preds),
+        ],
+    )
+    test_keras.main()
+
+    out = tmp_path / "features"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "tornet-cache-features",
+            "--model_path",
+            checkpoint,
+            "--years",
+            "2013",
+            "2014",
+            "--out",
+            str(out),
+            "--batch_size",
+            "2",
+            "--workers",
+            "1",
+            "--verify",
+            str(preds),
+        ],
+    )
+    cache_features.main()
+
+    info = json.loads((out / "cache.json").read_text())
+    assert info["tap_layer"].startswith("dropout")
+    assert len(info["feature_shape"]) == 3 and info["feature_shape"][-1] == 32  # 8 * start_filters
+    assert info["verify"]["max_abs_logit_diff"] < 1e-2  # float16 storage only
+    n_train_2013 = sum(
+        1 for rel, kind, *_ in SYNTHETIC_SAMPLES if kind == "train" and "/2013/" in rel
+    )
+    feats = np.load(out / "train_2013_features.npy")
+    meta = pd.read_csv(out / "train_2013_meta.csv")
+    assert feats.dtype == np.float16 and feats.shape[0] == n_train_2013 == len(meta)
+    assert {"filename", "label", "category", "ef_number", "year"} <= set(meta.columns)
+    assert not (out / "test_2013_features.npy").exists()  # no 2013 test files in the fixture
+    return out
+
+
+def test_train_head_on_cached_features(trained, tmp_path, monkeypatch, capsys):
+    exp, checkpoint = trained
+    out = tmp_path / "features"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "tornet-cache-features",
+            "--model_path",
+            checkpoint,
+            "--years",
+            "2013",
+            "2014",
+            "--out",
+            str(out),
+            "--batch_size",
+            "2",
+            "--workers",
+            "1",
+        ],
+    )
+    cache_features.main()
+
+    for head, kw in [
+        ("transformer", {"depth": 1, "num_heads": 4, "pool": "max"}),
+        ("token_mlp", {"depth": 1}),
+    ]:
+        r = train_head.main(
+            {
+                **train_head.DEFAULT_CONFIG,
+                "features_dir": str(out),
+                "train_years": [2013],
+                "val_years": [2014],
+                "test_years": [2014],
+                "head": head,
+                "head_kwargs": kw,
+                "epochs": 2,
+                "batch_size": 2,
+                "exp_dir": str(exp),
+                "exp_name": f"head_{head}_fold_x",
+            }
+        )
+        assert r["epochs_run"] == 2 and r["best_epoch"] in (1, 2)
+        assert r["params"] > 0 and r["head"] == head
+        expdir = r["expdir"]
+        assert os.path.exists(r["best_checkpoint"]) and os.path.exists(r["last_checkpoint"])
+        preds = pd.read_csv(os.path.join(expdir, "predictions.csv"))
+        assert {"filename", "label", "category", "ef_number", "year", "logit", "prob"} <= set(
+            preds.columns
+        )
+        assert set(preds["year"]) == {2014}
+        with open(os.path.join(expdir, "scores.json")) as f:
+            scores = json.load(f)
+        assert 0.0 <= scores["AUC"] <= 1.0 and r["test_AUC"] == scores["AUC"]
+
+    # the scorer accepts head predictions and tornet-results sees both runs
+    monkeypatch.setattr(
+        sys, "argv", ["tornet-score", os.path.join(expdir, "predictions.csv"), "--bootstrap", "0"]
+    )
+    score.main()
+    from tornet.scripts import results
+
+    df = results.collect(str(exp))
+    assert {"head_transformer_fold_x", "head_token_mlp_fold_x"} <= set(df["exp_name"])
+
+
+def test_train_head_without_validation_or_test(trained, tmp_path, monkeypatch):
+    exp, checkpoint = trained
+    out = tmp_path / "features"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "tornet-cache-features",
+            "--model_path",
+            checkpoint,
+            "--years",
+            "2013",
+            "--partitions",
+            "train",
+            "--out",
+            str(out),
+            "--batch_size",
+            "2",
+            "--workers",
+            "1",
+        ],
+    )
+    cache_features.main()
+    r = train_head.main(
+        {
+            **train_head.DEFAULT_CONFIG,
+            "features_dir": str(out),
+            "train_years": [2013],
+            "val_years": [],
+            "test_years": [],
+            "head": "maxpool",
+            "head_kwargs": {},
+            "epochs": 1,
+            "batch_size": 2,
+            "exp_dir": str(exp),
+            "exp_name": "head_final",
+        }
+    )
+    assert r["AUC"] is None and r["best_checkpoint"] is None and "test_AUC" not in r
+    assert os.path.exists(r["last_checkpoint"])

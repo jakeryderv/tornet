@@ -132,3 +132,15 @@ class KerasDataLoader(keras.utils.PyDataset):
             return pp.select_keys(x, keys=self.select_keys), y, w
         else:
             return pp.select_keys(x, keys=self.select_keys), y
+
+
+def iterate_batches(ds: KerasDataLoader):
+    """Yield the loader's batches in file order, using its `workers` and `use_multiprocessing`
+    settings the way `Model.fit` does. Iterating `ds[i]` directly is single-process."""
+    from keras.src.trainers.data_adapters.py_dataset_adapter import PyDatasetAdapter
+
+    adapter = PyDatasetAdapter(ds, shuffle=False)
+    try:
+        yield from adapter.get_numpy_iterator()
+    finally:
+        adapter.on_epoch_end()

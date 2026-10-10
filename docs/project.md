@@ -179,6 +179,26 @@ local and "strongest spot wins"; a head on frozen features cannot build relation
 shape alone is not the lever. Next: change the training signal (auxiliary targets), then let the head
 train with the backbone.
 
+### Experiment 1b result: training-signal changes on frozen features (fold B, 2026-10-10)
+
+Auxiliary targets (`proximity`, `frame_fraction`) on the class-token transformer and the matched
+control, and the metric-learning head with label-based and proximity-based contrastive supervision
+(`results/head_aux_embed_fold_b_scores.json`). None moved test AUC beyond noise: every run is within
+0.005 of the pretrained reference, and the class-token transformer's earlier EF0/EF1 bump did not
+survive the auxiliary targets, so it was noise. The embedding runs peaked early (epoch 12) with the
+highest AUCPR of any head (0.69) but slightly lower AUC.
+
+The embedding geometry (`tornet-embeddings`) is informative anyway: warned nulls are not a separate
+cluster. Their centroid is nearly identical to the random-null centroid (cosine 0.995) and 54–57% of
+warned nulls fall nearest the random-null centroid, 14–16% nearest tornadoes, only 28–32% nearest
+their own. In this backbone's feature space, a warned storm that produced no tornado looks like a
+null, not like a near-miss. Context (why a forecaster warned) is not in the chip features.
+
+Conclusion of experiment 1: on frozen features, neither head shape, auxiliary targets, nor
+contrastive geometry changes detection. The lever has to be the backbone. Next: end-to-end
+training (fine-tune from pretrained, then from scratch), where these heads and losses get to shape
+the features.
+
 ### Training-signal ideas (agreed order: A then B)
 
 - **A. Continuous auxiliary targets, not EF-based** (EF ratings are survey-based, inconsistent at the

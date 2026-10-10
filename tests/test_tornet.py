@@ -22,11 +22,11 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-pytestmark = pytest.mark.skipif(
-    "TORNET_ROOT" not in os.environ,
-    reason="TORNET_ROOT must point at the TorNet dataset for these tests",
-)
 DATA_ROOT = os.environ.get("TORNET_ROOT", "")
+pytestmark = pytest.mark.skipif(
+    not os.path.exists(os.path.join(DATA_ROOT, "catalog.csv")),
+    reason="TORNET_ROOT must point at a directory containing the TorNet catalog.csv",
+)
 
 
 def available_years():

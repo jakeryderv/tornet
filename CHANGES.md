@@ -73,7 +73,7 @@ at run time rather than at import.
   which years are present rather than hardcoding four.
 - New data-free tests: a synthetic TorNet directory built in `tests/conftest.py` exercises the file
   reader, catalog query, loaders, every preprocessing function, both commands end to end, the
-  offline scorer, and the results table. 42 tests run without the dataset.
+  offline scorer, and the results table. 37 tests run without the dataset; 6 more run against real data when `TORNET_ROOT` points at it.
 
 ## Code quality
 

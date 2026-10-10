@@ -24,12 +24,12 @@ os.environ.setdefault("KERAS_BACKEND", "torch")
 
 import keras  # noqa: E402
 
+from tornet import metrics as tfm  # noqa: E402
 from tornet.data.constants import ALL_VARIABLES  # noqa: E402
 from tornet.data.loader import get_dataloader  # noqa: E402
 from tornet.data.preprocess import get_shape  # noqa: E402
-from tornet.metrics.keras import metrics as tfm  # noqa: E402
-from tornet.models.keras.cnn_baseline import build_model  # noqa: E402
-from tornet.models.keras.losses import mae_loss  # noqa: E402
+from tornet.models.cnn_baseline import build_model  # noqa: E402
+from tornet.models.losses import mae_loss  # noqa: E402
 from tornet.utils.general import git_revision, make_callback_dirs, make_exp_dir  # noqa: E402
 
 logging.basicConfig(level=logging.INFO)
@@ -58,7 +58,6 @@ DEFAULT_CONFIG = {
     "head": "maxpool",
     "exp_name": "tornet_baseline",
     "exp_dir": EXP_DIR,
-    "dataloader": "keras",
     "dataloader_kwargs": {},
     # False keeps only checkpoints/best.keras (by val AUC) and checkpoints/last.keras
     "save_all_checkpoints": False,
@@ -92,7 +91,6 @@ def main(config):
     exp_dir = config.get("exp_dir")
     train_years = config.get("train_years")
     val_years = config.get("val_years")
-    dataloader = config.get("dataloader")
     dataloader_kwargs = copy.deepcopy(config.get("dataloader_kwargs") or {})
 
     seed = config.get("seed")
@@ -100,7 +98,6 @@ def main(config):
         keras.utils.set_random_seed(int(seed))
 
     logging.info(f"Using {keras.config.backend()} backend")
-    logging.info(f"Using {dataloader} dataloader")
     logging.info("Running with config:")
     logging.info(config)
 
@@ -111,12 +108,12 @@ def main(config):
         {"select_keys": input_variables + ["range_folded_mask", "coordinates"]}
     )
     ds_train = get_dataloader(
-        dataloader, DATA_ROOT, train_years, "train", batch_size, weights, **dataloader_kwargs
+        DATA_ROOT, train_years, "train", batch_size, weights, **dataloader_kwargs
     )
     ds_val = None
     if val_years:
         ds_val = get_dataloader(
-            dataloader, DATA_ROOT, val_years, "train", batch_size, weights, **dataloader_kwargs
+            DATA_ROOT, val_years, "train", batch_size, weights, **dataloader_kwargs
         )
     else:
         logging.info("No val_years given: training without a validation set")
@@ -192,7 +189,7 @@ def main(config):
     shutil.copy(__file__, os.path.join(expdir, "train.py"))
 
     # Callbacks
-    tboard_dir, checkpoints_dir = make_callback_dirs(expdir)
+    checkpoints_dir = make_callback_dirs(expdir)
     callbacks = [
         keras.callbacks.CSVLogger(os.path.join(expdir, "history.csv")),
         keras.callbacks.TerminateOnNaN(),
@@ -215,12 +212,6 @@ def main(config):
                     best_checkpoint, monitor="val_AUC", mode="max", save_best_only=True
                 )
             )
-
-    # TensorBoard callback requires tensorflow backend
-    if keras.config.backend() == "tensorflow":
-        callbacks.append(
-            keras.callbacks.TensorBoard(log_dir=tboard_dir, write_graph=False)
-        )  # ,profile_batch=(5,15)),
 
     ## FIT
     history = nn.fit(

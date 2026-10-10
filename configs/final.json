@@ -21,7 +21,6 @@
     "loss": "cce",
     "head": "maxpool",
     "exp_name": "baseline_final",
-    "dataloader": "keras",
     "exp_dir": "experiments",
     "dataloader_kwargs": {
         "workers": 4,

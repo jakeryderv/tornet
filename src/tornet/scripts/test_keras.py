@@ -23,9 +23,9 @@ os.environ.setdefault("KERAS_BACKEND", "torch")
 
 import keras  # noqa: E402
 
-import tornet.models.keras.layers  # noqa: E402, F401  (registers CoordConv2D etc. for load_model)
+import tornet.models.layers  # noqa: E402, F401  (registers CoordConv2D etc. for load_model)
+from tornet import metrics as tfm  # noqa: E402
 from tornet.data.loader import get_dataloader  # noqa: E402
-from tornet.metrics.keras import metrics as tfm  # noqa: E402
 
 logging.basicConfig(level=logging.INFO)
 
@@ -94,12 +94,6 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_path", help="Pretrained model to test (.keras)", default=None)
     parser.add_argument(
-        "--dataloader",
-        help="Which data loader to use for loading test data",
-        default="keras",
-        choices=["keras", "tensorflow", "tensorflow-tfds", "torch", "torch-tfds"],
-    )
-    parser.add_argument(
         "--years",
         type=int,
         nargs="+",
@@ -110,8 +104,7 @@ def main():
     parser.add_argument("--output", help="Optional path to write scores as JSON", default=None)
     parser.add_argument(
         "--predictions",
-        help="Optional CSV path for per-sample logits and metadata (keras dataloader only); "
-        "score it later with tornet-score",
+        help="Optional CSV path for per-sample logits and metadata; score it with tornet-score",
         default=None,
     )
     args = parser.parse_args()
@@ -132,41 +125,21 @@ def main():
             filename="tornado_detector_baseline.keras",
         )
 
-    dataloader = args.dataloader
     logging.info(f"Using {keras.config.backend()} backend")
-    logging.info(f"Using {dataloader} dataloader")
-    if ("tfds" in dataloader) and ("TFDS_DATA_DIR" in os.environ):
-        logging.info("Using TFDS dataset location at " + os.environ["TFDS_DATA_DIR"])
 
     model = keras.saving.load_model(trained_model, compile=False)
     input_keys = list(model.input.keys())
     logging.info(f"Evaluating on test years {args.years}")
 
-    if dataloader == "keras":
-        # Predict once, keep the logits, derive every metric from them.
-        ds = get_dataloader(
-            dataloader,
-            data_root,
-            args.years,
-            "test",
-            args.batch_size,
-            select_keys=input_keys + META_KEYS,
-        )
-        preds = predict_dataset(model, ds)
-        scores = score_predictions(preds)
-        if args.predictions:
-            preds.to_csv(args.predictions, index=False)
-            logging.info(f"wrote {len(preds)} predictions to {args.predictions}")
-    else:
-        if args.predictions:
-            parser.error("--predictions is only supported with the keras dataloader")
-        ds_test = get_dataloader(
-            dataloader, data_root, args.years, "test", args.batch_size, select_keys=input_keys
-        )
-        metrics = build_metrics()
-        model.compile(metrics=metrics)
-        raw = model.evaluate(ds_test)
-        scores = {m.name: float(raw[k + 1]) for k, m in enumerate(metrics)}
+    # Predict once, keep the logits, derive every metric from them.
+    ds = get_dataloader(
+        data_root, args.years, "test", args.batch_size, select_keys=input_keys + META_KEYS
+    )
+    preds = predict_dataset(model, ds)
+    scores = score_predictions(preds)
+    if args.predictions:
+        preds.to_csv(args.predictions, index=False)
+        logging.info(f"wrote {len(preds)} predictions to {args.predictions}")
 
     scores["model_path"] = str(trained_model)
     scores["years"] = list(args.years)

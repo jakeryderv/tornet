@@ -12,7 +12,7 @@ def test_constants_consistent():
 
 def test_build_and_run_keras_baseline():
     keras = pytest.importorskip("keras")
-    from tornet.models.keras.cnn_baseline import build_model
+    from tornet.models.cnn_baseline import build_model
 
     shape = (120, 240, 2)
     model = build_model(shape=shape, c_shape=shape, start_filters=8)

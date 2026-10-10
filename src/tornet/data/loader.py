@@ -187,7 +187,6 @@ class TornadoDataLoader:
 
 
 def get_dataloader(
-    dataloader: str,
     data_root: str,
     years: list[int],
     data_type: str,
@@ -195,68 +194,24 @@ def get_dataloader(
     weights: dict[str, float] | None = None,
     **kwargs,
 ):
-    """Creates a dataloader for keras, torch or tensorflow
+    """Create a KerasDataLoader for the given years and partition.
 
     Inputs:
-    dataloader - str describing the dataloader to use. Valid options are: keras,
-    tensorflow, tensorflow-tfds, torch and torch-tfds
     data_root - where data is located
     years - years to load btwn 2013 and 2022
     data_type - either train or test
     batch_size - size of batch
-    weights - weights for different categories of sample
-
-    weights is optional, if provided must be a dict of the form
-      weights={'wN':wN,'w0':w0,'w1':w1,'w2':w2,'wW':wW}
-    where wN,w0,w1,w2,wW are numeric weights assigned to random,
-    ef0, ef1, ef2+ and warnings samples, respectively.
-
-    Returns:
-    tf.data.Dataset, torch.utils.data.DataLoader or tornet.data.keras.loader.KerasDataLoader
+    weights - optional dict {'wN','w0','w1','w2','wW'} of sample weights for random, EF0, EF1,
+              EF2+ and warning samples; when given, batches are (x, y, w) instead of (x, y)
+    kwargs - passed to KerasDataLoader (select_keys, workers, use_multiprocessing, ...)
     """
+    from tornet.data.keras_loader import KerasDataLoader
 
-    # Argument validation
-    valid_dataloaders = ["tensorflow", "tensorflow-tfds", "torch", "torch-tfds", "keras"]
-
-    # Convert string to lower case
-    dataloader = dataloader.lower()
-    assert dataloader in valid_dataloaders, f"dataloader must be in {valid_dataloaders}!"
-
-    from_tfds = False
-    if "tfds" in dataloader:
-        from_tfds = True
-
-    if "tensorflow" in dataloader:
-        import tensorflow as tf
-
-        from tornet.data.tf.loader import make_tf_loader
-
-        ds = make_tf_loader(
-            data_root, data_type, years, batch_size, weights, from_tfds=from_tfds, **kwargs
-        )
-
-        data_opts = tf.data.Options()
-        data_opts.experimental_distribute.auto_shard_policy = (
-            tf.data.experimental.AutoShardPolicy.DATA
-        )
-        ds = ds.with_options(data_opts)
-
-    elif "torch" in dataloader:
-        from tornet.data.torch.loader import make_torch_loader
-
-        ds = make_torch_loader(
-            data_root, data_type, years, batch_size, weights, from_tfds=from_tfds, **kwargs
-        )
-    else:
-        from tornet.data.keras.loader import KerasDataLoader
-
-        ds = KerasDataLoader(
-            data_root=data_root,
-            data_type=data_type,
-            years=years,
-            batch_size=batch_size,
-            weights=weights,
-            **kwargs,
-        )
-
-    return ds
+    return KerasDataLoader(
+        data_root=data_root,
+        data_type=data_type,
+        years=years,
+        batch_size=batch_size,
+        weights=weights,
+        **kwargs,
+    )

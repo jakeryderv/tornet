@@ -115,7 +115,7 @@ def test_tornado_data_loader_indexes_iterates_and_transforms(tornet_root):
 
 def test_keras_dataloader_batches(tornet_root):
     pytest.importorskip("keras")
-    from tornet.data.keras.loader import KerasDataLoader
+    from tornet.data.keras_loader import KerasDataLoader
 
     weights = {"wN": 1.0, "w0": 1.0, "w1": 1.0, "w2": 2.0, "wW": 0.5}
     ds = KerasDataLoader(

@@ -1,7 +1,7 @@
 [project]
 name = "tornet"
 version = "1.0.0"
-description = "Tools for working with the TorNet tornado detection dataset"
+description = "TorNet tornado detection: the MIT-LL CNN baseline and a CNN-transformer hybrid"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
@@ -21,18 +21,8 @@ dependencies = [
 [project.optional-dependencies]
 # Keras 3 only; bring your own backend (tensorflow, torch or jax).
 keras = ["keras>=3.0"]
-# Keras 3 on the torch backend, plus the standalone Lightning port in tornet.models.torch.
-torch = [
-  "keras>=3.0",
-  "torch>=2.7",
-  "torchvision",
-  "torchmetrics",
-  "lightning>=2.0",
-]
-# Keras 3 on the tensorflow backend, the authors' original stack, plus the TFDS reformat path.
-# PyPI tensorflow wheels have no Blackwell (sm_120) kernels, so this is for H100-class pods,
-# not the local RTX 50-series GPU.
-tensorflow = ["keras>=3.0", "tensorflow[and-cuda]>=2.21", "tensorflow-datasets"]
+# Keras 3 on the torch backend.
+torch = ["keras>=3.0", "torch>=2.7"]
 # Download pretrained weights from Hugging Face.
 hf = ["huggingface_hub"]
 notebooks = ["jupyter"]
@@ -57,8 +47,6 @@ dev = [
 ]
 # Pulls in the torch extra by default so `uv sync` and `uv run` give a working backend.
 torch = ["tornet[torch]"]
-# Opt-in for full-scale runs on a supported GPU: uv sync --no-group torch --group tensorflow
-tensorflow = ["tornet[tensorflow]"]
 # tornet-test downloads the pretrained weights from Hugging Face by default.
 hf = ["tornet[hf]"]
 

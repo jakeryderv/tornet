@@ -15,7 +15,7 @@ import keras
 import numpy as np
 
 from tornet.data.constants import ALL_VARIABLES, CHANNEL_MIN_MAX
-from tornet.models.keras.layers import CoordConv2D, FillNaNs
+from tornet.models.layers import CoordConv2D, FillNaNs
 
 
 def build_model(

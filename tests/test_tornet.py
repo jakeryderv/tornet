@@ -13,7 +13,6 @@ The software/firmware is provided to you on an As-Is basis
 Delivered to the U.S. Government with Unlimited Rights, as defined in DFARS Part 252.227-7013 or 7014 (Feb 2014). Notwithstanding any copyright notice, U.S. Government rights in this work are defined by DFARS 252.227-7013 or DFARS 252.227-7014 as detailed above. Use of this work other than as specifically authorized by the U.S. Government may violate any copyrights that exist in this work.
 """
 
-import importlib.util
 import os
 import unittest
 
@@ -40,10 +39,10 @@ def available_years():
 YEARS = available_years()
 
 try:
-    from tornet.data.keras.loader import KerasDataLoader
+    from tornet import metrics as tfm
+    from tornet.data.keras_loader import KerasDataLoader
     from tornet.data.loader import TornadoDataLoader, get_dataloader
-    from tornet.metrics.keras import metrics as tfm
-    from tornet.models.keras.cnn_baseline import build_model
+    from tornet.models.cnn_baseline import build_model
 except ImportError as e:
     print("WARNING: cannot import tornet library. Install it or add to path.")
     raise e
@@ -89,11 +88,10 @@ class KerasTests(unittest.TestCase):
         for _ in ds:
             break
 
-    def _run_train(self, dataloader="keras", **dataloader_kwargs):
+    def _run_train(self, **dataloader_kwargs):
         nn = build_model()
         dataloader_kwargs.update({"select_keys": list(nn.input.keys())})
         ds_train = get_dataloader(
-            dataloader,
             DATA_ROOT,
             YEARS[:1],
             "train",
@@ -101,7 +99,6 @@ class KerasTests(unittest.TestCase):
             **dataloader_kwargs,
         )
         ds_val = get_dataloader(
-            dataloader,
             DATA_ROOT,
             YEARS[-1:],
             "train",
@@ -126,17 +123,7 @@ class KerasTests(unittest.TestCase):
 
     def test_training_keras_dataloader(self):
         dataloader_kwargs = {"use_multiprocessing": False, "workers": 1}
-        self._run_train("keras", **dataloader_kwargs)
-
-    def test_training_tf_dataloader(self):
-        if importlib.util.find_spec("tensorflow") is None:
-            raise unittest.SkipTest("tensorflow not installed")
-        self._run_train("tensorflow")
-
-    def test_training_torch_dataloader(self):
-        if importlib.util.find_spec("torch") is None:
-            raise unittest.SkipTest("torch not installed")
-        self._run_train("torch")
+        self._run_train(**dataloader_kwargs)
 
 
 if __name__ == "__main__":

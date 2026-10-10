@@ -59,11 +59,6 @@ def git_revision(path: str | None = None) -> tuple[str | None, bool | None]:
 
 
 def make_callback_dirs(logdir):
-    tensorboard_dir = os.path.join(logdir, "tboard")
-    if not os.path.isdir(tensorboard_dir):
-        os.makedirs(tensorboard_dir)
-
     checkpoints_dir = os.path.join(logdir, "checkpoints")
-    if not os.path.isdir(checkpoints_dir):
-        os.makedirs(checkpoints_dir)
-    return tensorboard_dir, checkpoints_dir
+    os.makedirs(checkpoints_dir, exist_ok=True)
+    return checkpoints_dir

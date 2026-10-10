@@ -6,13 +6,14 @@ import re
 import subprocess
 import sys
 
+import pandas as pd
 import pytest
 
 from .conftest import SYNTHETIC_SAMPLES
 
 keras = pytest.importorskip("keras")
 
-from tornet.scripts import results, test_keras, train_keras  # noqa: E402
+from tornet.scripts import results, score, test_keras, train_keras  # noqa: E402
 
 TINY = {"epochs": 2, "batch_size": 2, "start_filters": 4, "dataloader_kwargs": {}}
 
@@ -82,6 +83,7 @@ def test_evaluate_checkpoint_on_subset_years(env, tmp_path, monkeypatch):
     test_years = sorted(
         {int(rel.split("/")[1]) for rel, kind, *_ in SYNTHETIC_SAMPLES if kind == "test"}
     )
+    preds = tmp_path / "preds.csv"
     monkeypatch.setattr(
         sys,
         "argv",
@@ -95,6 +97,8 @@ def test_evaluate_checkpoint_on_subset_years(env, tmp_path, monkeypatch):
             "2",
             "--output",
             str(out),
+            "--predictions",
+            str(preds),
         ],
     )
     test_keras.main()
@@ -104,6 +108,26 @@ def test_evaluate_checkpoint_on_subset_years(env, tmp_path, monkeypatch):
     assert scores["model_path"] == r["best_checkpoint"]
     for name in ("AUC", "AUCPR", "BinaryAccuracy", "Precision", "Recall", "F1"):
         assert 0.0 <= scores[name] <= 1.0
+
+    df = pd.read_csv(preds)
+    n_test = sum(1 for _rel, kind, *_ in SYNTHETIC_SAMPLES if kind == "test")
+    assert len(df) == n_test
+    assert set(df.columns) >= {
+        "filename",
+        "label",
+        "category",
+        "ef_number",
+        "event_id",
+        "year",
+        "logit",
+        "prob",
+    }
+    assert df["filename"].str.startswith("test/").all()
+    assert set(df["category"]) <= {"TOR", "NUL", "WRN"}
+    assert set(df["year"]) <= set(test_years)
+    # tornet-score accepts the file as-is
+    monkeypatch.setattr(sys, "argv", ["tornet-score", str(preds), "--bootstrap", "0"])
+    score.main()
 
 
 def test_tornet_test_cli_loads_checkpoint_in_fresh_process(env, tmp_path):

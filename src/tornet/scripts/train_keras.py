@@ -62,6 +62,8 @@ DEFAULT_CONFIG = {
     "dataloader_kwargs": {},
     # False keeps only checkpoints/best.keras (by val AUC) and checkpoints/last.keras
     "save_all_checkpoints": False,
+    # Seeds python, numpy and the backend. GPU kernels may still be nondeterministic.
+    "seed": 1234,
 }
 
 
@@ -92,6 +94,10 @@ def main(config):
     val_years = config.get("val_years")
     dataloader = config.get("dataloader")
     dataloader_kwargs = copy.deepcopy(config.get("dataloader_kwargs") or {})
+
+    seed = config.get("seed")
+    if seed is not None:
+        keras.utils.set_random_seed(int(seed))
 
     logging.info(f"Using {keras.config.backend()} backend")
     logging.info(f"Using {dataloader} dataloader")
@@ -236,6 +242,7 @@ def main(config):
         {
             "epochs_run": len(history.history["loss"]),
             "exp_name": exp_name,
+            "seed": seed,
             "train_years": list(train_years),
             "val_years": list(val_years),
             "git_commit": git_commit,

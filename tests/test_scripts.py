@@ -53,6 +53,26 @@ def test_train_with_validation_writes_results_and_checkpoints(env):
     assert (env / "latest").is_symlink()
 
 
+def test_train_init_from_checkpoint_with_transformer_head(env):
+    base = train(env, exp_name="base", train_years=[2013], val_years=[2014])
+    r = train(
+        env,
+        exp_name="finetune",
+        train_years=[2013],
+        val_years=[2014],
+        head="transformer",
+        head_kwargs={"depth": 1, "num_heads": 2, "pool": "cls"},
+        init_from=base["last_checkpoint"],
+        backbone_lr_scale=0.1,
+    )
+    assert r["epochs_run"] == 2
+    assert r["head"] == "transformer" and r["init_from"] == base["last_checkpoint"]
+    assert r["backbone_lr_scale"] == 0.1
+    assert r["params"] > 0
+    # the checkpoint (with its ScaledAdam) loads back in a fresh process via tornet-test
+    assert os.path.exists(r["best_checkpoint"])
+
+
 def test_train_without_validation_keeps_only_last(env):
     r = train(env, exp_name="baseline_final", train_years=[2013, 2014], val_years=[])
     assert r["AUC"] is None and r["best_epoch"] is None

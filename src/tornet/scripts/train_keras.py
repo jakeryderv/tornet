@@ -28,8 +28,13 @@ from tornet import metrics as tfm  # noqa: E402
 from tornet.data.constants import ALL_VARIABLES  # noqa: E402
 from tornet.data.loader import get_dataloader  # noqa: E402
 from tornet.data.preprocess import get_shape  # noqa: E402
-from tornet.models.cnn_baseline import build_model  # noqa: E402
+from tornet.models.cnn_baseline import (  # noqa: E402
+    backbone_layers,
+    build_model,
+    load_backbone_weights,
+)
 from tornet.models.losses import mae_loss  # noqa: E402
+from tornet.models.optimizers import ScaledAdam, scales_for  # noqa: E402
 from tornet.utils.general import (  # noqa: E402
     CollectGarbage,
     git_revision,
@@ -61,6 +66,12 @@ DEFAULT_CONFIG = {
     "label_smooth": 0,
     "loss": "cce",
     "head": "maxpool",
+    "head_kwargs": {},
+    # Path to a .keras model, or "pretrained" for the authors' Hugging Face weights, whose backbone
+    # initialises this model's backbone. The head always starts fresh. None trains from scratch.
+    "init_from": None,
+    # Learning-rate multiplier for the backbone (1.0: same rate as the head; 0: frozen backbone).
+    "backbone_lr_scale": 1.0,
     "exp_name": "tornet_baseline",
     "exp_dir": EXP_DIR,
     "dataloader_kwargs": {},
@@ -69,6 +80,18 @@ DEFAULT_CONFIG = {
     # Seeds python, numpy and the backend. GPU kernels may still be nondeterministic.
     "seed": 1234,
 }
+
+
+def resolve_init_from(init_from: str) -> str:
+    """A .keras path, or "pretrained" for the authors' published weights."""
+    if init_from != "pretrained":
+        return init_from
+    from huggingface_hub import hf_hub_download
+
+    return hf_hub_download(
+        repo_id="tornet-ml/tornado_detector_baseline_v1",
+        filename="tornado_detector_baseline.keras",
+    )
 
 
 def main(config):
@@ -89,6 +112,9 @@ def main(config):
     w2 = config.get("w2")
     wW = config.get("wW")
     head = config.get("head")
+    head_kwargs = copy.deepcopy(config.get("head_kwargs") or {})
+    init_from = config.get("init_from")
+    backbone_lr_scale = float(config.get("backbone_lr_scale", 1.0))
     label_smooth = config.get("label_smooth")
     loss_fn = config.get("loss")
     input_variables = config.get("input_variables")
@@ -134,12 +160,25 @@ def main(config):
         l2_reg=l2_reg,
         input_variables=input_variables,
         head=head,
+        head_kwargs=head_kwargs,
     )
+
+    if init_from:
+        init_path = resolve_init_from(init_from)
+        n_layers = load_backbone_weights(nn, init_path)
+        logging.info(f"initialised {n_layers} backbone layers from {init_path}")
 
     # model setup
     lr = keras.optimizers.schedules.ExponentialDecay(
         learning_rate, decay_steps, decay_rate, staircase=False, name="exp_decay"
     )
+    backbone = backbone_layers(nn)
+    if backbone_lr_scale == 0:
+        for layer in backbone:
+            layer.trainable = False
+        logging.info("backbone frozen")
+    elif backbone_lr_scale != 1.0:
+        logging.info(f"backbone learning rate scaled by {backbone_lr_scale}")
 
     from_logits = True
     if loss_fn.lower() == "cce":
@@ -153,7 +192,10 @@ def main(config):
     else:
         raise RuntimeError(f"unknown loss {loss_fn}")
 
-    opt = keras.optimizers.Adam(learning_rate=lr)
+    if backbone_lr_scale in (0, 1.0):
+        opt = keras.optimizers.Adam(learning_rate=lr)
+    else:
+        opt = ScaledAdam(learning_rate=lr, scales=scales_for(backbone, backbone_lr_scale))
 
     # Compute various metrics while training
     metrics = [
@@ -240,6 +282,11 @@ def main(config):
             "epochs_run": len(history.history["loss"]),
             "exp_name": exp_name,
             "seed": seed,
+            "head": head,
+            "head_kwargs": head_kwargs,
+            "init_from": init_from,
+            "backbone_lr_scale": backbone_lr_scale,
+            "params": int(nn.count_params()),
             "train_years": list(train_years),
             "val_years": list(val_years),
             "git_commit": git_commit,

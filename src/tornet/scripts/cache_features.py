@@ -28,9 +28,12 @@ os.environ.setdefault("KERAS_BACKEND", "torch")
 
 import keras  # noqa: E402
 
-import tornet.models.layers  # noqa: E402, F401  (registers custom layers for load_model)
+import tornet.models.heads  # noqa: E402, F401  (registers custom layers for load_model)
+import tornet.models.layers  # noqa: E402, F401
+import tornet.models.optimizers  # noqa: E402, F401
 from tornet.data.keras_loader import iterate_batches  # noqa: E402
 from tornet.data.loader import get_dataloader  # noqa: E402
+from tornet.models.cnn_baseline import backbone_end  # noqa: E402
 from tornet.scripts.score import roc_auc  # noqa: E402
 from tornet.scripts.test_keras import META_KEYS, batch_metadata  # noqa: E402
 
@@ -38,19 +41,17 @@ logging.basicConfig(level=logging.INFO)
 
 
 def split_backbone(model: keras.Model) -> tuple[keras.Model, keras.Model]:
-    """Return (backbone, head) models: the backbone ends at the last Dropout layer, the head
-    re-applies every layer after it to an input of the backbone's output shape."""
-    dropouts = [
-        i for i, layer in enumerate(model.layers) if isinstance(layer, keras.layers.Dropout)
-    ]
-    if not dropouts:
-        raise ValueError("model has no Dropout layer to cut at")
-    tap = model.layers[dropouts[-1]]
+    """Return (backbone, head) models: the backbone ends at its `features` layer (the last Dropout
+    for upstream checkpoints); the head re-applies every layer after it to an input of the
+    backbone's output shape. Rebuilding the head this way only works for the sequential `maxpool`
+    head, which is all `--verify` needs."""
+    end = backbone_end(model)
+    tap = model.layers[end]
     backbone = keras.Model(inputs=model.input, outputs=tap.output, name="backbone")
     feature_shape = tuple(tap.output.shape[1:])
     head_input = keras.Input(feature_shape, name="features")
     y = head_input
-    for layer in model.layers[dropouts[-1] + 1 :]:
+    for layer in model.layers[end + 1 :]:
         y = layer(y)
     head = keras.Model(inputs=head_input, outputs=y, name="head")
     return backbone, head

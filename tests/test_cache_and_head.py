@@ -82,7 +82,7 @@ def test_cache_features_and_verify(trained, tmp_path, monkeypatch):
     cache_features.main()
 
     info = json.loads((out / "cache.json").read_text())
-    assert info["tap_layer"].startswith("dropout")
+    assert info["tap_layer"] == "features"
     assert len(info["feature_shape"]) == 3 and info["feature_shape"][-1] == 32  # 8 * start_filters
     assert info["verify"]["max_abs_logit_diff"] < 1e-2  # float16 storage only
     n_train_2013 = sum(

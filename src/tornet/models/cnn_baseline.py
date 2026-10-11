@@ -18,6 +18,9 @@ from tornet.data.constants import ALL_VARIABLES, CHANNEL_MIN_MAX
 from tornet.models.heads import HEADS
 from tornet.models.layers import CoordConv2D, FillNaNs
 
+# Name of the backbone's last layer (the dropout after block 4). Heads attach to its output.
+FEATURES_LAYER = "features"
+
 
 def build_model(
     shape: tuple[int] = (120, 240, 2),
@@ -68,8 +71,15 @@ def build_model(
         x, c, filters=4 * start_filters, ksize=3, l2_reg=l2_reg, n_convs=3, drop_rate=0.1
     )  # (15,30)
     x, c = vgg_block(
-        x, c, filters=8 * start_filters, ksize=3, l2_reg=l2_reg, n_convs=3, drop_rate=0.1
-    )  # (7,15)
+        x,
+        c,
+        filters=8 * start_filters,
+        ksize=3,
+        l2_reg=l2_reg,
+        n_convs=3,
+        drop_rate=0.1,
+        name=FEATURES_LAYER,
+    )  # (8,15): the backbone's output, where heads attach
     # x,c = vgg_block(x,c, filters=8*start_filters, ksize=3, l2_reg=l2_reg, n_convs=3)  # (3,7)
 
     if head not in HEADS:
@@ -81,8 +91,8 @@ def build_model(
     return keras.Model(inputs=inputs, outputs=output)
 
 
-def vgg_block(x, c, filters=64, ksize=3, n_convs=2, l2_reg=1e-6, drop_rate=0.0):
-
+def vgg_block(x, c, filters=64, ksize=3, n_convs=2, l2_reg=1e-6, drop_rate=0.0, name=None):
+    """`name`, if given, names the block's final dropout layer."""
     for _ in range(n_convs):
         x, c = CoordConv2D(
             filters=filters,
@@ -94,7 +104,7 @@ def vgg_block(x, c, filters=64, ksize=3, n_convs=2, l2_reg=1e-6, drop_rate=0.0):
     x = keras.layers.MaxPool2D(pool_size=2, strides=2, padding="same")(x)
     c = keras.layers.MaxPool2D(pool_size=2, strides=2, padding="same")(c)
     if drop_rate > 0:
-        x = keras.layers.Dropout(rate=drop_rate)(x)
+        x = keras.layers.Dropout(rate=drop_rate, name=name)(x)
     return x, c
 
 
@@ -123,3 +133,48 @@ def normalize(x, name: str):
     )  # [n_sweeps,]
 
     return keras.layers.Normalization(mean=offset, variance=var, name=f"Normalize_{name}")(x)
+
+
+def backbone_end(model: keras.Model) -> int:
+    """Index in `model.layers` of the backbone's last layer.
+
+    Models built here name it `FEATURES_LAYER`; upstream checkpoints predate that name, and for
+    them (maxpool head only) it is the last Dropout layer.
+    """
+    names = [layer.name for layer in model.layers]
+    if FEATURES_LAYER in names:
+        return names.index(FEATURES_LAYER)
+    dropouts = [
+        i for i, layer in enumerate(model.layers) if isinstance(layer, keras.layers.Dropout)
+    ]
+    if not dropouts:
+        raise ValueError("model has neither a 'features' layer nor a Dropout layer to cut at")
+    return dropouts[-1]
+
+
+def backbone_layers(model: keras.Model) -> list[keras.layers.Layer]:
+    return model.layers[: backbone_end(model) + 1]
+
+
+def load_backbone_weights(model: keras.Model, source: keras.Model | str) -> int:
+    """Copy backbone weights from `source` (a model or a .keras path) into `model`, layer by layer.
+
+    Only the backbone is copied; the head keeps its fresh initialisation. Returns the number of
+    layers whose weights were set. Raises if the two backbones do not line up.
+    """
+    if isinstance(source, str):
+        source = keras.saving.load_model(source, compile=False)
+    src = [layer for layer in backbone_layers(source) if layer.weights]
+    dst = [layer for layer in backbone_layers(model) if layer.weights]
+    if len(src) != len(dst):
+        raise ValueError(
+            f"backbones differ: {len(src)} weighted layers in source, {len(dst)} in model"
+        )
+    for a, b in zip(src, dst, strict=True):
+        wa, wb = a.get_weights(), b.get_weights()
+        if [w.shape for w in wa] != [w.shape for w in wb]:
+            raise ValueError(
+                f"shape mismatch at {a.name} -> {b.name}: {[w.shape for w in wa]} vs {[w.shape for w in wb]}"
+            )
+        b.set_weights(wa)
+    return len(dst)

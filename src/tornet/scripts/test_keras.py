@@ -23,7 +23,9 @@ os.environ.setdefault("KERAS_BACKEND", "torch")
 
 import keras  # noqa: E402
 
+import tornet.models.heads  # noqa: E402, F401  (registers the head layers for load_model)
 import tornet.models.layers  # noqa: E402, F401  (registers CoordConv2D etc. for load_model)
+import tornet.models.optimizers  # noqa: E402, F401  (registers ScaledAdam saved in checkpoints)
 from tornet import metrics as tfm  # noqa: E402
 from tornet.data.keras_loader import iterate_batches  # noqa: E402
 from tornet.data.loader import get_dataloader  # noqa: E402

@@ -128,9 +128,12 @@ at run time rather than at import.
 - An empty `val_years` list trains without a validation set, for the final all-years retrain.
 - The config is deep-copied so repeated runs in one process do not share loader state.
 
-- A per-epoch garbage-collection callback in both trainers. Keras on the torch backend leaves
-  reference cycles holding GPU tensors between epochs; with multi-output heads this grew by about
-  0.15 GB per epoch until an out-of-memory error. Collecting at epoch end keeps memory flat.
+- A garbage-collection callback in both trainers, every 50 training batches and at epoch end. Keras
+  on the torch backend leaves reference cycles holding GPU tensors after every step; the four-frame
+  models grew from 5 GB to an out-of-memory error inside one 1,452-step epoch, and multi-output
+  heads grew about 0.15 GB per epoch. Collecting keeps memory flat. The trainers and `tornet-test`
+  also default `PYTORCH_CUDA_ALLOC_CONF` to expandable segments, since the smaller last batch of an
+  epoch otherwise fragments the allocator.
 
 ## Evaluation behavior
 
@@ -138,6 +141,9 @@ at run time rather than at import.
   them. Verified identical to `model.evaluate` on the pretrained weights.
 - Evaluation and caching iterate the loader through Keras' own adapter, so `--workers` processes
   apply there too (about 4x faster than the single-process path).
+- `tornet-test` collects garbage every 50 batches (the same per-call leak as in training) and its
+  default batch is 64 scans divided by the model's frame count, so four-frame checkpoints test at
+  16 samples per batch.
 - The custom Keras layers are imported before loading a model. Upstream's test script could not load
   the published weights under current Keras without this.
 

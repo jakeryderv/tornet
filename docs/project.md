@@ -237,6 +237,63 @@ hybrid (the backbone could be shaped by attention from the start rather than nud
 attention over the four frames, and any of this at full scale, where two years of training data is
 no longer the limiting factor.
 
+### Experiment 3 result: from scratch on fold B, single frame vs four frames (2026-10-11)
+
+`configs/fold_b.json` (the authors' architecture, batch 64), `configs/temporal/fold_b_attention.json`
+and `configs/temporal/fold_b_concat.json` (four frames through the shared backbone, batch 16, the
+two heads parameter-matched at 5.26M vs 4.67M for the baseline). All three from random
+initialisation, 15 epochs, label smoothing 0.1, checkpoint by validation AUC on 2014, `decay_steps`
+equal to one epoch so the schedule is the same per epoch. Scores on the 2013–2015 test partition
+(`results/scratch_fold_b_scores.{json,txt}`, `results/scratch_fold_b_results.csv`, histories in
+`results/{baseline,temporal_attention,temporal_concat}_fold_b_history.csv`):
+
+| Run | best epoch | val AUC | NC AUC | NC AUCPR | RC AUC | WC AUC | AUC 2013 / 2014 / 2015 |
+|---|---|---|---|---|---|---|---|
+| pretrained reference (8 years) | | | 0.8946 | 0.696 | 0.9422 | 0.8270 | 0.962 / 0.895 / 0.884 |
+| baseline, 1 frame | 11 | 0.8372 | 0.8792 | 0.573 | 0.9385 | 0.7951 | 0.932 / 0.866 / 0.880 |
+| temporal attention, 4 frames | 14 | 0.8264 | 0.8740 | 0.584 | 0.9235 | 0.8039 | 0.923 / 0.873 / 0.867 |
+| temporal concat, 4 frames | 8 | 0.8290 | 0.8734 | 0.625 | 0.9168 | 0.8118 | 0.914 / 0.868 / 0.871 |
+
+Paired bootstrap ΔAUC against the single-frame baseline:
+
+| | NC | RC | WC | NC ΔAUCPR |
+|---|---|---|---|---|
+| attention − baseline | −0.005 [−0.014, +0.004] | −0.015 [−0.023, −0.008] | +0.009 [−0.002, +0.021] | +0.011 |
+| concat − baseline | −0.006 [−0.016, +0.004] | −0.022 [−0.032, −0.012] | +0.017 [+0.004, +0.031] | +0.053 |
+| attention − concat | +0.001 [−0.010, +0.010] | +0.007 [−0.004, +0.019] | −0.008 [−0.022, +0.004] | −0.042 |
+
+What this says:
+
+- **Two years from scratch costs about 0.015–0.02 AUC** against the pretrained weights, for every
+  architecture. Test AUC is above validation AUC for all three because 2013 and 2015 are training
+  years whose test partitions are in the test set; 2014 is the honest held-out column, and there
+  the three models sit within 0.007 of each other.
+- **Four frames do not raise overall AUC.** Both temporal models are 0.005–0.006 below the single
+  frame on NC, inside the interval. The split by view is the interesting part and it is consistent
+  across both heads: temporal context **hurts on random negatives** (RC −0.015/−0.022, both
+  significant) and **helps on warned negatives** (WC +0.009/+0.017, the concat one significant),
+  with higher AUCPR. Reading: the earlier frames help separate a tornado from a storm that drew a
+  warning but produced none, and cost something on the easy clear-air cases, where a single scan is
+  enough and three more are noise to overfit.
+- **Attention vs concat is a tie on AUC**, and concat has the better AUCPR. The curves differ:
+  concat overfits by epoch 8 (train AUC 0.94 at epoch 15 with validation falling to 0.80) while
+  attention is still improving at epoch 15 (train 0.90). Attention acts as a regulariser here, not
+  as a better aggregator. It may pull ahead with more epochs or more data; there is no evidence yet.
+- **Caveats.** One seed each, so differences under 0.01 are within run-to-run noise. The temporal
+  runs took four times as many optimiser steps (batch 16 vs 64) at the same per-epoch decay. The
+  baseline here is well below the paper's reported numbers because it saw two years, not eight.
+
+Decision for the full-scale run: the single-frame baseline and the two temporal variants are the
+trio to carry to RunPod, since the WC gain is the one signal worth testing on eight years, and the
+single-frame hybrid head is dropped (Experiments 1 and 2 found nothing for it). Local training cost
+for reference, 12 GB laptop GPU: baseline 3.3 min/epoch, four-frame models 9.2–9.8 min/epoch.
+
+Engineering notes from these runs: the authors' batch 128 does not fit in 12 GB with real training
+(fold configs are now batch 64 with `decay_steps` doubled); Keras on torch leaks collectable
+reference cycles holding GPU tensors every step, in training and in prediction, so both
+`tornet-train` and `tornet-test` collect every 50 batches; `tornet-test` divides its default batch
+of 64 by the model's frame count.
+
 ### Training-signal ideas (agreed order: A then B)
 
 - **A. Continuous auxiliary targets, not EF-based** (EF ratings are survey-based, inconsistent at the
@@ -307,6 +364,17 @@ uv run tornet-train configs/finetune/fold_b_maxpool.json
 uv run tornet-train configs/finetune/fold_b_transformer_cls.json
 uv run tornet-test --model_path experiments/<run>/checkpoints/best.keras --years 2013 2014 2015 --predictions experiments/<run>/predictions.csv
 uv run tornet-score results/predictions_pretrained_2013_2015.csv experiments/<control>/predictions.csv experiments/<hybrid>/predictions.csv
+```
+
+**From scratch, single vs four frames** (experiment 3; baseline ~50 min, four-frame runs ~2.5 h each
+on the laptop):
+
+```
+uv run tornet-train configs/fold_b.json
+uv run tornet-train configs/temporal/fold_b_attention.json
+uv run tornet-train configs/temporal/fold_b_concat.json
+uv run tornet-test --model_path experiments/<run>/checkpoints/best.keras --years 2013 2014 2015 --predictions experiments/<run>/predictions.csv
+uv run tornet-score experiments/<baseline>/predictions.csv experiments/<attention>/predictions.csv experiments/<concat>/predictions.csv
 ```
 
 A variant is a new `exp_name` prefix on the same configs. Subset scores sit below the paper's because

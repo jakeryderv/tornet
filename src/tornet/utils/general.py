@@ -67,15 +67,30 @@ def make_callback_dirs(logdir):
 
 
 class CollectGarbage(keras.callbacks.Callback):
-    """Keras on the torch backend can leave reference cycles holding GPU tensors between epochs,
-    which grows memory until an OOM (seen with multi-output heads). Collect at each epoch end."""
+    """Keras on the torch backend leaves reference cycles holding GPU tensors after every training
+    step. They are collectable garbage, but Python's collector does not run often enough: on a
+    12 GB GPU the four-frame models grew from 5 GB to an out-of-memory error within one 1,452-step
+    epoch. Collect every `every` training batches and at each epoch end (where the CUDA cache is
+    also released)."""
 
-    def on_epoch_end(self, epoch, logs=None):
+    def __init__(self, every: int = 50):
+        super().__init__()
+        self.every = every
+
+    @staticmethod
+    def _collect(release_cache: bool):
         import gc
 
         gc.collect()
-        if keras.config.backend() == "torch":
+        if release_cache and keras.config.backend() == "torch":
             import torch
 
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
+
+    def on_train_batch_end(self, batch, logs=None):
+        if self.every and (batch + 1) % self.every == 0:
+            self._collect(release_cache=False)
+
+    def on_epoch_end(self, epoch, logs=None):
+        self._collect(release_cache=True)

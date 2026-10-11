@@ -11,6 +11,7 @@ Delivered to the U.S. Government with Unlimited Rights, as defined in DFARS Part
 """
 
 import argparse
+import gc
 import json
 import logging
 import os
@@ -20,6 +21,7 @@ import pandas as pd
 
 # Keras must see the backend before it is imported anywhere, including via tornet.metrics.
 os.environ.setdefault("KERAS_BACKEND", "torch")
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 
 import keras  # noqa: E402
 
@@ -98,8 +100,12 @@ def finish_predictions(rows: list[dict]) -> pd.DataFrame:
     return df
 
 
-def predict_dataset(model, ds) -> pd.DataFrame:
-    """Run the model over a KerasDataLoader and return one row per sample with its logit."""
+def predict_dataset(model, ds, collect_every: int = 50) -> pd.DataFrame:
+    """Run the model over a KerasDataLoader and return one row per sample with its logit.
+
+    Keras on torch leaves collectable reference cycles holding GPU tensors after each predict call
+    too (a four-frame model at batch 16 reached 4.6 GB allocated after 360 batches), so the
+    collector runs every `collect_every` batches."""
     input_keys = list(model.input.keys())
     rows = []
     for i, (x, y) in enumerate(iterate_batches(ds)):
@@ -109,6 +115,8 @@ def predict_dataset(model, ds) -> pd.DataFrame:
             rows.append({**row, "logit": float(logit)})
         if (i + 1) % 10 == 0 or i + 1 == len(ds):
             logging.info(f"predicted {i + 1}/{len(ds)} batches")
+        if collect_every and (i + 1) % collect_every == 0:
+            gc.collect()
     return finish_predictions(rows)
 
 
@@ -140,7 +148,13 @@ def main():
         default=list(range(2013, 2023)),
         help="Test years to evaluate on (default: all, 2013-2022)",
     )
-    parser.add_argument("--batch_size", type=int, default=64)
+    parser.add_argument(
+        "--batch_size",
+        type=int,
+        default=None,
+        help="Samples per batch (default: 64 single-frame samples, divided by the model's frames so"
+        " the backbone sees 64 scans per batch either way)",
+    )
     parser.add_argument("--workers", type=int, default=8, help="Loader worker processes")
     parser.add_argument("--output", help="Optional path to write scores as JSON", default=None)
     parser.add_argument(
@@ -171,14 +185,17 @@ def main():
     model = keras.saving.load_model(trained_model, compile=False)
     input_keys = list(model.input.keys())
     frames = model_frames(model)
-    logging.info(f"Evaluating on test years {args.years} ({frames} frame(s) per sample)")
+    batch_size = args.batch_size or max(1, 64 // frames)
+    logging.info(
+        f"Evaluating on test years {args.years} ({frames} frame(s) per sample, batch {batch_size})"
+    )
 
     # Predict once, keep the logits, derive every metric from them.
     ds = get_dataloader(
         data_root,
         args.years,
         "test",
-        args.batch_size,
+        batch_size,
         select_keys=input_keys + META_KEYS,
         workers=args.workers,
         use_multiprocessing=args.workers > 1,

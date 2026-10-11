@@ -52,6 +52,15 @@ classification head and to tooling around cached features:
   `configs/finetune/*.json` fine-tune on fold B from the pretrained backbone with a fresh maxpool
   head and with a class-token transformer head, at batch 64 (batch 128 needs 10.8 GB on the laptop
   GPU) with `decay_steps` doubled so the per-epoch decay is unchanged.
+- Temporal variants (`frames` config key, default 1): the loader can return the last N scans
+  stacked behind the batch axis, and `build_model(frames=N)` runs the unchanged backbone on every
+  frame with shared weights before a head combines the per-frame feature maps.
+  `temporal_attention` applies self-attention over the frames at each feature-map location (with
+  a learned per-frame position) and feeds the last frame's attended token to the authors' maxpool
+  head; `temporal_concat` is the no-attention control, concatenating frames along channels, and
+  is parameter-matched to one attention layer. Both keep the per-location logit and global max.
+  `tornet-test` infers the frame count from a checkpoint. `configs/temporal/*.json` run both on
+  fold B at batch 16.
 
 Known paper/code discrepancy, not altered: the paper describes 2, 3, 3, 3 convolutions per block,
 while the code and the pretrained weights have 2, 2, 3, 3. See `docs/project.md` section 3.

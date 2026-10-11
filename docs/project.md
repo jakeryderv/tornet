@@ -199,6 +199,44 @@ contrastive geometry changes detection. The lever has to be the backbone. Next: 
 training (fine-tune from pretrained, then from scratch), where these heads and losses get to shape
 the features.
 
+### Experiment 2 result: end-to-end fine-tuning from the pretrained backbone (fold B, 2026-10-10)
+
+`configs/finetune/fold_b_{maxpool,transformer_cls}.json`: backbone initialised from the pretrained
+weights (`init_from: pretrained`), head fresh, backbone learning rate at 0.1× the head's
+(`backbone_lr_scale`), batch 64, 10 epochs, checkpoint by validation AUC on 2014. Scores on the
+2013–2015 test partition (`results/finetune_fold_b_scores.json`, histories in
+`results/finetune_*_history.csv`):
+
+| Run | best epoch | val AUC | NC AUC | NC AUCPR | RC AUC | WC AUC | EF0 / EF1 recall |
+|---|---|---|---|---|---|---|---|
+| pretrained reference | | | 0.8946 | 0.696 | 0.9422 | 0.8270 | 0.35 / 0.58 |
+| fine-tune, maxpool head (control) | 3 | 0.9127 | 0.9086 | 0.703 | 0.9529 | 0.8458 | 0.31 / 0.55 |
+| fine-tune, class-token transformer | 8 | 0.9113 | 0.9065 | 0.679 | 0.9528 | 0.8408 | 0.38 / 0.60 |
+
+Paired bootstrap ΔAUC (NC): control vs pretrained +0.014 [+0.007, +0.022]; transformer vs
+pretrained +0.012 [+0.006, +0.020]; **transformer vs control −0.002 [−0.007, +0.002]**, and
+−0.025 AUCPR. The two end-to-end runs are indistinguishable in AUC; the transformer ranks the
+positives slightly worse.
+
+Two things worth separating:
+
+- **Fine-tuning helps, but it is partly year adaptation.** Both runs beat the pretrained weights,
+  with the gain concentrated in 2014 (0.895 → 0.906/0.909) and 2015 (0.884 → 0.906/0.897) while
+  2013 is flat. The pretrained model was fit across 2013–2020; specialising to the early years
+  helps on the early years. This is not evidence about the full dataset.
+- **Attention still buys nothing.** Letting the backbone move at 0.1× did not give the transformer
+  head anything the maxpool head lacks. The control also overfit faster (train AUC 0.965 vs val
+  0.906 by epoch 10; the transformer reached train 0.952), so the transformer's only measurable
+  effect is slower fitting of the training set. The EF0/EF1 recall bump (0.38/0.60 vs 0.31/0.55)
+  is at a lower CSI-maximising threshold (0.53 vs 0.66) and comes with lower precision; AUCPR says
+  the ranking is not better.
+
+Conclusion so far: on this subset, the detection ceiling is set by the data and the backbone, not by
+how the 8 × 15 feature map is aggregated. What has not been tested: training from scratch with the
+hybrid (the backbone could be shaped by attention from the start rather than nudged), temporal
+attention over the four frames, and any of this at full scale, where two years of training data is
+no longer the limiting factor.
+
 ### Training-signal ideas (agreed order: A then B)
 
 - **A. Continuous auxiliary targets, not EF-based** (EF ratings are survey-based, inconsistent at the
@@ -260,6 +298,15 @@ uv run tornet-cache-features --years 2013 2014 2015 --verify results/predictions
 for c in configs/heads/*.json; do uv run tornet-train-head $c; done
 uv run tornet-results --group
 uv run tornet-score results/predictions_pretrained_2013_2015.csv experiments/<run>/predictions.csv
+```
+
+**End-to-end fine-tuning** (experiment 2, ~35 min per run on the laptop):
+
+```
+uv run tornet-train configs/finetune/fold_b_maxpool.json
+uv run tornet-train configs/finetune/fold_b_transformer_cls.json
+uv run tornet-test --model_path experiments/<run>/checkpoints/best.keras --years 2013 2014 2015 --predictions experiments/<run>/predictions.csv
+uv run tornet-score results/predictions_pretrained_2013_2015.csv experiments/<control>/predictions.csv experiments/<hybrid>/predictions.csv
 ```
 
 A variant is a new `exp_name` prefix on the same configs. Subset scores sit below the paper's because

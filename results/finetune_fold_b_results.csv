@@ -1,0 +1,3 @@
+run,git_commit,git_dirty,train_years,val_years,epochs_run,best_epoch,AUC,AUCPR
+finetune_maxpool_fold_b_261010_201425,1bccf53,False,"[2013, 2015]",[2014],10,3,0.9127390384674072,0.6397782564163208
+finetune_transformer_cls_fold_b_261010_204804,af544f6,False,"[2013, 2015]",[2014],10,8,0.9113190174102783,0.6253684163093567

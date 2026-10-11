@@ -1,0 +1,20 @@
+{
+    "_note": "Temporal variant on fold B: shared backbone over the last 4 scans, temporal_concat head, from scratch. Batch 16 for the 4x input.",
+    "epochs": 15,
+    "batch_size": 16,
+    "frames": 4,
+    "train_years": [2013, 2015],
+    "val_years": [2014],
+    "start_filters": 48,
+    "learning_rate": 0.0001,
+    "decay_steps": 1452,
+    "decay_rate": 0.958,
+    "l2_reg": 1e-05,
+    "wN": 1.0, "w0": 1.0, "w1": 1.0, "w2": 2.0, "wW": 0.5,
+    "label_smooth": 0.1,
+    "loss": "cce",
+    "head": "temporal_concat",
+    "exp_name": "temporal_concat_fold_b",
+    "exp_dir": "experiments",
+    "dataloader_kwargs": {"workers": 8, "use_multiprocessing": true}
+}

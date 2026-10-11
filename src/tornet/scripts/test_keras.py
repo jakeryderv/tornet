@@ -26,6 +26,7 @@ import keras  # noqa: E402
 import tornet.models.heads  # noqa: E402, F401  (registers the head layers for load_model)
 import tornet.models.layers  # noqa: E402, F401  (registers CoordConv2D etc. for load_model)
 import tornet.models.optimizers  # noqa: E402, F401  (registers ScaledAdam saved in checkpoints)
+import tornet.models.temporal  # noqa: E402, F401  (registers the temporal layers)
 from tornet import metrics as tfm  # noqa: E402
 from tornet.data.keras_loader import iterate_batches  # noqa: E402
 from tornet.data.loader import get_dataloader  # noqa: E402
@@ -122,6 +123,13 @@ def score_predictions(df: pd.DataFrame) -> dict[str, float]:
     return scores
 
 
+def model_frames(model) -> int:
+    """Frames per sample a model expects: 1 for (azimuth, range, tilt) inputs, else the leading
+    input dimension."""
+    shape = model.input["DBZ" if "DBZ" in model.input else list(model.input)[0]].shape
+    return int(shape[1]) if len(shape) == 5 else 1
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_path", help="Pretrained model to test (.keras)", default=None)
@@ -162,7 +170,8 @@ def main():
 
     model = keras.saving.load_model(trained_model, compile=False)
     input_keys = list(model.input.keys())
-    logging.info(f"Evaluating on test years {args.years}")
+    frames = model_frames(model)
+    logging.info(f"Evaluating on test years {args.years} ({frames} frame(s) per sample)")
 
     # Predict once, keep the logits, derive every metric from them.
     ds = get_dataloader(
@@ -173,6 +182,7 @@ def main():
         select_keys=input_keys + META_KEYS,
         workers=args.workers,
         use_multiprocessing=args.workers > 1,
+        n_frames=frames,
     )
     preds = predict_dataset(model, ds)
     scores = score_predictions(preds)

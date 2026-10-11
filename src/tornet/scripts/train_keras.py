@@ -67,6 +67,8 @@ DEFAULT_CONFIG = {
     "loss": "cce",
     "head": "maxpool",
     "head_kwargs": {},
+    # Trailing radar scans per sample. 1 is the baseline; more needs a temporal head.
+    "frames": 1,
     # Path to a .keras model, or "pretrained" for the authors' Hugging Face weights, whose backbone
     # initialises this model's backbone. The head always starts fresh. None trains from scratch.
     "init_from": None,
@@ -113,6 +115,7 @@ def main(config):
     wW = config.get("wW")
     head = config.get("head")
     head_kwargs = copy.deepcopy(config.get("head_kwargs") or {})
+    frames = int(config.get("frames") or 1)
     init_from = config.get("init_from")
     backbone_lr_scale = float(config.get("backbone_lr_scale", 1.0))
     label_smooth = config.get("label_smooth")
@@ -136,7 +139,7 @@ def main(config):
 
     # Create data laoders
     dataloader_kwargs.update(
-        {"select_keys": input_variables + ["range_folded_mask", "coordinates"]}
+        {"select_keys": input_variables + ["range_folded_mask", "coordinates"], "n_frames": frames}
     )
     ds_train = get_dataloader(
         DATA_ROOT, train_years, "train", batch_size, weights, **dataloader_kwargs
@@ -161,6 +164,7 @@ def main(config):
         input_variables=input_variables,
         head=head,
         head_kwargs=head_kwargs,
+        frames=frames,
     )
 
     if init_from:
@@ -284,6 +288,7 @@ def main(config):
             "seed": seed,
             "head": head,
             "head_kwargs": head_kwargs,
+            "frames": frames,
             "init_from": init_from,
             "backbone_lr_scale": backbone_lr_scale,
             "params": int(nn.count_params()),

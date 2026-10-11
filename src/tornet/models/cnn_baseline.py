@@ -17,6 +17,7 @@ import numpy as np
 from tornet.data.constants import ALL_VARIABLES, CHANNEL_MIN_MAX
 from tornet.models.heads import HEADS
 from tornet.models.layers import CoordConv2D, FillNaNs
+from tornet.models.temporal import TEMPORAL_HEADS, FoldTime, RepeatFrames, UnfoldTime
 
 # Name of the backbone's last layer (the dropout after block 4). Heads attach to its output.
 FEATURES_LAYER = "features"
@@ -32,11 +33,24 @@ def build_model(
     include_range_folded: bool = True,
     head="maxpool",
     head_kwargs=None,
+    frames: int = 1,
 ):
+    """The authors' CNN with a choice of head.
+
+    `shape` is one frame's (azimuth, range, tilt). With `frames` > 1 the inputs are
+    (frames, azimuth, range, tilt), the backbone runs on every frame with shared weights, and
+    `head` must be one of `TEMPORAL_HEADS`, which combine the per-frame feature maps.
+    """
+    temporal = frames > 1
+    if temporal and head not in TEMPORAL_HEADS:
+        raise ValueError(f"frames={frames} needs a temporal head, one of {sorted(TEMPORAL_HEADS)}")
+    if not temporal and head in TEMPORAL_HEADS:
+        raise ValueError(f"head {head!r} needs frames > 1")
     # Create input layers for each input_variables
     inputs = {}
+    in_shape = (frames,) + tuple(shape) if temporal else tuple(shape)
     for v in input_variables:
-        inputs[v] = keras.Input(shape, name=v)
+        inputs[v] = keras.Input(in_shape, name=v)
     n_sweeps = shape[2]
 
     # Normalize inputs and concate along channel dim
@@ -49,7 +63,7 @@ def build_model(
 
     # Add channel for range folded gates
     if include_range_folded:
-        range_folded = keras.Input(shape[:2] + (n_sweeps,), name="range_folded_mask")
+        range_folded = keras.Input(in_shape[:-1] + (n_sweeps,), name="range_folded_mask")
         inputs["range_folded_mask"] = range_folded
         normalized_inputs = keras.layers.Concatenate(axis=-1, name="Concatenate2")(
             [normalized_inputs, range_folded]
@@ -60,6 +74,8 @@ def build_model(
     inputs["coordinates"] = cin
 
     x, c = normalized_inputs, cin
+    if temporal:  # frames into the batch axis; the backbone is shared across frames
+        x, c = FoldTime()(x), RepeatFrames(frames)(c)
 
     x, c = vgg_block(
         x, c, filters=start_filters, ksize=3, l2_reg=l2_reg, n_convs=2, drop_rate=0.1
@@ -82,12 +98,17 @@ def build_model(
     )  # (8,15): the backbone's output, where heads attach
     # x,c = vgg_block(x,c, filters=8*start_filters, ksize=3, l2_reg=l2_reg, n_convs=3)  # (3,7)
 
-    if head not in HEADS:
-        raise ValueError(f"unknown head {head!r}; expected one of {sorted(HEADS)}")
     head_kwargs = dict(head_kwargs or {})
-    if head == "maxpool":
+    if temporal:
+        x = UnfoldTime(frames)(x)
         head_kwargs.setdefault("l2_reg", l2_reg)
-    output = HEADS[head](x, **head_kwargs)
+        output = TEMPORAL_HEADS[head](x, **head_kwargs)
+    else:
+        if head not in HEADS:
+            raise ValueError(f"unknown head {head!r}; expected one of {sorted(HEADS)}")
+        if head == "maxpool":
+            head_kwargs.setdefault("l2_reg", l2_reg)
+        output = HEADS[head](x, **head_kwargs)
     return keras.Model(inputs=inputs, outputs=output)
 
 

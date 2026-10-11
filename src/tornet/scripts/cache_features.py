@@ -31,6 +31,7 @@ import keras  # noqa: E402
 import tornet.models.heads  # noqa: E402, F401  (registers custom layers for load_model)
 import tornet.models.layers  # noqa: E402, F401
 import tornet.models.optimizers  # noqa: E402, F401
+import tornet.models.temporal  # noqa: E402, F401
 from tornet.data.keras_loader import iterate_batches  # noqa: E402
 from tornet.data.loader import get_dataloader  # noqa: E402
 from tornet.models.cnn_baseline import backbone_end  # noqa: E402

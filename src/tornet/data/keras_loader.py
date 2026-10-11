@@ -33,7 +33,9 @@ class KerasDataLoader(keras.utils.PyDataset):
 
     After loading TorNet samples, this does the following preprocessing:
     - Optionaly permutes order of dimensions to not have tilt last
-    - Takes only last time frame
+    - Takes only the last time frame, or with n_frames > 1 the last n_frames stacked on a time
+      axis after the batch axis: [batch, time, azimuth, range, tilt]. The label is the last
+      frame's either way.
     - adds 'coordinates' variable used by CoordConv layers. If include_az is True, this
       includes r, r^{-1} (and az if include_az is True)
     - Splits sample into inputs,label
@@ -55,6 +57,7 @@ class KerasDataLoader(keras.utils.PyDataset):
         workers: int = 1,
         use_multiprocessing: bool = False,
         max_queue_size: int = 10,
+        n_frames: int = 1,
     ):
         """
         data_root - location of TorNet
@@ -71,6 +74,7 @@ class KerasDataLoader(keras.utils.PyDataset):
             [batch,tilt,azimuth,range]
         workers, use_multiprocessing, max_queue_size - see:
         https://keras.io/api/utils/python_utils/#pydataset-class
+        n_frames - number of trailing time frames per sample (1-4); more than 1 adds a time axis
 
         When workers==0, workers becomes os.cpu_count().
 
@@ -90,6 +94,9 @@ class KerasDataLoader(keras.utils.PyDataset):
         self.select_keys = select_keys
 
         self.tilt_last = tilt_last
+        if not 1 <= n_frames <= 4:
+            raise ValueError("n_frames must be between 1 and 4")
+        self.n_frames = n_frames
         self.file_list = query_catalog(data_root, data_type, years, random_state, catalog=catalog)
 
     def __len__(self) -> int:
@@ -106,7 +113,9 @@ class KerasDataLoader(keras.utils.PyDataset):
         element_list = []
         for f in files_batch:
             element_list.append(
-                read_file(f, variables=ALL_VARIABLES, n_frames=1, tilt_last=self.tilt_last)
+                read_file(
+                    f, variables=ALL_VARIABLES, n_frames=self.n_frames, tilt_last=self.tilt_last
+                )
             )
 
         # Transforms
@@ -119,10 +128,18 @@ class KerasDataLoader(keras.utils.PyDataset):
         for el in element_list:
             el["coordinates"] = el["coordinates"][None, ...]
 
-        # Concatenate into batch
+        # Concatenate into batch. With one frame, the frame axis of the radar fields serves as the
+        # batch axis. With several, the frames are stacked behind a new batch axis, and the
+        # per-frame label and time keep only the last frame.
         batch = {}
+        stacked = set(ALL_VARIABLES + ["range_folded_mask"]) if self.n_frames > 1 else set()
         for key in element_list[0].keys():
-            batch[key] = np.concatenate([el[key] for el in element_list])
+            if key in stacked:
+                batch[key] = np.stack([el[key] for el in element_list])
+            elif key in ("label", "time") and self.n_frames > 1:
+                batch[key] = np.concatenate([el[key][-1:] for el in element_list])
+            else:
+                batch[key] = np.concatenate([el[key] for el in element_list])
 
         # split into x,y
         x, y = pp.split_x_y(batch)

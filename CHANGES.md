@@ -21,7 +21,7 @@ classification head and to tooling around cached features:
 - `build_model(head=..., head_kwargs=...)` dispatches to those heads. The upstream `head='mlp'`
   option is removed; it flattened the feature map into a 4096-unit dense layer (~165M parameters)
   and was not a usable control.
-- `tornet-cache-features` (new): cuts a model at the last backbone dropout layer and writes float16
+- `tornet-cache-features` (new): cuts a model at the end of its backbone and writes float16
   feature maps (8 x 15 x 384 for the baseline) plus metadata per year and partition. `--verify`
   applies the model's own head to the cache and compares with saved full-model logits; on the
   pretrained weights the difference is at most 4e-4 over 7,021 test samples.
@@ -43,6 +43,15 @@ classification head and to tooling around cached features:
   target per sample (`contrastive_target`: the label, or `proximity`). `tornet-embeddings` (new)
   inspects a run's test embeddings: PCA scatters by category, EF and year, centroid cosines,
   nearest-centroid rates, and a k-means cross-tab against the categories.
+- End-to-end fine-tuning: `build_model` names the backbone's final dropout `features`, so the
+  backbone can be located in any model (upstream checkpoints fall back to the last Dropout).
+  `tornet-train` gains `head_kwargs`, `init_from` (a `.keras` path or `pretrained` for the authors'
+  Hugging Face weights, whose backbone is copied layer by layer while the head starts fresh) and
+  `backbone_lr_scale` (a learning-rate multiplier for the backbone, implemented as a per-variable
+  scaled Adam since Adam is invariant to gradient scale; 0 freezes the backbone).
+  `configs/finetune/*.json` fine-tune on fold B from the pretrained backbone with a fresh maxpool
+  head and with a class-token transformer head, at batch 64 (batch 128 needs 10.8 GB on the laptop
+  GPU) with `decay_steps` doubled so the per-epoch decay is unchanged.
 
 Known paper/code discrepancy, not altered: the paper describes 2, 3, 3, 3 convolutions per block,
 while the code and the pretrained weights have 2, 2, 3, 3. See `docs/project.md` section 3.

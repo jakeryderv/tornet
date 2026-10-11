@@ -314,9 +314,10 @@ of less training data and a higher tornado base rate (13% vs 6%); compare the hy
 baseline on the same subset, never against the published numbers. The bootstrap CI on the subset
 NC AUC is about ±0.016, which is the noise floor a variant has to clear.
 
-**Config notes.** `decay_steps` in each config equals that config's steps per epoch at batch 128,
-matching the paper's one-epoch decay period. Batch 128 may not fit in 12 GB; if so, drop to 64 and
-double `decay_steps`.
+**Config notes.** `decay_steps` in each config equals that config's steps per epoch, matching the
+paper's one-epoch decay period. The local configs use batch 64: the paper's batch 128 runs out of
+memory on the 12 GB laptop GPU (confirmed 2026-10-11, out of memory in epoch 2). At full scale on a
+larger GPU, restore batch 128 and halve `decay_steps`.
 
 **Loader throughput** (measured 2026-10-10, 2014 train files, batch 128): single-threaded 58 files/s;
 threaded `workers > 1` **segfaults** (NetCDF/HDF5 is not thread-safe); multiprocessing 4 workers

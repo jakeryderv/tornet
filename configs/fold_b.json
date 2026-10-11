@@ -1,7 +1,7 @@
 {
-    "_note": "Three-fold local CV, fold B: hold out 2014.",
+    "_note": "Three-fold local CV, fold B: hold out 2014. Batch 64 (steps/epoch = decay_steps) because batch 128 runs out of memory on a 12 GB GPU.",
     "epochs": 15,
-    "batch_size": 128,
+    "batch_size": 64,
     "train_years": [
         2013,
         2015
@@ -11,7 +11,7 @@
     ],
     "start_filters": 48,
     "learning_rate": 0.0001,
-    "decay_steps": 182,
+    "decay_steps": 364,
     "decay_rate": 0.958,
     "l2_reg": 1e-05,
     "wN": 1.0,

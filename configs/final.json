@@ -1,7 +1,7 @@
 {
-    "_note": "Retrain on all three years with no validation set, as the paper does after CV. Evaluate with: uv run tornet-test --model_path experiments/latest/checkpoints/last.keras --years 2013 2014 2015",
+    "_note": "Retrain on all three years with no validation set, as the paper does after CV. Evaluate with: uv run tornet-test --model_path experiments/latest/checkpoints/last.keras --years 2013 2014 2015. Batch 64 (steps/epoch = decay_steps) because batch 128 runs out of memory on a 12 GB GPU.",
     "epochs": 15,
-    "batch_size": 128,
+    "batch_size": 64,
     "train_years": [
         2013,
         2014,
@@ -10,7 +10,7 @@
     "val_years": [],
     "start_filters": 48,
     "learning_rate": 0.0001,
-    "decay_steps": 318,
+    "decay_steps": 636,
     "decay_rate": 0.958,
     "l2_reg": 1e-05,
     "wN": 1.0,

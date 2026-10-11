@@ -21,6 +21,9 @@ import numpy as np
 
 # Keras must see the backend before it is imported anywhere, including via tornet.metrics.
 os.environ.setdefault("KERAS_BACKEND", "torch")
+# Let the CUDA caching allocator grow segments instead of fragmenting: the last, smaller batch of
+# an epoch changes tensor shapes, and without this a 12 GB GPU ran out of memory at 7.75 GB live.
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 
 import keras  # noqa: E402
 

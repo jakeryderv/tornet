@@ -1,0 +1,13 @@
+{
+  "AUC": 0.8907877206802368,
+  "AUCPR": 0.30746549367904663,
+  "BinaryAccuracy": 0.9389638304710388,
+  "Precision": 0.3220720589160919,
+  "Recall": 0.5257353186607361,
+  "F1": 0.3994412422180176,
+  "years": [
+    2021,
+    2022
+  ],
+  "checkpoint": "/workspace/experiments/frozen_temporal_attention_full_261012_095603/checkpoints/best.keras"
+}

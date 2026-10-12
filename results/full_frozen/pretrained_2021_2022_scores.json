@@ -1,0 +1,13 @@
+{
+  "AUC": 0.8783567547798157,
+  "AUCPR": 0.3395937979221344,
+  "BinaryAccuracy": 0.9535840749740601,
+  "Precision": 0.4035087823867798,
+  "Recall": 0.4227941036224365,
+  "F1": 0.4129263162612915,
+  "model_path": "/root/.cache/huggingface/hub/models--tornet-ml--tornado_detector_baseline_v1/snapshots/b4d103aa9b2769d7c9258f84de89f876b0a22787/tornado_detector_baseline.keras",
+  "years": [
+    2021,
+    2022
+  ]
+}

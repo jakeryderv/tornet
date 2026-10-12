@@ -1,0 +1,37 @@
+{
+  "AUC": 0.9488327503204346,
+  "AUCPR": 0.7168236970901489,
+  "best_epoch": 10,
+  "epochs_run": 15,
+  "exp_name": "frozen_temporal_attention_full",
+  "head": "temporal_attention",
+  "head_kwargs": {},
+  "frames": 4,
+  "aux_target": null,
+  "contrastive_target": null,
+  "aux_weight": null,
+  "params": 923137,
+  "seed": 1234,
+  "train_years": [
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020
+  ],
+  "val_years": [
+    2021,
+    2022
+  ],
+  "git_commit": "78d1afb",
+  "git_dirty": true,
+  "best_checkpoint": "/workspace/experiments/frozen_temporal_attention_full_261012_095603/checkpoints/best.keras",
+  "last_checkpoint": "/workspace/experiments/frozen_temporal_attention_full_261012_095603/checkpoints/last.keras",
+  "expdir": "/workspace/experiments/frozen_temporal_attention_full_261012_095603",
+  "test_AUC": 0.8907877206802368,
+  "test_AUCPR": 0.30746549367904663,
+  "predictions": "/workspace/experiments/frozen_temporal_attention_full_261012_095603/predictions.csv"
+}

@@ -346,6 +346,56 @@ cache 2013–2022 four-frame features once (about 75 GB on the volume), train th
 2013–2020 with validation on the 2021–2022 train partition, score on the 2021–2022 test partition,
 15 epochs. Seeds are cheap on the cache and should follow if the first pass is within noise.
 
+### Experiment 5 result: frozen temporal heads at full scale (RunPod, 2026-10-12)
+
+The Experiment 4 protocol on all ten years (`scripts/runpod/frozen_heads.sh`, one RTX PRO 6000 pod
+in US-NE-1, 1.5 h, about $4): the published backbone's four-frame features cached for every sample
+(171,666 train and 31,467 test files, 75 GB on the volume at `/workspace/tornet/features_4f`),
+heads trained for 15 epochs on 2013–2020 (130,479 samples), checkpoint by validation AUC on the
+2021–2022 train partition (41,187), scored on the 2021–2022 test partition (7,045 samples, 272
+confirmed tornadoes). The published model was scored on the same test files for the reference row.
+Artifacts in `results/full_frozen/` (per-run `results.json`, `history.csv`, `predictions.csv`;
+`scores_all.{json,txt}` is the four-way paired score; `pod.log`).
+
+| Run | best epoch | val AUC | NC AUC | NC AUCPR | RC AUC | WC AUC | AUC 2021 / 2022 |
+|---|---|---|---|---|---|---|---|
+| published model | | | 0.8786 | 0.341 | 0.9293 | 0.7835 | 0.865 / 0.900 |
+| frozen, maxpool head, last frame (control) | 5 | 0.9482 | 0.8915 | 0.342 | 0.9420 | 0.7966 | 0.886 / 0.898 |
+| frozen, temporal attention, 4 frames | 10 | 0.9488 | 0.8908 | 0.310 | 0.9430 | 0.7928 | 0.880 / 0.905 |
+| frozen, temporal concat, 4 frames | 9 | 0.9474 | 0.8885 | 0.323 | 0.9413 | 0.7893 | 0.885 / 0.891 |
+
+Paired bootstrap ΔAUC:
+
+| | NC | RC | WC | NC ΔAUCPR |
+|---|---|---|---|---|
+| control − published | +0.0128 [+0.0053, +0.0210] | +0.0127 [+0.0061, +0.0203] | +0.0131 [+0.0054, +0.0210] | +0.001 |
+| attention − control | −0.0006 [−0.0076, +0.0083] | +0.0011 [−0.0071, +0.0096] | −0.0038 [−0.0130, +0.0072] | −0.032 |
+| concat − control | −0.0030 [−0.0088, +0.0061] | −0.0007 [−0.0080, +0.0077] | −0.0074 [−0.0146, +0.0008] | −0.019 |
+
+What this says:
+
+- **The fold B temporal gain did not replicate.** On eight training years and a held-out pair of
+  test years, both temporal heads tie the single-frame control on AUC and are worse on AUCPR. The
+  Experiment 4 result (+0.010 with an interval clear of zero) was either specific to 2013–2015 or a
+  fluke of that test set; either way it is not a property of the frozen features in general.
+  Validation on 41k samples agrees: the three heads are within 0.0014.
+- **Retraining the authors' head on their own frozen features beats the shipped weights by
+  0.013 AUC**, significant on every view, with equal AUCPR. Same backbone, same head architecture,
+  same validation years as the authors used; the differences are label smoothing 0.1, our
+  learning-rate schedule, and checkpoint selection over 15 epochs. This is the only robust gain
+  found so far and it is a training-recipe effect, not an architecture one. Worth a seed check
+  before claiming it.
+- **Statistical power is thinner than fold B.** 272 confirmed tornadoes in the 2021–2022 test
+  partition against 770 on fold B; the NC AUC interval is about ±0.02 and the paired interval
+  about ±0.008. A 0.005 effect would not be visible here. Seeds on the cache cost about $1.50 per
+  head per three seeds plus 14 minutes of feature loading per run from the volume.
+
+Where this leaves the hybrid question: four experiments on heads over frozen or fine-tuned
+single-frame features, plus one from scratch on a subset, have not produced an architectural gain
+that survives a change of years. Remaining untested: a backbone trained with temporal context from
+the start at full scale (Plan B), which Experiment 3's warned-negative split hinted at but is a
+multi-hour GPU run per variant; and the training-recipe finding above, which is cheap to firm up.
+
 ### Training-signal ideas (agreed order: A then B)
 
 - **A. Continuous auxiliary targets, not EF-based** (EF ratings are survey-based, inconsistent at the

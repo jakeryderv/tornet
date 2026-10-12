@@ -1,0 +1,37 @@
+{
+  "AUC": 0.9473576545715332,
+  "AUCPR": 0.72008216381073,
+  "best_epoch": 9,
+  "epochs_run": 15,
+  "exp_name": "frozen_temporal_concat_full",
+  "head": "temporal_concat",
+  "head_kwargs": {},
+  "frames": 4,
+  "aux_target": null,
+  "contrastive_target": null,
+  "aux_weight": null,
+  "params": 918529,
+  "seed": 1234,
+  "train_years": [
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020
+  ],
+  "val_years": [
+    2021,
+    2022
+  ],
+  "git_commit": "78d1afb",
+  "git_dirty": true,
+  "best_checkpoint": "/workspace/experiments/frozen_temporal_concat_full_261012_100430/checkpoints/best.keras",
+  "last_checkpoint": "/workspace/experiments/frozen_temporal_concat_full_261012_100430/checkpoints/last.keras",
+  "expdir": "/workspace/experiments/frozen_temporal_concat_full_261012_100430",
+  "test_AUC": 0.8884490132331848,
+  "test_AUCPR": 0.3202190399169922,
+  "predictions": "/workspace/experiments/frozen_temporal_concat_full_261012_100430/predictions.csv"
+}

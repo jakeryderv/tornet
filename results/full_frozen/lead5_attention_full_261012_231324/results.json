@@ -1,0 +1,42 @@
+{
+  "AUC": 0.9192740321159363,
+  "AUCPR": 0.5919202566146851,
+  "best_epoch": 14,
+  "epochs_run": 15,
+  "exp_name": "lead5_attention_full",
+  "head": "temporal_attention",
+  "head_kwargs": {},
+  "frames": 4,
+  "frames_used": [
+    0,
+    1,
+    2
+  ],
+  "aux_target": null,
+  "contrastive_target": null,
+  "aux_weight": null,
+  "params": 922753,
+  "seed": 1234,
+  "train_years": [
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020
+  ],
+  "val_years": [
+    2021,
+    2022
+  ],
+  "git_commit": "11c3241",
+  "git_dirty": true,
+  "best_checkpoint": "/workspace/experiments/lead5_attention_full_261012_231324/checkpoints/best.keras",
+  "last_checkpoint": "/workspace/experiments/lead5_attention_full_261012_231324/checkpoints/last.keras",
+  "expdir": "/workspace/experiments/lead5_attention_full_261012_231324",
+  "test_AUC": 0.8589359521865845,
+  "test_AUCPR": 0.22976842522621155,
+  "predictions": "/workspace/experiments/lead5_attention_full_261012_231324/predictions.csv"
+}

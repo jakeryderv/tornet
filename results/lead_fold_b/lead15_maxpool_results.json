@@ -1,0 +1,33 @@
+{
+  "AUC": 0.840817928314209,
+  "AUCPR": 0.44624462723731995,
+  "best_epoch": 5,
+  "epochs_run": 30,
+  "exp_name": "lead15_maxpool_fold_b",
+  "head": "maxpool",
+  "head_kwargs": {},
+  "frames": 4,
+  "frames_used": [
+    0
+  ],
+  "aux_target": null,
+  "contrastive_target": null,
+  "aux_weight": null,
+  "params": 328705,
+  "seed": 1234,
+  "train_years": [
+    2013,
+    2015
+  ],
+  "val_years": [
+    2014
+  ],
+  "git_commit": "11c3241",
+  "git_dirty": false,
+  "best_checkpoint": "experiments/lead15_maxpool_fold_b_261012_171246/checkpoints/best.keras",
+  "last_checkpoint": "experiments/lead15_maxpool_fold_b_261012_171246/checkpoints/last.keras",
+  "expdir": "experiments/lead15_maxpool_fold_b_261012_171246",
+  "test_AUC": 0.8381534814834595,
+  "test_AUCPR": 0.5288202166557312,
+  "predictions": "experiments/lead15_maxpool_fold_b_261012_171246/predictions.csv"
+}

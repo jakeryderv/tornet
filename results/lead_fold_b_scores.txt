@@ -1,0 +1,129 @@
+
+=== experiments/frozen_maxpool_fold_b_261012_022652/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7021        770 0.8973 [0.884, 0.909] 0.6849 0.4652 0.60 0.740 0.556
+  RC 4436        770 0.9465 [0.937, 0.955] 0.8739 0.6456 0.15 0.817 0.755
+  WC 3355        770 0.8276 [0.808, 0.846] 0.7082 0.4698 0.60 0.752 0.556
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.32 (n=268), EF1 0.55 (n=278), EF2 0.84 (n=122), EF3 0.78 (n=58), EF4 0.93 (n=44)
+  AUC by year: 2013 0.964, 2014 0.892, 2015 0.892
+
+=== experiments/lead15_maxpool_fold_b_261012_171246/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7021        770 0.8382 [0.824, 0.850] 0.5291 0.3197 0.37 0.493 0.477
+  RC 4436        770 0.9108 [0.899, 0.923] 0.7733 0.5358 0.17 0.706 0.690
+  WC 3355        770 0.7352 [0.715, 0.756] 0.5681 0.3365 0.33 0.496 0.512
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.31 (n=268), EF1 0.47 (n=278), EF2 0.72 (n=122), EF3 0.43 (n=58), EF4 0.93 (n=44)
+  AUC by year: 2013 0.938, 2014 0.842, 2015 0.818
+
+=== experiments/lead10_maxpool_fold_b_261012_171452/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7021        770 0.8760 [0.863, 0.888] 0.5979 0.3846 0.44 0.581 0.532
+  RC 4436        770 0.9363 [0.926, 0.945] 0.8285 0.5801 0.19 0.766 0.705
+  WC 3355        770 0.7903 [0.770, 0.809] 0.6321 0.4000 0.43 0.613 0.535
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.32 (n=268), EF1 0.52 (n=278), EF2 0.82 (n=122), EF3 0.67 (n=58), EF4 0.95 (n=44)
+  AUC by year: 2013 0.944, 2014 0.880, 2015 0.860
+
+=== experiments/lead10_concat_fold_b_261012_171701/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7021        770 0.8740 [0.861, 0.886] 0.6003 0.3818 0.42 0.579 0.529
+  RC 4436        770 0.9347 [0.922, 0.944] 0.8318 0.5897 0.16 0.737 0.747
+  WC 3355        770 0.7878 [0.768, 0.806] 0.6325 0.3968 0.39 0.585 0.552
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.31 (n=268), EF1 0.51 (n=278), EF2 0.84 (n=122), EF3 0.60 (n=58), EF4 0.95 (n=44)
+  AUC by year: 2013 0.953, 2014 0.875, 2015 0.860
+
+=== experiments/lead10_attention_fold_b_261012_172022/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7021        770 0.8726 [0.858, 0.884] 0.5853 0.3821 0.45 0.568 0.539
+  RC 4436        770 0.9347 [0.923, 0.944] 0.8303 0.5835 0.16 0.730 0.744
+  WC 3355        770 0.7846 [0.764, 0.803] 0.6172 0.3952 0.45 0.597 0.539
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.34 (n=268), EF1 0.51 (n=278), EF2 0.85 (n=122), EF3 0.64 (n=58), EF4 0.98 (n=44)
+  AUC by year: 2013 0.942, 2014 0.876, 2015 0.857
+
+=== experiments/lead5_maxpool_fold_b_261012_172622/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7021        770 0.8927 [0.882, 0.905] 0.6512 0.4221 0.55 0.697 0.517
+  RC 4436        770 0.9464 [0.936, 0.955] 0.8642 0.6440 0.21 0.851 0.726
+  WC 3355        770 0.8167 [0.796, 0.832] 0.6795 0.4326 0.42 0.636 0.575
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.28 (n=268), EF1 0.49 (n=278), EF2 0.84 (n=122), EF3 0.74 (n=58), EF4 0.89 (n=44)
+  AUC by year: 2013 0.960, 2014 0.891, 2015 0.882
+
+=== experiments/lead5_concat_fold_b_261012_172832/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7021        770 0.8930 [0.882, 0.905] 0.6708 0.4443 0.45 0.619 0.612
+  RC 4436        770 0.9444 [0.934, 0.955] 0.8688 0.6591 0.20 0.841 0.753
+  WC 3355        770 0.8201 [0.800, 0.837] 0.6969 0.4595 0.45 0.649 0.612
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.37 (n=268), EF1 0.61 (n=278), EF2 0.93 (n=122), EF3 0.76 (n=58), EF4 1.00 (n=44)
+  AUC by year: 2013 0.959, 2014 0.890, 2015 0.885
+
+=== experiments/lead5_attention_fold_b_261012_173258/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7021        770 0.8961 [0.885, 0.907] 0.6452 0.4279 0.58 0.652 0.555
+  RC 4436        770 0.9503 [0.940, 0.959] 0.8683 0.6488 0.21 0.842 0.739
+  WC 3355        770 0.8192 [0.799, 0.834] 0.6728 0.4406 0.41 0.577 0.651
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.31 (n=268), EF1 0.54 (n=278), EF2 0.90 (n=122), EF3 0.67 (n=58), EF4 1.00 (n=44)
+  AUC by year: 2013 0.959, 2014 0.899, 2015 0.882
+
+=== experiments/lead15_maxpool_fold_b_261012_171246/predictions.csv minus experiments/frozen_maxpool_fold_b_261012_022652/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC -0.0592 95% CI [-0.0729, -0.0465]   dAUCPR -0.1558
+  RC: dAUC -0.0357 95% CI [-0.0474, -0.0255]   dAUCPR -0.1006
+  WC: dAUC -0.0924 95% CI [-0.1158, -0.0719]   dAUCPR -0.1402
+
+=== experiments/lead10_maxpool_fold_b_261012_171452/predictions.csv minus experiments/frozen_maxpool_fold_b_261012_022652/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC -0.0214 95% CI [-0.0326, -0.0101]   dAUCPR -0.0870
+  RC: dAUC -0.0102 95% CI [-0.0188, -0.0024]   dAUCPR -0.0454
+  WC: dAUC -0.0373 95% CI [-0.0549, -0.0207]   dAUCPR -0.0762
+
+=== experiments/lead10_concat_fold_b_261012_171701/predictions.csv minus experiments/frozen_maxpool_fold_b_261012_022652/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC -0.0234 95% CI [-0.0349, -0.0129]   dAUCPR -0.0847
+  RC: dAUC -0.0118 95% CI [-0.0217, -0.0035]   dAUCPR -0.0421
+  WC: dAUC -0.0398 95% CI [-0.0589, -0.0220]   dAUCPR -0.0757
+
+=== experiments/lead10_attention_fold_b_261012_172022/predictions.csv minus experiments/frozen_maxpool_fold_b_261012_022652/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC -0.0247 95% CI [-0.0352, -0.0142]   dAUCPR -0.0997
+  RC: dAUC -0.0118 95% CI [-0.0205, -0.0035]   dAUCPR -0.0437
+  WC: dAUC -0.0430 95% CI [-0.0602, -0.0274]   dAUCPR -0.0910
+
+=== experiments/lead5_maxpool_fold_b_261012_172622/predictions.csv minus experiments/frozen_maxpool_fold_b_261012_022652/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC -0.0046 95% CI [-0.0115, +0.0039]   dAUCPR -0.0337
+  RC: dAUC -0.0001 95% CI [-0.0067, +0.0064]   dAUCPR -0.0098
+  WC: dAUC -0.0109 95% CI [-0.0223, +0.0006]   dAUCPR -0.0287
+
+=== experiments/lead5_concat_fold_b_261012_172832/predictions.csv minus experiments/frozen_maxpool_fold_b_261012_022652/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC -0.0043 95% CI [-0.0138, +0.0046]   dAUCPR -0.0141
+  RC: dAUC -0.0021 95% CI [-0.0090, +0.0042]   dAUCPR -0.0052
+  WC: dAUC -0.0075 95% CI [-0.0219, +0.0052]   dAUCPR -0.0113
+
+=== experiments/lead5_attention_fold_b_261012_173258/predictions.csv minus experiments/frozen_maxpool_fold_b_261012_022652/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC -0.0013 95% CI [-0.0100, +0.0079]   dAUCPR -0.0397
+  RC: dAUC +0.0037 95% CI [-0.0031, +0.0104]   dAUCPR -0.0056
+  WC: dAUC -0.0084 95% CI [-0.0237, +0.0050]   dAUCPR -0.0354
+
+wrote results/lead_fold_b_scores.json
+
+##### same-lead pairings, fold B
+=== experiments/lead10_concat_fold_b_261012_171701/predictions.csv minus experiments/lead10_maxpool_fold_b_261012_171452/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC -0.0020 95% CI [-0.0058, +0.0019]   dAUCPR +0.0024
+  RC: dAUC -0.0016 95% CI [-0.0049, +0.0014]   dAUCPR +0.0033
+  WC: dAUC -0.0025 95% CI [-0.0084, +0.0034]   dAUCPR +0.0004
+
+=== experiments/lead10_attention_fold_b_261012_172022/predictions.csv minus experiments/lead10_maxpool_fold_b_261012_171452/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC -0.0033 95% CI [-0.0074, +0.0001]   dAUCPR -0.0126
+  RC: dAUC -0.0016 95% CI [-0.0049, +0.0016]   dAUCPR +0.0018
+  WC: dAUC -0.0057 95% CI [-0.0114, -0.0004]   dAUCPR -0.0148
+=== experiments/lead5_concat_fold_b_261012_172832/predictions.csv minus experiments/lead5_maxpool_fold_b_261012_172622/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC +0.0003 95% CI [-0.0040, +0.0043]   dAUCPR +0.0196
+  RC: dAUC -0.0020 95% CI [-0.0063, +0.0018]   dAUCPR +0.0046
+  WC: dAUC +0.0035 95% CI [-0.0022, +0.0112]   dAUCPR +0.0174
+
+=== experiments/lead5_attention_fold_b_261012_173258/predictions.csv minus experiments/lead5_maxpool_fold_b_261012_172622/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC +0.0033 95% CI [-0.0010, +0.0077]   dAUCPR -0.0060
+  RC: dAUC +0.0039 95% CI [-0.0009, +0.0076]   dAUCPR +0.0041
+  WC: dAUC +0.0025 95% CI [-0.0032, +0.0096]   dAUCPR -0.0067

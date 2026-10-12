@@ -1,0 +1,35 @@
+{
+  "AUC": 0.8878254294395447,
+  "AUCPR": 0.5843724012374878,
+  "best_epoch": 8,
+  "epochs_run": 30,
+  "exp_name": "lead5_concat_fold_b",
+  "head": "temporal_concat",
+  "head_kwargs": {},
+  "frames": 4,
+  "frames_used": [
+    0,
+    1,
+    2
+  ],
+  "aux_target": null,
+  "contrastive_target": null,
+  "aux_weight": null,
+  "params": 721921,
+  "seed": 1234,
+  "train_years": [
+    2013,
+    2015
+  ],
+  "val_years": [
+    2014
+  ],
+  "git_commit": "11c3241",
+  "git_dirty": false,
+  "best_checkpoint": "experiments/lead5_concat_fold_b_261012_172832/checkpoints/best.keras",
+  "last_checkpoint": "experiments/lead5_concat_fold_b_261012_172832/checkpoints/last.keras",
+  "expdir": "experiments/lead5_concat_fold_b_261012_172832",
+  "test_AUC": 0.8930259346961975,
+  "test_AUCPR": 0.6706652641296387,
+  "predictions": "experiments/lead5_concat_fold_b_261012_172832/predictions.csv"
+}

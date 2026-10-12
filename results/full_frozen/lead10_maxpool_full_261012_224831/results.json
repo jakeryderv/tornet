@@ -1,0 +1,40 @@
+{
+  "AUC": 0.8946479558944702,
+  "AUCPR": 0.5072392225265503,
+  "best_epoch": 5,
+  "epochs_run": 15,
+  "exp_name": "lead10_maxpool_full",
+  "head": "maxpool",
+  "head_kwargs": {},
+  "frames": 4,
+  "frames_used": [
+    1
+  ],
+  "aux_target": null,
+  "contrastive_target": null,
+  "aux_weight": null,
+  "params": 328705,
+  "seed": 1234,
+  "train_years": [
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020
+  ],
+  "val_years": [
+    2021,
+    2022
+  ],
+  "git_commit": "11c3241",
+  "git_dirty": true,
+  "best_checkpoint": "/workspace/experiments/lead10_maxpool_full_261012_224831/checkpoints/best.keras",
+  "last_checkpoint": "/workspace/experiments/lead10_maxpool_full_261012_224831/checkpoints/last.keras",
+  "expdir": "/workspace/experiments/lead10_maxpool_full_261012_224831",
+  "test_AUC": 0.8212083578109741,
+  "test_AUCPR": 0.15235409140586853,
+  "predictions": "/workspace/experiments/lead10_maxpool_full_261012_224831/predictions.csv"
+}

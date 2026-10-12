@@ -396,6 +396,73 @@ that survives a change of years. Remaining untested: a backbone trained with tem
 the start at full scale (Plan B), which Experiment 3's warned-negative split hinted at but is a
 multi-hour GPU run per variant; and the training-recipe finding above, which is cheap to firm up.
 
+### Experiment 6 result: prediction from earlier scans (lead-time study, 2026-10-12)
+
+TorNet's label follows the storm report's start and end times, and most tornado samples sit at
+onset: in the 2021–2022 test partition the tornado is present in only the newest scan for 125 of
+272 tornado samples, in the newest two for 83, three for 37, all four for 27, and for 67 the newest
+scan is itself up to 5 min before onset (still labelled 1). So hiding the newer scans turns
+detection into short-lead prediction with the same labels. Heads on the frozen four-frame cache
+were given only the older scans (`frames` key in `configs/lead/*.json`): the t−15 scan alone
+(≈15 min lead), t−10 alone or t−15..t−10 (≈10 min), t−5 alone or t−15..t−5 (≈5 min). The control
+is the all-scans maxpool head from Experiments 4/5. Fold B at 30 epochs
+(`results/lead_fold_b_scores.{json,txt}`, `results/lead_fold_b/`), full data at 15 epochs on one
+pod for 1.2 h, about $3 (`results/full_frozen/lead_*`, `scripts/runpod/lead_heads.sh`).
+
+NC AUC (AUCPR) and WC AUC by lead, single scan vs the two temporal heads over the scans up to
+that lead:
+
+| lead | input | fold B NC | fold B WC | full NC | full WC |
+|---|---|---|---|---|---|
+| 15 min | t−15 alone | 0.838 (0.53) | 0.735 | 0.795 (0.13) | 0.643 |
+| 10 min | t−10 alone | 0.876 (0.60) | 0.790 | 0.821 (0.15) | 0.679 |
+| 10 min | concat t−15, t−10 | 0.874 (0.60) | 0.788 | **0.833** (0.16) | **0.695** |
+| 10 min | attention t−15, t−10 | 0.873 (0.59) | 0.785 | **0.831** (0.16) | **0.690** |
+| 5 min | t−5 alone | 0.893 (0.65) | 0.817 | 0.855 (0.24) | 0.739 |
+| 5 min | concat t−15..t−5 | 0.893 (0.67) | 0.820 | 0.858 (0.22) | 0.737 |
+| 5 min | attention t−15..t−5 | 0.896 (0.65) | 0.819 | 0.859 (0.23) | 0.739 |
+| 0 | t alone (control) | 0.897 (0.68) | 0.828 | 0.892 (0.34) | 0.797 |
+
+Paired ΔAUC of the temporal heads against the single scan at the same lead:
+
+| | fold B NC | full NC | full WC |
+|---|---|---|---|
+| 10 min, concat − single | −0.002 [−0.006, +0.002] | **+0.012 [+0.006, +0.017]** | **+0.017 [+0.008, +0.025]** |
+| 10 min, attention − single | −0.003 [−0.007, +0.000] | **+0.010 [+0.002, +0.017]** | +0.011 [+0.001, +0.023] |
+| 5 min, concat − single | +0.000 [−0.004, +0.004] | +0.004 [−0.004, +0.009] | −0.002 [−0.013, +0.008] |
+| 5 min, attention − single | +0.003 [−0.001, +0.008] | +0.005 [−0.002, +0.012] | −0.000 [−0.010, +0.009] |
+| 0, either − single (Exp 4/5) | +0.006 to +0.010 | −0.001 to −0.003 | −0.004 to −0.007 |
+
+What this says:
+
+- **The frozen detection features predict, with a steep decay.** On 2021–2022 a single scan
+  gives 0.855 at 5 min, 0.821 at 10, 0.795 at 15, against 0.892 at onset; AUCPR falls from 0.34
+  to 0.13. The warned-versus-confirmed view loses about twice as much as the overall one
+  (0.797 → 0.643), so what disappears with lead is mostly the ability to tell a tornadic storm
+  from a warned one; separating storms from clear air survives. Fold B decays more gently
+  (0.897 → 0.838) because its test set includes training-year storms.
+- **Older scans help exactly where they should, and only there.** At 10 min lead on the full
+  data, adding the t−15 scan is worth +0.012 (concat) or +0.010 (attention), significant on every
+  view and largest on warned negatives (+0.017). At 5 min the gain is +0.004 and not significant;
+  at onset it is nil (Experiment 5). Fold B shows nothing at any lead. The consistent reading is
+  that history matters when the newest scan is pre-tornado, that the effect is small (about a
+  sixth of the lead penalty recovered), and that two years of training data cannot learn it.
+- **Attention is still not better than concat.** At every lead the two are within 0.003 of each
+  other; concat is slightly ahead at 10 min on the full data. Nothing in six experiments
+  separates them.
+- **Caveats.** One seed; 272 confirmed tornadoes in the test partition; the frozen backbone was
+  trained for detection and only incidentally encodes precursors, so these curves are a lower
+  bound on predictability; lead is approximate (scans are 4–6 min apart and onset times are
+  report-based).
+
+Decision point. The prediction framing is the first place temporal context has shown a
+significant, interpretable gain, and it is the natural one for an operational use (a warning
+needs lead). Two ways forward, in order of cost: (a) fine-tune the backbone on the prediction
+target with the t−15..t−10 window as input, so it can learn precursor features rather than reuse
+detection ones (Plan A machinery, hours per run on the pod); (b) longer sequences via
+TorNet-Temporal (8–22 scans of the same events), where leads of 30–60 min become testable and a
+3D CNN or attention over time is the natural model.
+
 ### Training-signal ideas (agreed order: A then B)
 
 - **A. Continuous auxiliary targets, not EF-based** (EF ratings are survey-based, inconsistent at the

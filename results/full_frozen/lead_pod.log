@@ -1,0 +1,378 @@
+=== 2026-10-12T22:23:35+00:00 train configs/lead/full_*.json
+INFO:root:features from /workspace/tornet/features_4f
+INFO:root:Using torch backend
+INFO:root:{'features_dir': 'features_4f', 'train_years': [2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020], 'val_years': [2021, 2022], 'test_years': [2021, 2022], 'head': 'maxpool', 'head_kwargs': {}, 'frames': [0], 'epochs': 15, 'batch_size': 256, 'learning_rate': 0.0003, 'decay_steps': None, 'decay_rate': 0.958, 'wN': 1.0, 'w0': 1.0, 'w1': 1.0, 'w2': 2.0, 'wW': 0.5, 'label_smooth': 0.1, 'aux_target': None, 'aux_weight': 1.0, 'aux_window': 60.0, 'contrastive_target': 'label', 'contrastive_weight': 1.0, 'contrastive_sigma': 0.25, 'temperature': 0.1, 'seed': 1234, 'loader_workers': 4, 'exp_name': 'lead15_maxpool_full', 'exp_dir': '/workspace/experiments', 'save_all_checkpoints': False, '_note': 'Lead-time study on the frozen four-frame cache: the oldest scan (t-15) alone; same labels as detection. Full data, test on the 2021-2022 test partition.'}
+INFO:root:train (130479, 4, 8, 15, 384), val (41187, 4, 8, 15, 384)
+INFO:root:head maxpool {}: 328,705 params
+INFO:root:expdir=/workspace/experiments/lead15_maxpool_full_261012_224542 (git 11c3241+dirty)
+Epoch 1/15
+510/510 - 11s - 22ms/step - AUC: 0.8171 - AUCPR: 0.3514 - BinaryAccuracy: 0.9268 - F1: 0.3438 - Precision: 0.4995 - Recall: 0.2621 - loss: 0.3046 - val_AUC: 0.8590 - val_AUCPR: 0.4156 - val_BinaryAccuracy: 0.9442 - val_F1: 0.3929 - val_Precision: 0.5072 - val_Recall: 0.3207 - val_loss: 0.2770
+Epoch 2/15
+510/510 - 11s - 21ms/step - AUC: 0.8319 - AUCPR: 0.3973 - BinaryAccuracy: 0.9294 - F1: 0.3677 - Precision: 0.5301 - Recall: 0.2814 - loss: 0.2946 - val_AUC: 0.8618 - val_AUCPR: 0.4284 - val_BinaryAccuracy: 0.9478 - val_F1: 0.4026 - val_Precision: 0.5670 - val_Recall: 0.3121 - val_loss: 0.2778
+Epoch 3/15
+510/510 - 11s - 22ms/step - AUC: 0.8368 - AUCPR: 0.4054 - BinaryAccuracy: 0.9291 - F1: 0.3750 - Precision: 0.5302 - Recall: 0.2901 - loss: 0.2932 - val_AUC: 0.8615 - val_AUCPR: 0.4267 - val_BinaryAccuracy: 0.9495 - val_F1: 0.3800 - val_Precision: 0.6167 - val_Recall: 0.2746 - val_loss: 0.2752
+Epoch 4/15
+510/510 - 11s - 21ms/step - AUC: 0.8372 - AUCPR: 0.4087 - BinaryAccuracy: 0.9297 - F1: 0.3782 - Precision: 0.5372 - Recall: 0.2918 - loss: 0.2925 - val_AUC: 0.8587 - val_AUCPR: 0.4289 - val_BinaryAccuracy: 0.9500 - val_F1: 0.3755 - val_Precision: 0.6336 - val_Recall: 0.2668 - val_loss: 0.2742
+Epoch 5/15
+510/510 - 11s - 22ms/step - AUC: 0.8397 - AUCPR: 0.4125 - BinaryAccuracy: 0.9298 - F1: 0.3817 - Precision: 0.5360 - Recall: 0.2964 - loss: 0.2916 - val_AUC: 0.8632 - val_AUCPR: 0.4284 - val_BinaryAccuracy: 0.9481 - val_F1: 0.3869 - val_Precision: 0.5774 - val_Recall: 0.2909 - val_loss: 0.2747
+Epoch 6/15
+510/510 - 11s - 21ms/step - AUC: 0.8387 - AUCPR: 0.4143 - BinaryAccuracy: 0.9299 - F1: 0.3805 - Precision: 0.5372 - Recall: 0.2946 - loss: 0.2914 - val_AUC: 0.8621 - val_AUCPR: 0.4331 - val_BinaryAccuracy: 0.9479 - val_F1: 0.4033 - val_Precision: 0.5686 - val_Recall: 0.3125 - val_loss: 0.2741
+Epoch 7/15
+510/510 - 11s - 22ms/step - AUC: 0.8399 - AUCPR: 0.4175 - BinaryAccuracy: 0.9299 - F1: 0.3860 - Precision: 0.5389 - Recall: 0.3007 - loss: 0.2909 - val_AUC: 0.8636 - val_AUCPR: 0.4319 - val_BinaryAccuracy: 0.9474 - val_F1: 0.3944 - val_Precision: 0.5618 - val_Recall: 0.3039 - val_loss: 0.2747
+Epoch 8/15
+510/510 - 11s - 21ms/step - AUC: 0.8406 - AUCPR: 0.4202 - BinaryAccuracy: 0.9302 - F1: 0.3846 - Precision: 0.5413 - Recall: 0.2983 - loss: 0.2905 - val_AUC: 0.8632 - val_AUCPR: 0.4285 - val_BinaryAccuracy: 0.9473 - val_F1: 0.4012 - val_Precision: 0.5575 - val_Recall: 0.3134 - val_loss: 0.2765
+Epoch 9/15
+510/510 - 11s - 21ms/step - AUC: 0.8411 - AUCPR: 0.4209 - BinaryAccuracy: 0.9303 - F1: 0.3894 - Precision: 0.5431 - Recall: 0.3035 - loss: 0.2901 - val_AUC: 0.8644 - val_AUCPR: 0.4322 - val_BinaryAccuracy: 0.9460 - val_F1: 0.4045 - val_Precision: 0.5331 - val_Recall: 0.3259 - val_loss: 0.2733
+Epoch 10/15
+510/510 - 11s - 22ms/step - AUC: 0.8428 - AUCPR: 0.4221 - BinaryAccuracy: 0.9307 - F1: 0.3911 - Precision: 0.5444 - Recall: 0.3051 - loss: 0.2894 - val_AUC: 0.8662 - val_AUCPR: 0.4372 - val_BinaryAccuracy: 0.9494 - val_F1: 0.4005 - val_Precision: 0.6021 - val_Recall: 0.3000 - val_loss: 0.2725
+Epoch 11/15
+510/510 - 11s - 21ms/step - AUC: 0.8426 - AUCPR: 0.4251 - BinaryAccuracy: 0.9301 - F1: 0.3900 - Precision: 0.5442 - Recall: 0.3039 - loss: 0.2898 - val_AUC: 0.8652 - val_AUCPR: 0.4335 - val_BinaryAccuracy: 0.9498 - val_F1: 0.3889 - val_Precision: 0.6184 - val_Recall: 0.2836 - val_loss: 0.2735
+Epoch 12/15
+510/510 - 11s - 21ms/step - AUC: 0.8446 - AUCPR: 0.4286 - BinaryAccuracy: 0.9305 - F1: 0.3920 - Precision: 0.5456 - Recall: 0.3059 - loss: 0.2890 - val_AUC: 0.8656 - val_AUCPR: 0.4342 - val_BinaryAccuracy: 0.9475 - val_F1: 0.4098 - val_Precision: 0.5584 - val_Recall: 0.3237 - val_loss: 0.2735
+Epoch 13/15
+510/510 - 11s - 21ms/step - AUC: 0.8438 - AUCPR: 0.4279 - BinaryAccuracy: 0.9306 - F1: 0.3943 - Precision: 0.5436 - Recall: 0.3093 - loss: 0.2886 - val_AUC: 0.8627 - val_AUCPR: 0.4285 - val_BinaryAccuracy: 0.9487 - val_F1: 0.3879 - val_Precision: 0.5926 - val_Recall: 0.2884 - val_loss: 0.2731
+Epoch 14/15
+510/510 - 11s - 21ms/step - AUC: 0.8434 - AUCPR: 0.4269 - BinaryAccuracy: 0.9310 - F1: 0.3928 - Precision: 0.5514 - Recall: 0.3051 - loss: 0.2887 - val_AUC: 0.8648 - val_AUCPR: 0.4305 - val_BinaryAccuracy: 0.9450 - val_F1: 0.4107 - val_Precision: 0.5174 - val_Recall: 0.3405 - val_loss: 0.2747
+Epoch 15/15
+510/510 - 11s - 21ms/step - AUC: 0.8463 - AUCPR: 0.4337 - BinaryAccuracy: 0.9313 - F1: 0.3994 - Precision: 0.5547 - Recall: 0.3120 - loss: 0.2880 - val_AUC: 0.8641 - val_AUCPR: 0.4310 - val_BinaryAccuracy: 0.9479 - val_F1: 0.4047 - val_Precision: 0.5682 - val_Recall: 0.3142 - val_loss: 0.2727
+INFO:root:test scores: {'AUC': 0.7954174280166626, 'AUCPR': 0.12877801060676575, 'BinaryAccuracy': 0.9420865774154663, 'Precision': 0.2068965584039688, 'Recall': 0.1764705926179886, 'F1': 0.19047614932060242, 'years': [2021, 2022], 'checkpoint': '/workspace/experiments/lead15_maxpool_full_261012_224542/checkpoints/best.keras'}
+INFO:root:results: {'AUC': 0.8662446141242981, 'AUCPR': 0.4372466206550598, 'best_epoch': 10, 'epochs_run': 15, 'exp_name': 'lead15_maxpool_full', 'head': 'maxpool', 'head_kwargs': {}, 'frames': 4, 'frames_used': [0], 'aux_target': None, 'contrastive_target': None, 'aux_weight': None, 'params': 328705, 'seed': 1234, 'train_years': [2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020], 'val_years': [2021, 2022], 'git_commit': '11c3241', 'git_dirty': True, 'best_checkpoint': '/workspace/experiments/lead15_maxpool_full_261012_224542/checkpoints/best.keras', 'last_checkpoint': '/workspace/experiments/lead15_maxpool_full_261012_224542/checkpoints/last.keras', 'expdir': '/workspace/experiments/lead15_maxpool_full_261012_224542', 'test_AUC': 0.7954174280166626, 'test_AUCPR': 0.12877801060676575, 'predictions': '/workspace/experiments/lead15_maxpool_full_261012_224542/predictions.csv'}
+INFO:root:features from /workspace/tornet/features_4f
+INFO:root:Using torch backend
+INFO:root:{'features_dir': 'features_4f', 'train_years': [2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020], 'val_years': [2021, 2022], 'test_years': [2021, 2022], 'head': 'maxpool', 'head_kwargs': {}, 'frames': [1], 'epochs': 15, 'batch_size': 256, 'learning_rate': 0.0003, 'decay_steps': None, 'decay_rate': 0.958, 'wN': 1.0, 'w0': 1.0, 'w1': 1.0, 'w2': 2.0, 'wW': 0.5, 'label_smooth': 0.1, 'aux_target': None, 'aux_weight': 1.0, 'aux_window': 60.0, 'contrastive_target': 'label', 'contrastive_weight': 1.0, 'contrastive_sigma': 0.25, 'temperature': 0.1, 'seed': 1234, 'loader_workers': 4, 'exp_name': 'lead10_maxpool_full', 'exp_dir': '/workspace/experiments', 'save_all_checkpoints': False, '_note': 'Lead-time study on the frozen four-frame cache: the t-10 scan alone; same labels as detection. Full data, test on the 2021-2022 test partition.'}
+INFO:root:train (130479, 4, 8, 15, 384), val (41187, 4, 8, 15, 384)
+INFO:root:head maxpool {}: 328,705 params
+INFO:root:expdir=/workspace/experiments/lead10_maxpool_full_261012_224831 (git 11c3241+dirty)
+Epoch 1/15
+510/510 - 11s - 22ms/step - AUC: 0.8482 - AUCPR: 0.4271 - BinaryAccuracy: 0.9289 - F1: 0.4263 - Precision: 0.5208 - Recall: 0.3609 - loss: 0.2927 - val_AUC: 0.8900 - val_AUCPR: 0.5043 - val_BinaryAccuracy: 0.9495 - val_F1: 0.4580 - val_Precision: 0.5799 - val_Recall: 0.3784 - val_loss: 0.2648
+Epoch 2/15
+510/510 - 11s - 21ms/step - AUC: 0.8584 - AUCPR: 0.4657 - BinaryAccuracy: 0.9314 - F1: 0.4404 - Precision: 0.5440 - Recall: 0.3699 - loss: 0.2836 - val_AUC: 0.8915 - val_AUCPR: 0.5075 - val_BinaryAccuracy: 0.9496 - val_F1: 0.4596 - val_Precision: 0.5810 - val_Recall: 0.3802 - val_loss: 0.2653
+Epoch 3/15
+510/510 - 11s - 21ms/step - AUC: 0.8619 - AUCPR: 0.4731 - BinaryAccuracy: 0.9313 - F1: 0.4451 - Precision: 0.5467 - Recall: 0.3754 - loss: 0.2825 - val_AUC: 0.8900 - val_AUCPR: 0.5066 - val_BinaryAccuracy: 0.9512 - val_F1: 0.4384 - val_Precision: 0.6225 - val_Recall: 0.3384 - val_loss: 0.2639
+Epoch 4/15
+510/510 - 11s - 22ms/step - AUC: 0.8621 - AUCPR: 0.4743 - BinaryAccuracy: 0.9321 - F1: 0.4489 - Precision: 0.5531 - Recall: 0.3777 - loss: 0.2818 - val_AUC: 0.8911 - val_AUCPR: 0.5070 - val_BinaryAccuracy: 0.9530 - val_F1: 0.4339 - val_Precision: 0.6745 - val_Recall: 0.3198 - val_loss: 0.2646
+Epoch 5/15
+510/510 - 11s - 22ms/step - AUC: 0.8633 - AUCPR: 0.4760 - BinaryAccuracy: 0.9320 - F1: 0.4493 - Precision: 0.5514 - Recall: 0.3791 - loss: 0.2812 - val_AUC: 0.8946 - val_AUCPR: 0.5072 - val_BinaryAccuracy: 0.9505 - val_F1: 0.4519 - val_Precision: 0.6009 - val_Recall: 0.3621 - val_loss: 0.2646
+Epoch 6/15
+510/510 - 11s - 22ms/step - AUC: 0.8630 - AUCPR: 0.4785 - BinaryAccuracy: 0.9322 - F1: 0.4492 - Precision: 0.5536 - Recall: 0.3778 - loss: 0.2810 - val_AUC: 0.8869 - val_AUCPR: 0.5054 - val_BinaryAccuracy: 0.9497 - val_F1: 0.4614 - val_Precision: 0.5816 - val_Recall: 0.3823 - val_loss: 0.2668
+Epoch 7/15
+510/510 - 59s - 117ms/step - AUC: 0.8645 - AUCPR: 0.4786 - BinaryAccuracy: 0.9322 - F1: 0.4511 - Precision: 0.5544 - Recall: 0.3802 - loss: 0.2807 - val_AUC: 0.8933 - val_AUCPR: 0.5080 - val_BinaryAccuracy: 0.9501 - val_F1: 0.4648 - val_Precision: 0.5876 - val_Recall: 0.3845 - val_loss: 0.2628
+Epoch 8/15
+510/510 - 11s - 22ms/step - AUC: 0.8653 - AUCPR: 0.4815 - BinaryAccuracy: 0.9324 - F1: 0.4498 - Precision: 0.5554 - Recall: 0.3779 - loss: 0.2800 - val_AUC: 0.8915 - val_AUCPR: 0.5047 - val_BinaryAccuracy: 0.9514 - val_F1: 0.4546 - val_Precision: 0.6182 - val_Recall: 0.3595 - val_loss: 0.2637
+Epoch 9/15
+510/510 - 12s - 24ms/step - AUC: 0.8651 - AUCPR: 0.4828 - BinaryAccuracy: 0.9324 - F1: 0.4558 - Precision: 0.5551 - Recall: 0.3867 - loss: 0.2798 - val_AUC: 0.8913 - val_AUCPR: 0.5071 - val_BinaryAccuracy: 0.9471 - val_F1: 0.4708 - val_Precision: 0.5395 - val_Recall: 0.4177 - val_loss: 0.2634
+Epoch 10/15
+510/510 - 11s - 21ms/step - AUC: 0.8661 - AUCPR: 0.4834 - BinaryAccuracy: 0.9329 - F1: 0.4553 - Precision: 0.5581 - Recall: 0.3845 - loss: 0.2792 - val_AUC: 0.8937 - val_AUCPR: 0.5079 - val_BinaryAccuracy: 0.9505 - val_F1: 0.4572 - val_Precision: 0.5974 - val_Recall: 0.3703 - val_loss: 0.2627
+Epoch 11/15
+510/510 - 39s - 76ms/step - AUC: 0.8667 - AUCPR: 0.4869 - BinaryAccuracy: 0.9327 - F1: 0.4583 - Precision: 0.5616 - Recall: 0.3872 - loss: 0.2794 - val_AUC: 0.8939 - val_AUCPR: 0.5070 - val_BinaryAccuracy: 0.9512 - val_F1: 0.4501 - val_Precision: 0.6156 - val_Recall: 0.3547 - val_loss: 0.2630
+Epoch 12/15
+510/510 - 13s - 26ms/step - AUC: 0.8668 - AUCPR: 0.4869 - BinaryAccuracy: 0.9330 - F1: 0.4584 - Precision: 0.5613 - Recall: 0.3875 - loss: 0.2791 - val_AUC: 0.8936 - val_AUCPR: 0.5094 - val_BinaryAccuracy: 0.9479 - val_F1: 0.4722 - val_Precision: 0.5505 - val_Recall: 0.4134 - val_loss: 0.2640
+Epoch 13/15
+510/510 - 12s - 24ms/step - AUC: 0.8676 - AUCPR: 0.4879 - BinaryAccuracy: 0.9329 - F1: 0.4582 - Precision: 0.5583 - Recall: 0.3885 - loss: 0.2784 - val_AUC: 0.8934 - val_AUCPR: 0.5059 - val_BinaryAccuracy: 0.9510 - val_F1: 0.4507 - val_Precision: 0.6115 - val_Recall: 0.3569 - val_loss: 0.2624
+Epoch 14/15
+510/510 - 12s - 24ms/step - AUC: 0.8662 - AUCPR: 0.4857 - BinaryAccuracy: 0.9329 - F1: 0.4550 - Precision: 0.5603 - Recall: 0.3830 - loss: 0.2789 - val_AUC: 0.8941 - val_AUCPR: 0.5084 - val_BinaryAccuracy: 0.9489 - val_F1: 0.4680 - val_Precision: 0.5664 - val_Recall: 0.3987 - val_loss: 0.2627
+Epoch 15/15
+510/510 - 12s - 24ms/step - AUC: 0.8694 - AUCPR: 0.4913 - BinaryAccuracy: 0.9333 - F1: 0.4607 - Precision: 0.5643 - Recall: 0.3893 - loss: 0.2781 - val_AUC: 0.8917 - val_AUCPR: 0.5044 - val_BinaryAccuracy: 0.9488 - val_F1: 0.4690 - val_Precision: 0.5635 - val_Recall: 0.4017 - val_loss: 0.2637
+INFO:root:test scores: {'AUC': 0.8212083578109741, 'AUCPR': 0.15235409140586853, 'BinaryAccuracy': 0.9413768649101257, 'Precision': 0.2339622676372528, 'Recall': 0.22794117033481598, 'F1': 0.23091241717338562, 'years': [2021, 2022], 'checkpoint': '/workspace/experiments/lead10_maxpool_full_261012_224831/checkpoints/best.keras'}
+INFO:root:results: {'AUC': 0.8946479558944702, 'AUCPR': 0.5072392225265503, 'best_epoch': 5, 'epochs_run': 15, 'exp_name': 'lead10_maxpool_full', 'head': 'maxpool', 'head_kwargs': {}, 'frames': 4, 'frames_used': [1], 'aux_target': None, 'contrastive_target': None, 'aux_weight': None, 'params': 328705, 'seed': 1234, 'train_years': [2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020], 'val_years': [2021, 2022], 'git_commit': '11c3241', 'git_dirty': True, 'best_checkpoint': '/workspace/experiments/lead10_maxpool_full_261012_224831/checkpoints/best.keras', 'last_checkpoint': '/workspace/experiments/lead10_maxpool_full_261012_224831/checkpoints/last.keras', 'expdir': '/workspace/experiments/lead10_maxpool_full_261012_224831', 'test_AUC': 0.8212083578109741, 'test_AUCPR': 0.15235409140586853, 'predictions': '/workspace/experiments/lead10_maxpool_full_261012_224831/predictions.csv'}
+INFO:root:features from /workspace/tornet/features_4f
+INFO:root:Using torch backend
+INFO:root:{'features_dir': 'features_4f', 'train_years': [2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020], 'val_years': [2021, 2022], 'test_years': [2021, 2022], 'head': 'temporal_concat', 'head_kwargs': {}, 'frames': [0, 1], 'epochs': 15, 'batch_size': 256, 'learning_rate': 0.0003, 'decay_steps': None, 'decay_rate': 0.958, 'wN': 1.0, 'w0': 1.0, 'w1': 1.0, 'w2': 2.0, 'wW': 0.5, 'label_smooth': 0.1, 'aux_target': None, 'aux_weight': 1.0, 'aux_window': 60.0, 'contrastive_target': 'label', 'contrastive_weight': 1.0, 'contrastive_sigma': 0.25, 'temperature': 0.1, 'seed': 1234, 'loader_workers': 4, 'exp_name': 'lead10_concat_full', 'exp_dir': '/workspace/experiments', 'save_all_checkpoints': False, '_note': 'Lead-time study on the frozen four-frame cache: scans t-15 and t-10 concatenated; same labels as detection. Full data, test on the 2021-2022 test partition.'}
+INFO:root:train (130479, 4, 8, 15, 384), val (41187, 4, 8, 15, 384)
+INFO:root:head temporal_concat {}: 525,313 params
+INFO:root:expdir=/workspace/experiments/lead10_concat_full_261012_225240 (git 11c3241+dirty)
+Epoch 1/15
+510/510 - 22s - 43ms/step - AUC: 0.8485 - AUCPR: 0.4390 - BinaryAccuracy: 0.9298 - F1: 0.4293 - Precision: 0.5304 - Recall: 0.3606 - loss: 0.2926 - val_AUC: 0.8885 - val_AUCPR: 0.5079 - val_BinaryAccuracy: 0.9500 - val_F1: 0.4569 - val_Precision: 0.5887 - val_Recall: 0.3733 - val_loss: 0.2651
+Epoch 2/15
+510/510 - 33s - 65ms/step - AUC: 0.8595 - AUCPR: 0.4780 - BinaryAccuracy: 0.9333 - F1: 0.4491 - Precision: 0.5643 - Recall: 0.3730 - loss: 0.2833 - val_AUC: 0.8907 - val_AUCPR: 0.5125 - val_BinaryAccuracy: 0.9496 - val_F1: 0.4634 - val_Precision: 0.5783 - val_Recall: 0.3866 - val_loss: 0.2679
+Epoch 3/15
+510/510 - 34s - 66ms/step - AUC: 0.8635 - AUCPR: 0.4876 - BinaryAccuracy: 0.9337 - F1: 0.4574 - Precision: 0.5724 - Recall: 0.3809 - loss: 0.2819 - val_AUC: 0.8930 - val_AUCPR: 0.5134 - val_BinaryAccuracy: 0.9526 - val_F1: 0.4525 - val_Precision: 0.6472 - val_Recall: 0.3478 - val_loss: 0.2639
+Epoch 4/15
+510/510 - 17s - 34ms/step - AUC: 0.8638 - AUCPR: 0.4919 - BinaryAccuracy: 0.9343 - F1: 0.4601 - Precision: 0.5776 - Recall: 0.3823 - loss: 0.2808 - val_AUC: 0.8920 - val_AUCPR: 0.5090 - val_BinaryAccuracy: 0.9535 - val_F1: 0.4275 - val_Precision: 0.6976 - val_Recall: 0.3082 - val_loss: 0.2666
+Epoch 5/15
+510/510 - 17s - 34ms/step - AUC: 0.8655 - AUCPR: 0.4937 - BinaryAccuracy: 0.9343 - F1: 0.4588 - Precision: 0.5774 - Recall: 0.3807 - loss: 0.2801 - val_AUC: 0.8961 - val_AUCPR: 0.5139 - val_BinaryAccuracy: 0.9513 - val_F1: 0.4580 - val_Precision: 0.6132 - val_Recall: 0.3655 - val_loss: 0.2643
+Epoch 6/15
+510/510 - 17s - 34ms/step - AUC: 0.8658 - AUCPR: 0.4977 - BinaryAccuracy: 0.9347 - F1: 0.4620 - Precision: 0.5806 - Recall: 0.3836 - loss: 0.2795 - val_AUC: 0.8954 - val_AUCPR: 0.5153 - val_BinaryAccuracy: 0.9517 - val_F1: 0.4636 - val_Precision: 0.6187 - val_Recall: 0.3707 - val_loss: 0.2624
+Epoch 7/15
+510/510 - 17s - 33ms/step - AUC: 0.8672 - AUCPR: 0.5003 - BinaryAccuracy: 0.9348 - F1: 0.4644 - Precision: 0.5830 - Recall: 0.3860 - loss: 0.2790 - val_AUC: 0.8993 - val_AUCPR: 0.5187 - val_BinaryAccuracy: 0.9504 - val_F1: 0.4680 - val_Precision: 0.5907 - val_Recall: 0.3875 - val_loss: 0.2613
+Epoch 8/15
+510/510 - 32s - 63ms/step - AUC: 0.8689 - AUCPR: 0.5044 - BinaryAccuracy: 0.9355 - F1: 0.4717 - Precision: 0.5886 - Recall: 0.3935 - loss: 0.2780 - val_AUC: 0.8955 - val_AUCPR: 0.5133 - val_BinaryAccuracy: 0.9524 - val_F1: 0.4514 - val_Precision: 0.6443 - val_Recall: 0.3474 - val_loss: 0.2623
+Epoch 9/15
+510/510 - 17s - 33ms/step - AUC: 0.8689 - AUCPR: 0.5055 - BinaryAccuracy: 0.9354 - F1: 0.4711 - Precision: 0.5878 - Recall: 0.3931 - loss: 0.2777 - val_AUC: 0.8985 - val_AUCPR: 0.5164 - val_BinaryAccuracy: 0.9498 - val_F1: 0.4835 - val_Precision: 0.5756 - val_Recall: 0.4168 - val_loss: 0.2624
+Epoch 10/15
+510/510 - 29s - 57ms/step - AUC: 0.8695 - AUCPR: 0.5083 - BinaryAccuracy: 0.9356 - F1: 0.4722 - Precision: 0.5867 - Recall: 0.3950 - loss: 0.2769 - val_AUC: 0.8992 - val_AUCPR: 0.5179 - val_BinaryAccuracy: 0.9508 - val_F1: 0.4714 - val_Precision: 0.5976 - val_Recall: 0.3892 - val_loss: 0.2623
+Epoch 11/15
+510/510 - 17s - 33ms/step - AUC: 0.8706 - AUCPR: 0.5128 - BinaryAccuracy: 0.9356 - F1: 0.4756 - Precision: 0.5918 - Recall: 0.3976 - loss: 0.2770 - val_AUC: 0.8974 - val_AUCPR: 0.5135 - val_BinaryAccuracy: 0.9522 - val_F1: 0.4632 - val_Precision: 0.6296 - val_Recall: 0.3664 - val_loss: 0.2622
+Epoch 12/15
+510/510 - 16s - 32ms/step - AUC: 0.8714 - AUCPR: 0.5131 - BinaryAccuracy: 0.9360 - F1: 0.4777 - Precision: 0.5936 - Recall: 0.3997 - loss: 0.2765 - val_AUC: 0.9000 - val_AUCPR: 0.5221 - val_BinaryAccuracy: 0.9495 - val_F1: 0.4786 - val_Precision: 0.5723 - val_Recall: 0.4112 - val_loss: 0.2622
+Epoch 13/15
+510/510 - 41s - 79ms/step - AUC: 0.8726 - AUCPR: 0.5158 - BinaryAccuracy: 0.9361 - F1: 0.4802 - Precision: 0.5902 - Recall: 0.4047 - loss: 0.2756 - val_AUC: 0.8959 - val_AUCPR: 0.5135 - val_BinaryAccuracy: 0.9523 - val_F1: 0.4489 - val_Precision: 0.6431 - val_Recall: 0.3448 - val_loss: 0.2618
+Epoch 14/15
+510/510 - 23s - 45ms/step - AUC: 0.8706 - AUCPR: 0.5145 - BinaryAccuracy: 0.9363 - F1: 0.4788 - Precision: 0.5958 - Recall: 0.4002 - loss: 0.2759 - val_AUC: 0.9008 - val_AUCPR: 0.5184 - val_BinaryAccuracy: 0.9501 - val_F1: 0.4708 - val_Precision: 0.5848 - val_Recall: 0.3940 - val_loss: 0.2609
+Epoch 15/15
+510/510 - 70s - 137ms/step - AUC: 0.8747 - AUCPR: 0.5219 - BinaryAccuracy: 0.9365 - F1: 0.4836 - Precision: 0.5977 - Recall: 0.4060 - loss: 0.2750 - val_AUC: 0.8995 - val_AUCPR: 0.5170 - val_BinaryAccuracy: 0.9496 - val_F1: 0.4784 - val_Precision: 0.5735 - val_Recall: 0.4103 - val_loss: 0.2620
+INFO:root:test scores: {'AUC': 0.8329319953918457, 'AUCPR': 0.16152948141098022, 'BinaryAccuracy': 0.9382540583610535, 'Precision': 0.23624595999717712, 'Recall': 0.26838234066963196, 'F1': 0.25129082798957825, 'years': [2021, 2022], 'checkpoint': '/workspace/experiments/lead10_concat_full_261012_225240/checkpoints/best.keras'}
+INFO:root:results: {'AUC': 0.9007523059844971, 'AUCPR': 0.5184035301208496, 'best_epoch': 14, 'epochs_run': 15, 'exp_name': 'lead10_concat_full', 'head': 'temporal_concat', 'head_kwargs': {}, 'frames': 4, 'frames_used': [0, 1], 'aux_target': None, 'contrastive_target': None, 'aux_weight': None, 'params': 525313, 'seed': 1234, 'train_years': [2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020], 'val_years': [2021, 2022], 'git_commit': '11c3241', 'git_dirty': True, 'best_checkpoint': '/workspace/experiments/lead10_concat_full_261012_225240/checkpoints/best.keras', 'last_checkpoint': '/workspace/experiments/lead10_concat_full_261012_225240/checkpoints/last.keras', 'expdir': '/workspace/experiments/lead10_concat_full_261012_225240', 'test_AUC': 0.8329319953918457, 'test_AUCPR': 0.16152948141098022, 'predictions': '/workspace/experiments/lead10_concat_full_261012_225240/predictions.csv'}
+INFO:root:features from /workspace/tornet/features_4f
+INFO:root:Using torch backend
+INFO:root:{'features_dir': 'features_4f', 'train_years': [2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020], 'val_years': [2021, 2022], 'test_years': [2021, 2022], 'head': 'temporal_attention', 'head_kwargs': {}, 'frames': [0, 1], 'epochs': 15, 'batch_size': 256, 'learning_rate': 0.0003, 'decay_steps': None, 'decay_rate': 0.958, 'wN': 1.0, 'w0': 1.0, 'w1': 1.0, 'w2': 2.0, 'wW': 0.5, 'label_smooth': 0.1, 'aux_target': None, 'aux_weight': 1.0, 'aux_window': 60.0, 'contrastive_target': 'label', 'contrastive_weight': 1.0, 'contrastive_sigma': 0.25, 'temperature': 0.1, 'seed': 1234, 'loader_workers': 4, 'exp_name': 'lead10_attention_full', 'exp_dir': '/workspace/experiments', 'save_all_checkpoints': False, '_note': 'Lead-time study on the frozen four-frame cache: attention over scans t-15 and t-10; same labels as detection. Full data, test on the 2021-2022 test partition.'}
+INFO:root:train (130479, 4, 8, 15, 384), val (41187, 4, 8, 15, 384)
+INFO:root:head temporal_attention {}: 922,369 params
+INFO:root:expdir=/workspace/experiments/lead10_attention_full_261012_225935 (git 11c3241+dirty)
+Epoch 1/15
+510/510 - 28s - 54ms/step - AUC: 0.8429 - AUCPR: 0.4433 - BinaryAccuracy: 0.9306 - F1: 0.4315 - Precision: 0.5374 - Recall: 0.3605 - loss: 0.2913 - val_AUC: 0.8927 - val_AUCPR: 0.5069 - val_BinaryAccuracy: 0.9524 - val_F1: 0.4385 - val_Precision: 0.6525 - val_Recall: 0.3302 - val_loss: 0.2681
+Epoch 2/15
+510/510 - 21s - 42ms/step - AUC: 0.8530 - AUCPR: 0.4674 - BinaryAccuracy: 0.9325 - F1: 0.4432 - Precision: 0.5557 - Recall: 0.3685 - loss: 0.2866 - val_AUC: 0.8943 - val_AUCPR: 0.5088 - val_BinaryAccuracy: 0.9504 - val_F1: 0.4630 - val_Precision: 0.5929 - val_Recall: 0.3797 - val_loss: 0.2677
+Epoch 3/15
+510/510 - 23s - 45ms/step - AUC: 0.8587 - AUCPR: 0.4752 - BinaryAccuracy: 0.9330 - F1: 0.4573 - Precision: 0.5631 - Recall: 0.3850 - loss: 0.2848 - val_AUC: 0.8956 - val_AUCPR: 0.5149 - val_BinaryAccuracy: 0.9516 - val_F1: 0.4610 - val_Precision: 0.6192 - val_Recall: 0.3672 - val_loss: 0.2646
+Epoch 4/15
+510/510 - 22s - 42ms/step - AUC: 0.8604 - AUCPR: 0.4807 - BinaryAccuracy: 0.9333 - F1: 0.4580 - Precision: 0.5649 - Recall: 0.3851 - loss: 0.2835 - val_AUC: 0.8930 - val_AUCPR: 0.5137 - val_BinaryAccuracy: 0.9537 - val_F1: 0.4175 - val_Precision: 0.7147 - val_Recall: 0.2948 - val_loss: 0.2683
+Epoch 5/15
+510/510 - 22s - 43ms/step - AUC: 0.8617 - AUCPR: 0.4822 - BinaryAccuracy: 0.9335 - F1: 0.4606 - Precision: 0.5667 - Recall: 0.3880 - loss: 0.2826 - val_AUC: 0.8951 - val_AUCPR: 0.5125 - val_BinaryAccuracy: 0.9521 - val_F1: 0.4492 - val_Precision: 0.6369 - val_Recall: 0.3470 - val_loss: 0.2677
+Epoch 6/15
+510/510 - 21s - 41ms/step - AUC: 0.8621 - AUCPR: 0.4873 - BinaryAccuracy: 0.9339 - F1: 0.4589 - Precision: 0.5715 - Recall: 0.3834 - loss: 0.2817 - val_AUC: 0.8943 - val_AUCPR: 0.5149 - val_BinaryAccuracy: 0.9507 - val_F1: 0.4728 - val_Precision: 0.5939 - val_Recall: 0.3927 - val_loss: 0.2652
+Epoch 7/15
+510/510 - 21s - 42ms/step - AUC: 0.8633 - AUCPR: 0.4879 - BinaryAccuracy: 0.9333 - F1: 0.4673 - Precision: 0.5626 - Recall: 0.3996 - loss: 0.2810 - val_AUC: 0.8949 - val_AUCPR: 0.5161 - val_BinaryAccuracy: 0.9518 - val_F1: 0.4721 - val_Precision: 0.6168 - val_Recall: 0.3823 - val_loss: 0.2625
+Epoch 8/15
+510/510 - 21s - 42ms/step - AUC: 0.8649 - AUCPR: 0.4917 - BinaryAccuracy: 0.9340 - F1: 0.4626 - Precision: 0.5723 - Recall: 0.3883 - loss: 0.2801 - val_AUC: 0.8966 - val_AUCPR: 0.5156 - val_BinaryAccuracy: 0.9525 - val_F1: 0.4615 - val_Precision: 0.6375 - val_Recall: 0.3616 - val_loss: 0.2626
+Epoch 9/15
+510/510 - 22s - 42ms/step - AUC: 0.8647 - AUCPR: 0.4939 - BinaryAccuracy: 0.9341 - F1: 0.4677 - Precision: 0.5722 - Recall: 0.3955 - loss: 0.2794 - val_AUC: 0.8943 - val_AUCPR: 0.5167 - val_BinaryAccuracy: 0.9456 - val_F1: 0.4852 - val_Precision: 0.5200 - val_Recall: 0.4547 - val_loss: 0.2648
+Epoch 10/15
+510/510 - 21s - 42ms/step - AUC: 0.8670 - AUCPR: 0.4970 - BinaryAccuracy: 0.9345 - F1: 0.4732 - Precision: 0.5719 - Recall: 0.4036 - loss: 0.2780 - val_AUC: 0.8977 - val_AUCPR: 0.5184 - val_BinaryAccuracy: 0.9520 - val_F1: 0.4774 - val_Precision: 0.6172 - val_Recall: 0.3892 - val_loss: 0.2612
+Epoch 11/15
+510/510 - 21s - 42ms/step - AUC: 0.8688 - AUCPR: 0.5020 - BinaryAccuracy: 0.9346 - F1: 0.4747 - Precision: 0.5794 - Recall: 0.4020 - loss: 0.2777 - val_AUC: 0.8984 - val_AUCPR: 0.5149 - val_BinaryAccuracy: 0.9516 - val_F1: 0.4760 - val_Precision: 0.6093 - val_Recall: 0.3905 - val_loss: 0.2610
+Epoch 12/15
+510/510 - 22s - 43ms/step - AUC: 0.8693 - AUCPR: 0.5021 - BinaryAccuracy: 0.9353 - F1: 0.4809 - Precision: 0.5828 - Recall: 0.4093 - loss: 0.2770 - val_AUC: 0.8983 - val_AUCPR: 0.5229 - val_BinaryAccuracy: 0.9507 - val_F1: 0.4844 - val_Precision: 0.5893 - val_Recall: 0.4112 - val_loss: 0.2607
+Epoch 13/15
+510/510 - 22s - 43ms/step - AUC: 0.8699 - AUCPR: 0.5041 - BinaryAccuracy: 0.9350 - F1: 0.4773 - Precision: 0.5775 - Recall: 0.4068 - loss: 0.2761 - val_AUC: 0.8971 - val_AUCPR: 0.5167 - val_BinaryAccuracy: 0.9528 - val_F1: 0.4613 - val_Precision: 0.6465 - val_Recall: 0.3586 - val_loss: 0.2619
+Epoch 14/15
+510/510 - 22s - 43ms/step - AUC: 0.8693 - AUCPR: 0.5035 - BinaryAccuracy: 0.9354 - F1: 0.4793 - Precision: 0.5838 - Recall: 0.4066 - loss: 0.2760 - val_AUC: 0.8988 - val_AUCPR: 0.5244 - val_BinaryAccuracy: 0.9495 - val_F1: 0.4832 - val_Precision: 0.5708 - val_Recall: 0.4190 - val_loss: 0.2597
+Epoch 15/15
+510/510 - 22s - 43ms/step - AUC: 0.8721 - AUCPR: 0.5108 - BinaryAccuracy: 0.9359 - F1: 0.4861 - Precision: 0.5883 - Recall: 0.4141 - loss: 0.2751 - val_AUC: 0.8978 - val_AUCPR: 0.5184 - val_BinaryAccuracy: 0.9498 - val_F1: 0.4835 - val_Precision: 0.5748 - val_Recall: 0.4172 - val_loss: 0.2605
+INFO:root:test scores: {'AUC': 0.8310368061065674, 'AUCPR': 0.1574116051197052, 'BinaryAccuracy': 0.9341377019882202, 'Precision': 0.2257142812013626, 'Recall': 0.2904411852359772, 'F1': 0.25401920080184937, 'years': [2021, 2022], 'checkpoint': '/workspace/experiments/lead10_attention_full_261012_225935/checkpoints/best.keras'}
+INFO:root:results: {'AUC': 0.89876788854599, 'AUCPR': 0.5244037508964539, 'best_epoch': 14, 'epochs_run': 15, 'exp_name': 'lead10_attention_full', 'head': 'temporal_attention', 'head_kwargs': {}, 'frames': 4, 'frames_used': [0, 1], 'aux_target': None, 'contrastive_target': None, 'aux_weight': None, 'params': 922369, 'seed': 1234, 'train_years': [2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020], 'val_years': [2021, 2022], 'git_commit': '11c3241', 'git_dirty': True, 'best_checkpoint': '/workspace/experiments/lead10_attention_full_261012_225935/checkpoints/best.keras', 'last_checkpoint': '/workspace/experiments/lead10_attention_full_261012_225935/checkpoints/last.keras', 'expdir': '/workspace/experiments/lead10_attention_full_261012_225935', 'test_AUC': 0.8310368061065674, 'test_AUCPR': 0.1574116051197052, 'predictions': '/workspace/experiments/lead10_attention_full_261012_225935/predictions.csv'}
+INFO:root:features from /workspace/tornet/features_4f
+INFO:root:Using torch backend
+INFO:root:{'features_dir': 'features_4f', 'train_years': [2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020], 'val_years': [2021, 2022], 'test_years': [2021, 2022], 'head': 'maxpool', 'head_kwargs': {}, 'frames': [2], 'epochs': 15, 'batch_size': 256, 'learning_rate': 0.0003, 'decay_steps': None, 'decay_rate': 0.958, 'wN': 1.0, 'w0': 1.0, 'w1': 1.0, 'w2': 2.0, 'wW': 0.5, 'label_smooth': 0.1, 'aux_target': None, 'aux_weight': 1.0, 'aux_window': 60.0, 'contrastive_target': 'label', 'contrastive_weight': 1.0, 'contrastive_sigma': 0.25, 'temperature': 0.1, 'seed': 1234, 'loader_workers': 4, 'exp_name': 'lead5_maxpool_full', 'exp_dir': '/workspace/experiments', 'save_all_checkpoints': False, '_note': 'Lead-time study on the frozen four-frame cache: the t-5 scan alone; same labels as detection. Full data, test on the 2021-2022 test partition.'}
+INFO:root:train (130479, 4, 8, 15, 384), val (41187, 4, 8, 15, 384)
+INFO:root:head maxpool {}: 328,705 params
+INFO:root:expdir=/workspace/experiments/lead5_maxpool_full_261012_230509 (git 11c3241+dirty)
+Epoch 1/15
+510/510 - 11s - 22ms/step - AUC: 0.8771 - AUCPR: 0.5178 - BinaryAccuracy: 0.9352 - F1: 0.5081 - Precision: 0.5720 - Recall: 0.4571 - loss: 0.2793 - val_AUC: 0.9065 - val_AUCPR: 0.5709 - val_BinaryAccuracy: 0.9528 - val_F1: 0.5269 - val_Precision: 0.6055 - val_Recall: 0.4664 - val_loss: 0.2561
+Epoch 2/15
+510/510 - 11s - 22ms/step - AUC: 0.8853 - AUCPR: 0.5547 - BinaryAccuracy: 0.9374 - F1: 0.5200 - Precision: 0.5896 - Recall: 0.4651 - loss: 0.2706 - val_AUC: 0.9114 - val_AUCPR: 0.5706 - val_BinaryAccuracy: 0.9539 - val_F1: 0.5220 - val_Precision: 0.6273 - val_Recall: 0.4470 - val_loss: 0.2554
+Epoch 3/15
+510/510 - 11s - 22ms/step - AUC: 0.8883 - AUCPR: 0.5603 - BinaryAccuracy: 0.9381 - F1: 0.5261 - Precision: 0.6005 - Recall: 0.4681 - loss: 0.2696 - val_AUC: 0.9087 - val_AUCPR: 0.5690 - val_BinaryAccuracy: 0.9538 - val_F1: 0.5149 - val_Precision: 0.6310 - val_Recall: 0.4349 - val_loss: 0.2553
+Epoch 4/15
+510/510 - 11s - 22ms/step - AUC: 0.8881 - AUCPR: 0.5609 - BinaryAccuracy: 0.9383 - F1: 0.5253 - Precision: 0.6013 - Recall: 0.4664 - loss: 0.2691 - val_AUC: 0.9073 - val_AUCPR: 0.5688 - val_BinaryAccuracy: 0.9528 - val_F1: 0.5192 - val_Precision: 0.6095 - val_Recall: 0.4522 - val_loss: 0.2552
+Epoch 5/15
+510/510 - 11s - 23ms/step - AUC: 0.8903 - AUCPR: 0.5642 - BinaryAccuracy: 0.9386 - F1: 0.5298 - Precision: 0.6018 - Recall: 0.4732 - loss: 0.2682 - val_AUC: 0.9125 - val_AUCPR: 0.5700 - val_BinaryAccuracy: 0.9530 - val_F1: 0.5238 - val_Precision: 0.6104 - val_Recall: 0.4586 - val_loss: 0.2549
+Epoch 6/15
+510/510 - 11s - 22ms/step - AUC: 0.8891 - AUCPR: 0.5643 - BinaryAccuracy: 0.9383 - F1: 0.5255 - Precision: 0.6002 - Recall: 0.4673 - loss: 0.2682 - val_AUC: 0.8994 - val_AUCPR: 0.5650 - val_BinaryAccuracy: 0.9531 - val_F1: 0.5216 - val_Precision: 0.6138 - val_Recall: 0.4534 - val_loss: 0.2568
+Epoch 7/15
+510/510 - 11s - 22ms/step - AUC: 0.8901 - AUCPR: 0.5655 - BinaryAccuracy: 0.9389 - F1: 0.5319 - Precision: 0.6060 - Recall: 0.4738 - loss: 0.2679 - val_AUC: 0.9094 - val_AUCPR: 0.5663 - val_BinaryAccuracy: 0.9540 - val_F1: 0.5143 - val_Precision: 0.6338 - val_Recall: 0.4328 - val_loss: 0.2546
+Epoch 8/15
+510/510 - 11s - 22ms/step - AUC: 0.8920 - AUCPR: 0.5679 - BinaryAccuracy: 0.9391 - F1: 0.5298 - Precision: 0.6083 - Recall: 0.4693 - loss: 0.2671 - val_AUC: 0.9094 - val_AUCPR: 0.5697 - val_BinaryAccuracy: 0.9542 - val_F1: 0.5209 - val_Precision: 0.6337 - val_Recall: 0.4422 - val_loss: 0.2542
+Epoch 9/15
+510/510 - 12s - 23ms/step - AUC: 0.8911 - AUCPR: 0.5675 - BinaryAccuracy: 0.9391 - F1: 0.5318 - Precision: 0.6086 - Recall: 0.4723 - loss: 0.2673 - val_AUC: 0.9104 - val_AUCPR: 0.5677 - val_BinaryAccuracy: 0.9515 - val_F1: 0.5286 - val_Precision: 0.5846 - val_Recall: 0.4823 - val_loss: 0.2549
+Epoch 10/15
+510/510 - 11s - 23ms/step - AUC: 0.8914 - AUCPR: 0.5704 - BinaryAccuracy: 0.9391 - F1: 0.5320 - Precision: 0.6059 - Recall: 0.4742 - loss: 0.2664 - val_AUC: 0.9115 - val_AUCPR: 0.5703 - val_BinaryAccuracy: 0.9533 - val_F1: 0.5267 - val_Precision: 0.6131 - val_Recall: 0.4616 - val_loss: 0.2540
+Epoch 11/15
+510/510 - 12s - 23ms/step - AUC: 0.8923 - AUCPR: 0.5712 - BinaryAccuracy: 0.9389 - F1: 0.5331 - Precision: 0.6086 - Recall: 0.4742 - loss: 0.2668 - val_AUC: 0.9110 - val_AUCPR: 0.5682 - val_BinaryAccuracy: 0.9536 - val_F1: 0.5216 - val_Precision: 0.6212 - val_Recall: 0.4496 - val_loss: 0.2540
+Epoch 12/15
+510/510 - 12s - 23ms/step - AUC: 0.8927 - AUCPR: 0.5716 - BinaryAccuracy: 0.9395 - F1: 0.5365 - Precision: 0.6114 - Recall: 0.4780 - loss: 0.2662 - val_AUC: 0.9086 - val_AUCPR: 0.5648 - val_BinaryAccuracy: 0.9522 - val_F1: 0.5296 - val_Precision: 0.5944 - val_Recall: 0.4776 - val_loss: 0.2563
+Epoch 13/15
+510/510 - 11s - 22ms/step - AUC: 0.8933 - AUCPR: 0.5725 - BinaryAccuracy: 0.9396 - F1: 0.5362 - Precision: 0.6096 - Recall: 0.4786 - loss: 0.2659 - val_AUC: 0.9096 - val_AUCPR: 0.5683 - val_BinaryAccuracy: 0.9536 - val_F1: 0.5189 - val_Precision: 0.6233 - val_Recall: 0.4444 - val_loss: 0.2539
+Epoch 14/15
+510/510 - 12s - 23ms/step - AUC: 0.8927 - AUCPR: 0.5719 - BinaryAccuracy: 0.9394 - F1: 0.5342 - Precision: 0.6100 - Recall: 0.4752 - loss: 0.2660 - val_AUC: 0.9118 - val_AUCPR: 0.5684 - val_BinaryAccuracy: 0.9516 - val_F1: 0.5307 - val_Precision: 0.5848 - val_Recall: 0.4858 - val_loss: 0.2539
+Epoch 15/15
+510/510 - 11s - 22ms/step - AUC: 0.8943 - AUCPR: 0.5747 - BinaryAccuracy: 0.9392 - F1: 0.5344 - Precision: 0.6077 - Recall: 0.4769 - loss: 0.2656 - val_AUC: 0.9113 - val_AUCPR: 0.5682 - val_BinaryAccuracy: 0.9525 - val_F1: 0.5284 - val_Precision: 0.5996 - val_Recall: 0.4724 - val_loss: 0.2539
+INFO:root:test scores: {'AUC': 0.8545584678649902, 'AUCPR': 0.23653163015842438, 'BinaryAccuracy': 0.9435060620307922, 'Precision': 0.3055555522441864, 'Recall': 0.3639705777168274, 'F1': 0.33221471309661865, 'years': [2021, 2022], 'checkpoint': '/workspace/experiments/lead5_maxpool_full_261012_230509/checkpoints/best.keras'}
+INFO:root:results: {'AUC': 0.9124598503112793, 'AUCPR': 0.5700463652610779, 'best_epoch': 5, 'epochs_run': 15, 'exp_name': 'lead5_maxpool_full', 'head': 'maxpool', 'head_kwargs': {}, 'frames': 4, 'frames_used': [2], 'aux_target': None, 'contrastive_target': None, 'aux_weight': None, 'params': 328705, 'seed': 1234, 'train_years': [2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020], 'val_years': [2021, 2022], 'git_commit': '11c3241', 'git_dirty': True, 'best_checkpoint': '/workspace/experiments/lead5_maxpool_full_261012_230509/checkpoints/best.keras', 'last_checkpoint': '/workspace/experiments/lead5_maxpool_full_261012_230509/checkpoints/last.keras', 'expdir': '/workspace/experiments/lead5_maxpool_full_261012_230509', 'test_AUC': 0.8545584678649902, 'test_AUCPR': 0.23653163015842438, 'predictions': '/workspace/experiments/lead5_maxpool_full_261012_230509/predictions.csv'}
+INFO:root:features from /workspace/tornet/features_4f
+INFO:root:Using torch backend
+INFO:root:{'features_dir': 'features_4f', 'train_years': [2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020], 'val_years': [2021, 2022], 'test_years': [2021, 2022], 'head': 'temporal_concat', 'head_kwargs': {}, 'frames': [0, 1, 2], 'epochs': 15, 'batch_size': 256, 'learning_rate': 0.0003, 'decay_steps': None, 'decay_rate': 0.958, 'wN': 1.0, 'w0': 1.0, 'w1': 1.0, 'w2': 2.0, 'wW': 0.5, 'label_smooth': 0.1, 'aux_target': None, 'aux_weight': 1.0, 'aux_window': 60.0, 'contrastive_target': 'label', 'contrastive_weight': 1.0, 'contrastive_sigma': 0.25, 'temperature': 0.1, 'seed': 1234, 'loader_workers': 4, 'exp_name': 'lead5_concat_full', 'exp_dir': '/workspace/experiments', 'save_all_checkpoints': False, '_note': 'Lead-time study on the frozen four-frame cache: scans t-15 to t-5 concatenated; same labels as detection. Full data, test on the 2021-2022 test partition.'}
+INFO:root:train (130479, 4, 8, 15, 384), val (41187, 4, 8, 15, 384)
+INFO:root:head temporal_concat {}: 721,921 params
+INFO:root:expdir=/workspace/experiments/lead5_concat_full_261012_230801 (git 11c3241+dirty)
+Epoch 1/15
+510/510 - 21s - 41ms/step - AUC: 0.8772 - AUCPR: 0.5356 - BinaryAccuracy: 0.9361 - F1: 0.5142 - Precision: 0.5800 - Recall: 0.4617 - loss: 0.2788 - val_AUC: 0.9120 - val_AUCPR: 0.5905 - val_BinaryAccuracy: 0.9548 - val_F1: 0.5380 - val_Precision: 0.6339 - val_Recall: 0.4672 - val_loss: 0.2547
+Epoch 2/15
+510/510 - 22s - 44ms/step - AUC: 0.8841 - AUCPR: 0.5682 - BinaryAccuracy: 0.9393 - F1: 0.5319 - Precision: 0.6077 - Recall: 0.4730 - loss: 0.2702 - val_AUC: 0.9119 - val_AUCPR: 0.5943 - val_BinaryAccuracy: 0.9549 - val_F1: 0.5377 - val_Precision: 0.6364 - val_Recall: 0.4655 - val_loss: 0.2563
+Epoch 3/15
+510/510 - 22s - 43ms/step - AUC: 0.8889 - AUCPR: 0.5759 - BinaryAccuracy: 0.9401 - F1: 0.5406 - Precision: 0.6177 - Recall: 0.4807 - loss: 0.2688 - val_AUC: 0.9093 - val_AUCPR: 0.5881 - val_BinaryAccuracy: 0.9559 - val_F1: 0.5243 - val_Precision: 0.6671 - val_Recall: 0.4319 - val_loss: 0.2543
+Epoch 4/15
+510/510 - 22s - 43ms/step - AUC: 0.8885 - AUCPR: 0.5789 - BinaryAccuracy: 0.9402 - F1: 0.5391 - Precision: 0.6184 - Recall: 0.4778 - loss: 0.2680 - val_AUC: 0.9141 - val_AUCPR: 0.5900 - val_BinaryAccuracy: 0.9564 - val_F1: 0.5280 - val_Precision: 0.6770 - val_Recall: 0.4328 - val_loss: 0.2547
+Epoch 5/15
+510/510 - 22s - 43ms/step - AUC: 0.8914 - AUCPR: 0.5806 - BinaryAccuracy: 0.9404 - F1: 0.5421 - Precision: 0.6185 - Recall: 0.4825 - loss: 0.2671 - val_AUC: 0.9167 - val_AUCPR: 0.5934 - val_BinaryAccuracy: 0.9558 - val_F1: 0.5397 - val_Precision: 0.6530 - val_Recall: 0.4599 - val_loss: 0.2534
+Epoch 6/15
+510/510 - 22s - 43ms/step - AUC: 0.8909 - AUCPR: 0.5844 - BinaryAccuracy: 0.9412 - F1: 0.5449 - Precision: 0.6274 - Recall: 0.4816 - loss: 0.2666 - val_AUC: 0.9053 - val_AUCPR: 0.5865 - val_BinaryAccuracy: 0.9549 - val_F1: 0.5346 - val_Precision: 0.6391 - val_Recall: 0.4595 - val_loss: 0.2537
+Epoch 7/15
+510/510 - 23s - 44ms/step - AUC: 0.8914 - AUCPR: 0.5848 - BinaryAccuracy: 0.9409 - F1: 0.5458 - Precision: 0.6249 - Recall: 0.4845 - loss: 0.2663 - val_AUC: 0.9169 - val_AUCPR: 0.5890 - val_BinaryAccuracy: 0.9565 - val_F1: 0.5305 - val_Precision: 0.6758 - val_Recall: 0.4366 - val_loss: 0.2523
+Epoch 8/15
+510/510 - 22s - 43ms/step - AUC: 0.8929 - AUCPR: 0.5884 - BinaryAccuracy: 0.9415 - F1: 0.5477 - Precision: 0.6301 - Recall: 0.4843 - loss: 0.2654 - val_AUC: 0.9153 - val_AUCPR: 0.5913 - val_BinaryAccuracy: 0.9558 - val_F1: 0.5445 - val_Precision: 0.6482 - val_Recall: 0.4694 - val_loss: 0.2518
+Epoch 9/15
+510/510 - 20s - 40ms/step - AUC: 0.8924 - AUCPR: 0.5888 - BinaryAccuracy: 0.9412 - F1: 0.5483 - Precision: 0.6264 - Recall: 0.4875 - loss: 0.2653 - val_AUC: 0.9168 - val_AUCPR: 0.5875 - val_BinaryAccuracy: 0.9526 - val_F1: 0.5481 - val_Precision: 0.5920 - val_Recall: 0.5103 - val_loss: 0.2528
+Epoch 10/15
+510/510 - 20s - 40ms/step - AUC: 0.8933 - AUCPR: 0.5912 - BinaryAccuracy: 0.9421 - F1: 0.5521 - Precision: 0.6336 - Recall: 0.4892 - loss: 0.2644 - val_AUC: 0.9157 - val_AUCPR: 0.5919 - val_BinaryAccuracy: 0.9538 - val_F1: 0.5529 - val_Precision: 0.6081 - val_Recall: 0.5069 - val_loss: 0.2525
+Epoch 11/15
+510/510 - 22s - 42ms/step - AUC: 0.8945 - AUCPR: 0.5935 - BinaryAccuracy: 0.9415 - F1: 0.5510 - Precision: 0.6319 - Recall: 0.4885 - loss: 0.2646 - val_AUC: 0.9169 - val_AUCPR: 0.5896 - val_BinaryAccuracy: 0.9560 - val_F1: 0.5478 - val_Precision: 0.6510 - val_Recall: 0.4728 - val_loss: 0.2516
+Epoch 12/15
+510/510 - 21s - 41ms/step - AUC: 0.8951 - AUCPR: 0.5958 - BinaryAccuracy: 0.9421 - F1: 0.5533 - Precision: 0.6351 - Recall: 0.4903 - loss: 0.2638 - val_AUC: 0.9140 - val_AUCPR: 0.5881 - val_BinaryAccuracy: 0.9550 - val_F1: 0.5469 - val_Precision: 0.6315 - val_Recall: 0.4823 - val_loss: 0.2553
+Epoch 13/15
+510/510 - 21s - 40ms/step - AUC: 0.8956 - AUCPR: 0.5957 - BinaryAccuracy: 0.9422 - F1: 0.5535 - Precision: 0.6345 - Recall: 0.4908 - loss: 0.2634 - val_AUC: 0.9159 - val_AUCPR: 0.5880 - val_BinaryAccuracy: 0.9560 - val_F1: 0.5395 - val_Precision: 0.6568 - val_Recall: 0.4578 - val_loss: 0.2515
+Epoch 14/15
+510/510 - 21s - 41ms/step - AUC: 0.8959 - AUCPR: 0.5957 - BinaryAccuracy: 0.9421 - F1: 0.5529 - Precision: 0.6351 - Recall: 0.4896 - loss: 0.2633 - val_AUC: 0.9174 - val_AUCPR: 0.5878 - val_BinaryAccuracy: 0.9549 - val_F1: 0.5451 - val_Precision: 0.6304 - val_Recall: 0.4802 - val_loss: 0.2513
+Epoch 15/15
+510/510 - 21s - 41ms/step - AUC: 0.8974 - AUCPR: 0.6011 - BinaryAccuracy: 0.9422 - F1: 0.5563 - Precision: 0.6349 - Recall: 0.4950 - loss: 0.2627 - val_AUC: 0.9161 - val_AUCPR: 0.5878 - val_BinaryAccuracy: 0.9533 - val_F1: 0.5549 - val_Precision: 0.5985 - val_Recall: 0.5172 - val_loss: 0.2532
+INFO:root:test scores: {'AUC': 0.8579887747764587, 'AUCPR': 0.21625538170337677, 'BinaryAccuracy': 0.9399574398994446, 'Precision': 0.2824207544326782, 'Recall': 0.3602941036224365, 'F1': 0.31663966178894043, 'years': [2021, 2022], 'checkpoint': '/workspace/experiments/lead5_concat_full_261012_230801/checkpoints/best.keras'}
+INFO:root:results: {'AUC': 0.9173744320869446, 'AUCPR': 0.5877712965011597, 'best_epoch': 14, 'epochs_run': 15, 'exp_name': 'lead5_concat_full', 'head': 'temporal_concat', 'head_kwargs': {}, 'frames': 4, 'frames_used': [0, 1, 2], 'aux_target': None, 'contrastive_target': None, 'aux_weight': None, 'params': 721921, 'seed': 1234, 'train_years': [2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020], 'val_years': [2021, 2022], 'git_commit': '11c3241', 'git_dirty': True, 'best_checkpoint': '/workspace/experiments/lead5_concat_full_261012_230801/checkpoints/best.keras', 'last_checkpoint': '/workspace/experiments/lead5_concat_full_261012_230801/checkpoints/last.keras', 'expdir': '/workspace/experiments/lead5_concat_full_261012_230801', 'test_AUC': 0.8579887747764587, 'test_AUCPR': 0.21625538170337677, 'predictions': '/workspace/experiments/lead5_concat_full_261012_230801/predictions.csv'}
+INFO:root:features from /workspace/tornet/features_4f
+INFO:root:Using torch backend
+INFO:root:{'features_dir': 'features_4f', 'train_years': [2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020], 'val_years': [2021, 2022], 'test_years': [2021, 2022], 'head': 'temporal_attention', 'head_kwargs': {}, 'frames': [0, 1, 2], 'epochs': 15, 'batch_size': 256, 'learning_rate': 0.0003, 'decay_steps': None, 'decay_rate': 0.958, 'wN': 1.0, 'w0': 1.0, 'w1': 1.0, 'w2': 2.0, 'wW': 0.5, 'label_smooth': 0.1, 'aux_target': None, 'aux_weight': 1.0, 'aux_window': 60.0, 'contrastive_target': 'label', 'contrastive_weight': 1.0, 'contrastive_sigma': 0.25, 'temperature': 0.1, 'seed': 1234, 'loader_workers': 4, 'exp_name': 'lead5_attention_full', 'exp_dir': '/workspace/experiments', 'save_all_checkpoints': False, '_note': 'Lead-time study on the frozen four-frame cache: attention over scans t-15 to t-5; same labels as detection. Full data, test on the 2021-2022 test partition.'}
+INFO:root:train (130479, 4, 8, 15, 384), val (41187, 4, 8, 15, 384)
+INFO:root:head temporal_attention {}: 922,753 params
+INFO:root:expdir=/workspace/experiments/lead5_attention_full_261012_231324 (git 11c3241+dirty)
+Epoch 1/15
+510/510 - 29s - 57ms/step - AUC: 0.8703 - AUCPR: 0.5320 - BinaryAccuracy: 0.9373 - F1: 0.5183 - Precision: 0.5907 - Recall: 0.4617 - loss: 0.2771 - val_AUC: 0.9115 - val_AUCPR: 0.5887 - val_BinaryAccuracy: 0.9551 - val_F1: 0.5412 - val_Precision: 0.6373 - val_Recall: 0.4703 - val_loss: 0.2570
+Epoch 2/15
+510/510 - 29s - 57ms/step - AUC: 0.8806 - AUCPR: 0.5556 - BinaryAccuracy: 0.9383 - F1: 0.5262 - Precision: 0.5985 - Recall: 0.4695 - loss: 0.2725 - val_AUC: 0.9171 - val_AUCPR: 0.5898 - val_BinaryAccuracy: 0.9525 - val_F1: 0.5488 - val_Precision: 0.5907 - val_Recall: 0.5125 - val_loss: 0.2552
+Epoch 3/15
+510/510 - 29s - 57ms/step - AUC: 0.8850 - AUCPR: 0.5616 - BinaryAccuracy: 0.9388 - F1: 0.5355 - Precision: 0.6045 - Recall: 0.4806 - loss: 0.2712 - val_AUC: 0.9178 - val_AUCPR: 0.5898 - val_BinaryAccuracy: 0.9555 - val_F1: 0.5347 - val_Precision: 0.6514 - val_Recall: 0.4534 - val_loss: 0.2544
+Epoch 4/15
+510/510 - 29s - 57ms/step - AUC: 0.8869 - AUCPR: 0.5663 - BinaryAccuracy: 0.9388 - F1: 0.5356 - Precision: 0.6032 - Recall: 0.4816 - loss: 0.2699 - val_AUC: 0.9165 - val_AUCPR: 0.5910 - val_BinaryAccuracy: 0.9575 - val_F1: 0.5148 - val_Precision: 0.7222 - val_Recall: 0.4000 - val_loss: 0.2572
+Epoch 5/15
+510/510 - 29s - 56ms/step - AUC: 0.8889 - AUCPR: 0.5698 - BinaryAccuracy: 0.9391 - F1: 0.5381 - Precision: 0.6048 - Recall: 0.4847 - loss: 0.2689 - val_AUC: 0.9177 - val_AUCPR: 0.5945 - val_BinaryAccuracy: 0.9570 - val_F1: 0.5385 - val_Precision: 0.6803 - val_Recall: 0.4457 - val_loss: 0.2563
+Epoch 6/15
+510/510 - 28s - 56ms/step - AUC: 0.8880 - AUCPR: 0.5732 - BinaryAccuracy: 0.9393 - F1: 0.5381 - Precision: 0.6067 - Recall: 0.4834 - loss: 0.2682 - val_AUC: 0.9179 - val_AUCPR: 0.5944 - val_BinaryAccuracy: 0.9551 - val_F1: 0.5488 - val_Precision: 0.6320 - val_Recall: 0.4849 - val_loss: 0.2533
+Epoch 7/15
+510/510 - 28s - 55ms/step - AUC: 0.8899 - AUCPR: 0.5761 - BinaryAccuracy: 0.9400 - F1: 0.5429 - Precision: 0.6145 - Recall: 0.4862 - loss: 0.2673 - val_AUC: 0.9175 - val_AUCPR: 0.5878 - val_BinaryAccuracy: 0.9563 - val_F1: 0.5359 - val_Precision: 0.6662 - val_Recall: 0.4483 - val_loss: 0.2543
+Epoch 8/15
+510/510 - 28s - 55ms/step - AUC: 0.8921 - AUCPR: 0.5787 - BinaryAccuracy: 0.9400 - F1: 0.5453 - Precision: 0.6113 - Recall: 0.4922 - loss: 0.2662 - val_AUC: 0.9180 - val_AUCPR: 0.5958 - val_BinaryAccuracy: 0.9550 - val_F1: 0.5507 - val_Precision: 0.6285 - val_Recall: 0.4901 - val_loss: 0.2519
+Epoch 9/15
+510/510 - 28s - 55ms/step - AUC: 0.8912 - AUCPR: 0.5811 - BinaryAccuracy: 0.9403 - F1: 0.5455 - Precision: 0.6165 - Recall: 0.4891 - loss: 0.2657 - val_AUC: 0.9190 - val_AUCPR: 0.5949 - val_BinaryAccuracy: 0.9519 - val_F1: 0.5528 - val_Precision: 0.5800 - val_Recall: 0.5280 - val_loss: 0.2538
+Epoch 10/15
+510/510 - 28s - 55ms/step - AUC: 0.8920 - AUCPR: 0.5822 - BinaryAccuracy: 0.9407 - F1: 0.5485 - Precision: 0.6168 - Recall: 0.4938 - loss: 0.2648 - val_AUC: 0.9184 - val_AUCPR: 0.5918 - val_BinaryAccuracy: 0.9536 - val_F1: 0.5505 - val_Precision: 0.6059 - val_Recall: 0.5043 - val_loss: 0.2519
+Epoch 11/15
+510/510 - 28s - 55ms/step - AUC: 0.8946 - AUCPR: 0.5880 - BinaryAccuracy: 0.9405 - F1: 0.5483 - Precision: 0.6203 - Recall: 0.4912 - loss: 0.2644 - val_AUC: 0.9188 - val_AUCPR: 0.5888 - val_BinaryAccuracy: 0.9543 - val_F1: 0.5531 - val_Precision: 0.6162 - val_Recall: 0.5017 - val_loss: 0.2515
+Epoch 12/15
+510/510 - 28s - 55ms/step - AUC: 0.8953 - AUCPR: 0.5885 - BinaryAccuracy: 0.9406 - F1: 0.5529 - Precision: 0.6162 - Recall: 0.5015 - loss: 0.2636 - val_AUC: 0.9168 - val_AUCPR: 0.5918 - val_BinaryAccuracy: 0.9557 - val_F1: 0.5402 - val_Precision: 0.6511 - val_Recall: 0.4616 - val_loss: 0.2507
+Epoch 13/15
+510/510 - 28s - 55ms/step - AUC: 0.8955 - AUCPR: 0.5911 - BinaryAccuracy: 0.9412 - F1: 0.5536 - Precision: 0.6201 - Recall: 0.4999 - loss: 0.2628 - val_AUC: 0.9161 - val_AUCPR: 0.5893 - val_BinaryAccuracy: 0.9557 - val_F1: 0.5384 - val_Precision: 0.6525 - val_Recall: 0.4582 - val_loss: 0.2531
+Epoch 14/15
+510/510 - 28s - 55ms/step - AUC: 0.8948 - AUCPR: 0.5911 - BinaryAccuracy: 0.9420 - F1: 0.5554 - Precision: 0.6314 - Recall: 0.4958 - loss: 0.2626 - val_AUC: 0.9193 - val_AUCPR: 0.5919 - val_BinaryAccuracy: 0.9515 - val_F1: 0.5457 - val_Precision: 0.5781 - val_Recall: 0.5168 - val_loss: 0.2504
+Epoch 15/15
+510/510 - 54s - 106ms/step - AUC: 0.8973 - AUCPR: 0.5961 - BinaryAccuracy: 0.9414 - F1: 0.5565 - Precision: 0.6236 - Recall: 0.5025 - loss: 0.2618 - val_AUC: 0.9181 - val_AUCPR: 0.5852 - val_BinaryAccuracy: 0.9526 - val_F1: 0.5484 - val_Precision: 0.5915 - val_Recall: 0.5112 - val_loss: 0.2512
+INFO:root:test scores: {'AUC': 0.8589359521865845, 'AUCPR': 0.22976842522621155, 'BinaryAccuracy': 0.9361249208450317, 'Precision': 0.281862735748291, 'Recall': 0.4227941036224365, 'F1': 0.3382352292537689, 'years': [2021, 2022], 'checkpoint': '/workspace/experiments/lead5_attention_full_261012_231324/checkpoints/best.keras'}
+INFO:root:results: {'AUC': 0.9192740321159363, 'AUCPR': 0.5919202566146851, 'best_epoch': 14, 'epochs_run': 15, 'exp_name': 'lead5_attention_full', 'head': 'temporal_attention', 'head_kwargs': {}, 'frames': 4, 'frames_used': [0, 1, 2], 'aux_target': None, 'contrastive_target': None, 'aux_weight': None, 'params': 922753, 'seed': 1234, 'train_years': [2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020], 'val_years': [2021, 2022], 'git_commit': '11c3241', 'git_dirty': True, 'best_checkpoint': '/workspace/experiments/lead5_attention_full_261012_231324/checkpoints/best.keras', 'last_checkpoint': '/workspace/experiments/lead5_attention_full_261012_231324/checkpoints/last.keras', 'expdir': '/workspace/experiments/lead5_attention_full_261012_231324', 'test_AUC': 0.8589359521865845, 'test_AUCPR': 0.22976842522621155, 'predictions': '/workspace/experiments/lead5_attention_full_261012_231324/predictions.csv'}
+=== 2026-10-12T23:21:01+00:00 paired scores
+
+=== /workspace/experiments/frozen_maxpool_full_261012_094839/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7045        272 0.8915 [0.872, 0.908] 0.3424 0.2767 0.49 0.374 0.515
+  RC 4692        272 0.9420 [0.929, 0.955] 0.6791 0.5042 0.27 0.683 0.658
+  WC 2625        272 0.7966 [0.770, 0.822] 0.3809 0.2985 0.49 0.415 0.515
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.43 (n=133), EF1 0.60 (n=111), EF2 0.57 (n=28)
+  AUC by year: 2021 0.886, 2022 0.898
+
+=== /workspace/experiments/lead15_maxpool_full_261012_224542/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7045        272 0.7954 [0.768, 0.820] 0.1306 0.1239 0.35 0.169 0.316
+  RC 4692        272 0.8766 [0.855, 0.898] 0.3911 0.3038 0.23 0.434 0.504
+  WC 2625        272 0.6427 [0.614, 0.672] 0.1680 0.1497 0.17 0.164 0.640
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.19 (n=133), EF1 0.45 (n=111), EF2 0.39 (n=28)
+  AUC by year: 2021 0.768, 2022 0.836
+
+=== /workspace/experiments/lead10_maxpool_full_261012_224831/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7045        272 0.8212 [0.797, 0.846] 0.1543 0.1582 0.40 0.227 0.342
+  RC 4692        272 0.8971 [0.877, 0.918] 0.4614 0.3333 0.23 0.493 0.507
+  WC 2625        272 0.6785 [0.640, 0.709] 0.1881 0.1700 0.40 0.253 0.342
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.22 (n=133), EF1 0.47 (n=111), EF2 0.43 (n=28)
+  AUC by year: 2021 0.809, 2022 0.838
+
+=== /workspace/experiments/lead10_concat_full_261012_225240/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7045        272 0.8329 [0.809, 0.856] 0.1638 0.1541 0.39 0.212 0.360
+  RC 4692        272 0.9063 [0.888, 0.924] 0.4848 0.3482 0.24 0.492 0.544
+  WC 2625        272 0.6951 [0.664, 0.729] 0.1980 0.1745 0.26 0.208 0.518
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.23 (n=133), EF1 0.51 (n=111), EF2 0.36 (n=28)
+  AUC by year: 2021 0.820, 2022 0.851
+
+=== /workspace/experiments/lead10_attention_full_261012_225935/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7045        272 0.8311 [0.807, 0.856] 0.1588 0.1561 0.37 0.200 0.415
+  RC 4692        272 0.9063 [0.889, 0.924] 0.4672 0.3401 0.22 0.467 0.555
+  WC 2625        272 0.6898 [0.661, 0.722] 0.1932 0.1744 0.35 0.227 0.430
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.29 (n=133), EF1 0.58 (n=111), EF2 0.39 (n=28)
+  AUC by year: 2021 0.817, 2022 0.850
+
+=== /workspace/experiments/lead5_maxpool_full_261012_230509/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7045        272 0.8545 [0.836, 0.879] 0.2390 0.2062 0.45 0.290 0.415
+  RC 4692        272 0.9159 [0.899, 0.931] 0.5456 0.4294 0.32 0.635 0.570
+  WC 2625        272 0.7392 [0.710, 0.769] 0.2881 0.2285 0.38 0.300 0.489
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.29 (n=133), EF1 0.54 (n=111), EF2 0.50 (n=28)
+  AUC by year: 2021 0.835, 2022 0.884
+
+=== /workspace/experiments/lead5_concat_full_261012_230801/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7045        272 0.8580 [0.838, 0.878] 0.2187 0.1988 0.36 0.251 0.489
+  RC 4692        272 0.9224 [0.906, 0.937] 0.5594 0.4225 0.25 0.608 0.581
+  WC 2625        272 0.7371 [0.709, 0.765] 0.2588 0.2195 0.36 0.285 0.489
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.36 (n=133), EF1 0.65 (n=111), EF2 0.46 (n=28)
+  AUC by year: 2021 0.842, 2022 0.880
+
+=== /workspace/experiments/lead5_attention_full_261012_231324/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7045        272 0.8591 [0.837, 0.881] 0.2328 0.2080 0.51 0.290 0.423
+  RC 4692        272 0.9229 [0.907, 0.938] 0.5590 0.4068 0.19 0.516 0.658
+  WC 2625        272 0.7391 [0.710, 0.773] 0.2769 0.2268 0.52 0.329 0.423
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.32 (n=133), EF1 0.54 (n=111), EF2 0.46 (n=28)
+  AUC by year: 2021 0.842, 2022 0.882
+
+=== /workspace/experiments/lead15_maxpool_full_261012_224542/predictions.csv minus /workspace/experiments/frozen_maxpool_full_261012_094839/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC -0.0961 95% CI [-0.1173, -0.0744]   dAUCPR -0.2118
+  RC: dAUC -0.0653 95% CI [-0.0841, -0.0485]   dAUCPR -0.2880
+  WC: dAUC -0.1540 95% CI [-0.1830, -0.1245]   dAUCPR -0.2129
+
+=== /workspace/experiments/lead10_maxpool_full_261012_224831/predictions.csv minus /workspace/experiments/frozen_maxpool_full_261012_094839/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC -0.0703 95% CI [-0.0903, -0.0483]   dAUCPR -0.1881
+  RC: dAUC -0.0448 95% CI [-0.0633, -0.0292]   dAUCPR -0.2177
+  WC: dAUC -0.1181 95% CI [-0.1484, -0.0886]   dAUCPR -0.1928
+
+=== /workspace/experiments/lead10_concat_full_261012_225240/predictions.csv minus /workspace/experiments/frozen_maxpool_full_261012_094839/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC -0.0585 95% CI [-0.0783, -0.0371]   dAUCPR -0.1786
+  RC: dAUC -0.0356 95% CI [-0.0529, -0.0213]   dAUCPR -0.1943
+  WC: dAUC -0.1015 95% CI [-0.1286, -0.0713]   dAUCPR -0.1828
+
+=== /workspace/experiments/lead10_attention_full_261012_225935/predictions.csv minus /workspace/experiments/frozen_maxpool_full_261012_094839/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC -0.0604 95% CI [-0.0807, -0.0376]   dAUCPR -0.1835
+  RC: dAUC -0.0357 95% CI [-0.0508, -0.0223]   dAUCPR -0.2119
+  WC: dAUC -0.1068 95% CI [-0.1353, -0.0756]   dAUCPR -0.1877
+
+=== /workspace/experiments/lead5_maxpool_full_261012_230509/predictions.csv minus /workspace/experiments/frozen_maxpool_full_261012_094839/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC -0.0369 95% CI [-0.0529, -0.0179]   dAUCPR -0.1034
+  RC: dAUC -0.0260 95% CI [-0.0389, -0.0138]   dAUCPR -0.1336
+  WC: dAUC -0.0574 95% CI [-0.0803, -0.0312]   dAUCPR -0.0927
+
+=== /workspace/experiments/lead5_concat_full_261012_230801/predictions.csv minus /workspace/experiments/frozen_maxpool_full_261012_094839/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC -0.0334 95% CI [-0.0508, -0.0142]   dAUCPR -0.1237
+  RC: dAUC -0.0195 95% CI [-0.0315, -0.0085]   dAUCPR -0.1197
+  WC: dAUC -0.0595 95% CI [-0.0825, -0.0341]   dAUCPR -0.1221
+
+=== /workspace/experiments/lead5_attention_full_261012_231324/predictions.csv minus /workspace/experiments/frozen_maxpool_full_261012_094839/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC -0.0324 95% CI [-0.0477, -0.0136]   dAUCPR -0.1096
+  RC: dAUC -0.0191 95% CI [-0.0317, -0.0077]   dAUCPR -0.1201
+  WC: dAUC -0.0575 95% CI [-0.0792, -0.0327]   dAUCPR -0.1039
+
+wrote /workspace/experiments/lead_full_scores.json
+=== 2026-10-12T23:21:10+00:00 done

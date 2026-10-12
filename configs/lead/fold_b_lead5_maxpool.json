@@ -1,0 +1,27 @@
+{
+    "_note": "Lead-time study on the frozen four-frame cache: the t-5 scan alone; same labels as detection. Fold B.",
+    "train_years": [
+        2013,
+        2015
+    ],
+    "val_years": [
+        2014
+    ],
+    "test_years": [
+        2013,
+        2014,
+        2015
+    ],
+    "batch_size": 256,
+    "learning_rate": 0.0003,
+    "label_smooth": 0.1,
+    "seed": 1234,
+    "features_dir": "features_4f",
+    "epochs": 30,
+    "head": "maxpool",
+    "head_kwargs": {},
+    "frames": [
+        2
+    ],
+    "exp_name": "lead5_maxpool_fold_b"
+}

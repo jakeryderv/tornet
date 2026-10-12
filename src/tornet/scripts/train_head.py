@@ -6,7 +6,12 @@ then see the last frame) on the train years, selects the best epoch on the valid
 scores the best checkpoint on the test years. Writes the same run directory layout as tornet-train
 (results.json, history.csv, checkpoints/) plus predictions.csv and scores.json for tornet-score.
 
-Usage: tornet-train-head <config.json>
+On a multi-frame cache, `frames` selects which scans the head sees (indices into the time axis,
+oldest first; e.g. [0] is the oldest scan alone, [0, 1] the oldest two), which turns detection on
+the newest scan into prediction from earlier ones. Several configs in one invocation share the
+loaded features.
+
+Usage: tornet-train-head <config.json> [<config.json> ...]
 """
 
 import copy
@@ -45,6 +50,9 @@ DEFAULT_CONFIG = {
     "test_years": [2013, 2014, 2015],
     "head": "transformer",
     "head_kwargs": {},
+    # Multi-frame cache only: indices of the scans the head sees, oldest first (None: all). A
+    # single index gives single-frame heads that scan; several give temporal heads that window.
+    "frames": None,
     "epochs": 30,
     "batch_size": 256,
     "learning_rate": 3e-4,
@@ -81,8 +89,12 @@ DEFAULT_CONFIG = {
 CATEGORY_CODES = {"TOR": 0, "NUL": 1, "WRN": 2}
 
 
-def load_features(features_dir: str, partition: str, years: list[int]):
-    """Concatenate cached features (float16, in RAM) and metadata for the given years."""
+def load_features(features_dir: str, partition: str, years: list[int], cache: dict | None = None):
+    """Concatenate cached features (float16, in RAM) and metadata for the given years. With
+    `cache`, repeated loads of the same years in one process return the same arrays."""
+    key = (features_dir, partition, tuple(years))
+    if cache is not None and key in cache:
+        return cache[key]
     feats, metas = [], []
     for year in years:
         path = os.path.join(features_dir, f"{partition}_{year}_features.npy")
@@ -90,7 +102,29 @@ def load_features(features_dir: str, partition: str, years: list[int]):
             raise FileNotFoundError(f"{path} missing; run tornet-cache-features for {year} first")
         feats.append(np.load(path))
         metas.append(pd.read_csv(os.path.join(features_dir, f"{partition}_{year}_meta.csv")))
-    return np.concatenate(feats), pd.concat(metas, ignore_index=True)
+    out = np.concatenate(feats), pd.concat(metas, ignore_index=True)
+    if cache is not None:
+        cache[key] = out
+    return out
+
+
+def select_frames(x: np.ndarray, frames: list[int] | None) -> np.ndarray:
+    """Keep the given scans of a multi-frame batch or array (time axis 1, oldest first). One
+    index drops the time axis so single-frame heads apply; None or a single-frame input returns
+    `x` unchanged."""
+    if frames is None or x.ndim < 5:
+        return x
+    if len(frames) == 1:
+        return x[:, frames[0]]
+    return x[:, list(frames)]
+
+
+def feature_shape(train_shape: tuple, frames: list[int] | None) -> tuple:
+    """Per-sample input shape of the head after `select_frames`."""
+    shape = tuple(train_shape[1:])
+    if frames is None or len(shape) < 4:
+        return shape
+    return shape[1:] if len(frames) == 1 else (len(frames),) + shape[1:]
 
 
 def second_target(meta: pd.DataFrame, config) -> np.ndarray | None:
@@ -139,10 +173,12 @@ class FeatureBatches(keras.utils.PyDataset):
         seed=0,
         aux=None,
         aux_name="aux",
+        frames=None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.features, self.labels, self.weights, self.aux = features, labels, weights, aux
+        self.frames = frames
         self.aux_name = aux_name or "aux"
         self.batch_size, self.shuffle = batch_size, shuffle
         self.rng = np.random.default_rng(seed)
@@ -155,7 +191,7 @@ class FeatureBatches(keras.utils.PyDataset):
 
     def __getitem__(self, idx):
         sel = self.order[idx * self.batch_size : (idx + 1) * self.batch_size]
-        x = self.features[sel].astype(np.float32)
+        x = select_frames(self.features[sel], self.frames).astype(np.float32)
         if self.aux is None:
             return x, self.labels[sel], self.weights[sel]
         return (
@@ -181,18 +217,19 @@ def sample_weights(meta: pd.DataFrame, config) -> np.ndarray:
     return np.asarray(w, dtype=np.float32)
 
 
-def predict_features(model, features, batch_size=512) -> np.ndarray:
+def predict_features(model, features, batch_size=512, frames=None) -> np.ndarray:
     """Binary logits for cached features; takes the "logit" output of a multi-output head."""
     out = []
     for i in range(0, len(features), batch_size):
-        p = model.predict_on_batch(features[i : i + batch_size].astype(np.float32))
+        x = select_frames(features[i : i + batch_size], frames).astype(np.float32)
+        p = model.predict_on_batch(x)
         if isinstance(p, dict):
             p = p["logit"]
         out.append(np.asarray(p).reshape(-1))
     return np.concatenate(out)
 
 
-def main(config):
+def main(config, cache: dict | None = None):
     seed = config.get("seed")
     if seed is not None:
         keras.utils.set_random_seed(int(seed))
@@ -207,7 +244,11 @@ def main(config):
     embedding = config["head"] == "embedding"
     outputs = ("logit", "embedding") if embedding else (("logit", "aux") if aux else ("logit",))
     second_name = outputs[1] if len(outputs) > 1 else None
-    x_train, m_train = load_features(features_dir, "train", config["train_years"])
+    frames = config.get("frames")
+    frames = None if frames is None else [int(i) for i in frames]
+    x_train, m_train = load_features(features_dir, "train", config["train_years"], cache)
+    if frames is not None and x_train.ndim < 5:
+        raise ValueError("`frames` needs a multi-frame cache (tornet-cache-features --frames)")
     y_train = m_train["label"].to_numpy(dtype=np.float32)
     w_train = sample_weights(m_train, config)
     workers = int(config.get("loader_workers") or 0)
@@ -221,11 +262,12 @@ def main(config):
         seed=seed or 0,
         aux=second_target(m_train, config),
         aux_name=second_name,
+        frames=frames,
         **loader_kwargs,
     )
     ds_val = None
     if config["val_years"]:
-        x_val, m_val = load_features(features_dir, "train", config["val_years"])
+        x_val, m_val = load_features(features_dir, "train", config["val_years"], cache)
         ds_val = FeatureBatches(
             x_val,
             m_val["label"].to_numpy(dtype=np.float32),
@@ -234,6 +276,7 @@ def main(config):
             shuffle=False,
             aux=second_target(m_val, config),
             aux_name=second_name,
+            frames=frames,
             **loader_kwargs,
         )
     logging.info(f"train {x_train.shape}, val {None if ds_val is None else x_val.shape}")
@@ -242,7 +285,7 @@ def main(config):
     if embedding:
         head_kwargs.setdefault("temperature", config["temperature"])
     model = build_head_model(
-        tuple(x_train.shape[1:]), config["head"], outputs=outputs, **head_kwargs
+        feature_shape(x_train.shape, frames), config["head"], outputs=outputs, **head_kwargs
     )
     logging.info(f"head {config['head']} {config['head_kwargs']}: {model.count_params():,} params")
 
@@ -336,6 +379,7 @@ def main(config):
             "head": config["head"],
             "head_kwargs": config["head_kwargs"],
             "frames": int(x_train.shape[1]) if x_train.ndim == 5 else 1,
+            "frames_used": frames,
             "aux_target": aux,
             "contrastive_target": config["contrastive_target"] if embedding else None,
             "aux_weight": float(config["aux_weight"]) if aux else None,
@@ -356,9 +400,9 @@ def main(config):
         chosen = best_checkpoint if best_checkpoint and val_auc else last_checkpoint
         if chosen and os.path.exists(chosen):
             model = keras.saving.load_model(chosen, compile=False)
-        x_test, m_test = load_features(features_dir, "test", config["test_years"])
+        x_test, m_test = load_features(features_dir, "test", config["test_years"], cache)
         rows = m_test.drop(columns=["year"], errors="ignore").to_dict("records")
-        logits = predict_features(model, x_test)
+        logits = predict_features(model, x_test, frames=frames)
         preds = finish_predictions(
             [{**r, "logit": float(lg)} for r, lg in zip(rows, logits, strict=True)]
         )
@@ -372,7 +416,9 @@ def main(config):
             embs = np.concatenate(
                 [
                     np.asarray(
-                        model.predict_on_batch(x_test[i : i + 512].astype(np.float32))["embedding"]
+                        model.predict_on_batch(
+                            select_frames(x_test[i : i + 512], frames).astype(np.float32)
+                        )["embedding"]
                     )
                     for i in range(0, len(x_test), 512)
                 ]
@@ -390,11 +436,16 @@ def main(config):
 
 
 def cli():
-    config = copy.deepcopy(DEFAULT_CONFIG)
-    if len(sys.argv) > 1:
-        with open(sys.argv[1]) as f:
-            config.update(json.load(f))
-    main(config)
+    """`tornet-train-head [config.json ...]`: each config runs in turn; features loaded for one
+    config are reused by the next when the directory and years match."""
+    paths = sys.argv[1:] or [None]
+    cache: dict = {}
+    for path in paths:
+        config = copy.deepcopy(DEFAULT_CONFIG)
+        if path:
+            with open(path) as f:
+                config.update(json.load(f))
+        main(config, cache)
 
 
 if __name__ == "__main__":

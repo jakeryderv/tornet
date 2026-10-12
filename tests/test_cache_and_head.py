@@ -353,3 +353,75 @@ def test_multi_frame_cache_and_heads(trained, tmp_path, monkeypatch):
         assert r["frames"] == 2 and r["head"] == head and 0.0 <= r["test_AUC"] <= 1.0
         model = keras.saving.load_model(r["best_checkpoint"], compile=False)
         assert tuple(model.input.shape[1:]) == tuple(info["feature_shape"])
+
+
+def test_frames_select_which_scans_the_head_sees(trained, tmp_path, monkeypatch):
+    """`frames` picks scans from a multi-frame cache: one index gives a single-frame head that
+    scan, several give a temporal head that window; configs in one invocation share features."""
+    exp, checkpoint = trained
+    out = tmp_path / "features2"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["tornet-cache-features", "--model_path", checkpoint, "--years", "2013", "2014", "--out",
+         str(out), "--frames", "2", "--batch_size", "2", "--workers", "1"],
+    )  # fmt: skip
+    cache_features.main()
+    feats = np.load(out / "train_2013_features.npy")
+    assert train_head.select_frames(feats, [0]).shape == feats[:, 0].shape
+    assert train_head.select_frames(feats, [0, 1]).shape == feats.shape
+    assert train_head.feature_shape(feats.shape, [1]) == feats.shape[2:]
+    assert train_head.feature_shape(feats.shape, [0, 1]) == feats.shape[1:]
+
+    base = {
+        **train_head.DEFAULT_CONFIG,
+        "features_dir": str(out),
+        "train_years": [2013],
+        "val_years": [2014],
+        "test_years": [2014],
+        "epochs": 1,
+        "batch_size": 2,
+        "exp_dir": str(exp),
+    }
+    cfgs = [
+        {**base, "head": "maxpool", "frames": [0], "exp_name": "lead_maxpool_fold_x"},
+        {**base, "head": "temporal_attention", "head_kwargs": {"num_heads": 4}, "frames": [0, 1],
+         "exp_name": "lead_attention_fold_x"},
+    ]  # fmt: skip
+    paths = []
+    for i, c in enumerate(cfgs):
+        p = tmp_path / f"cfg{i}.json"
+        p.write_text(json.dumps(c))
+        paths.append(str(p))
+    monkeypatch.setattr(sys, "argv", ["tornet-train-head", *paths])
+    loads = []
+    real = train_head.load_features
+
+    def counting(*a, **k):
+        loads.append(a[1:3])
+        return real(*a, **k)
+
+    monkeypatch.setattr(train_head, "load_features", counting)
+    train_head.cli()
+    # six loads requested (train/val/test per config), the second config served from the cache
+    assert len(loads) == 6
+    for name, shape in [
+        ("lead_maxpool_fold_x", feats.shape[2:]),
+        ("lead_attention_fold_x", feats.shape[1:]),
+    ]:
+        run = sorted((exp).glob(f"{name}_*"))[-1]
+        r = json.loads((run / "results.json").read_text())
+        assert r["frames_used"] in ([0], [0, 1]) and 0.0 <= r["test_AUC"] <= 1.0
+        model = keras.saving.load_model(run / "checkpoints" / "best.keras", compile=False)
+        assert tuple(model.input.shape[1:]) == tuple(shape)
+
+    with pytest.raises(ValueError, match="multi-frame"):
+        single = tmp_path / "features1"
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            ["tornet-cache-features", "--model_path", checkpoint, "--years", "2013", "2014",
+             "--out", str(single), "--batch_size", "2", "--workers", "1"],
+        )  # fmt: skip
+        cache_features.main()
+        train_head.main({**base, "features_dir": str(single), "head": "maxpool", "frames": [0]})

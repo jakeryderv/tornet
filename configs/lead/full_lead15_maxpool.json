@@ -1,0 +1,33 @@
+{
+    "_note": "Lead-time study on the frozen four-frame cache: the oldest scan (t-15) alone; same labels as detection. Full data, test on the 2021-2022 test partition.",
+    "train_years": [
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020
+    ],
+    "val_years": [
+        2021,
+        2022
+    ],
+    "test_years": [
+        2021,
+        2022
+    ],
+    "batch_size": 256,
+    "learning_rate": 0.0003,
+    "label_smooth": 0.1,
+    "seed": 1234,
+    "features_dir": "features_4f",
+    "epochs": 15,
+    "head": "maxpool",
+    "head_kwargs": {},
+    "frames": [
+        0
+    ],
+    "exp_name": "lead15_maxpool_full"
+}

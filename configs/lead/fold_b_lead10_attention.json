@@ -1,0 +1,28 @@
+{
+    "_note": "Lead-time study on the frozen four-frame cache: attention over scans t-15 and t-10; same labels as detection. Fold B.",
+    "train_years": [
+        2013,
+        2015
+    ],
+    "val_years": [
+        2014
+    ],
+    "test_years": [
+        2013,
+        2014,
+        2015
+    ],
+    "batch_size": 256,
+    "learning_rate": 0.0003,
+    "label_smooth": 0.1,
+    "seed": 1234,
+    "features_dir": "features_4f",
+    "epochs": 30,
+    "head": "temporal_attention",
+    "head_kwargs": {},
+    "frames": [
+        0,
+        1
+    ],
+    "exp_name": "lead10_attention_fold_b"
+}

@@ -377,6 +377,19 @@ uv run tornet-test --model_path experiments/<run>/checkpoints/best.keras --years
 uv run tornet-score experiments/<baseline>/predictions.csv experiments/<attention>/predictions.csv experiments/<concat>/predictions.csv
 ```
 
+**Frozen backbone, four-frame feature cache** (experiment 4; the cache is one forward pass, then
+heads train in minutes and seeds are free):
+
+```
+uv run tornet-cache-features --years 2013 2014 2015 --frames 4 --out $TORNET_ROOT/features_4f --verify results/predictions_pretrained_2013_2015.csv
+for c in maxpool temporal_attention temporal_concat; do uv run tornet-train-head configs/frozen/fold_b_$c.json; done
+uv run tornet-score experiments/<maxpool>/predictions.csv experiments/<attention>/predictions.csv experiments/<concat>/predictions.csv
+```
+
+At full scale the same steps run from `scripts/runpod/frozen_heads.sh` on a pod mounting the
+network volume (loader benchmark, cache of all years, the three `configs/frozen/full_*.json` runs,
+paired scores).
+
 A variant is a new `exp_name` prefix on the same configs. Subset scores sit below the paper's because
 of less training data and a higher tornado base rate (13% vs 6%); compare the hybrid against the
 baseline on the same subset, never against the published numbers. The bootstrap CI on the subset

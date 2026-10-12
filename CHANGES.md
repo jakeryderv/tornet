@@ -61,6 +61,12 @@ classification head and to tooling around cached features:
   is parameter-matched to one attention layer. Both keep the per-location logit and global max.
   `tornet-test` infers the frame count from a checkpoint. `configs/temporal/*.json` run both on
   fold B at batch 16.
+- Frozen-backbone temporal heads: `tornet-cache-features --frames N` runs the pretrained backbone
+  on the last N scans with shared weights and writes `(N, T, H, W, C)` caches (`--verify` checks
+  the last frame against single-frame predictions). `tornet-train-head` builds the temporal heads
+  on such a cache, and gives single-frame heads the last frame so the maxpool control trains from
+  the same cache. `features_dir` may be relative to `TORNET_ROOT`. `configs/frozen/` holds fold B
+  and full-data configs for the control and both temporal heads.
 
 Known paper/code discrepancy, not altered: the paper describes 2, 3, 3, 3 convolutions per block,
 while the code and the pretrained weights have 2, 2, 3, 3. See `docs/project.md` section 3.

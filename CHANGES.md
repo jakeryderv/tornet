@@ -67,6 +67,11 @@ classification head and to tooling around cached features:
   on such a cache, and gives single-frame heads the last frame so the maxpool control trains from
   the same cache. `features_dir` may be relative to `TORNET_ROOT`. `configs/frozen/` holds fold B
   and full-data configs for the control and both temporal heads.
+- Lead-time study: `tornet-train-head` takes a `frames` key naming which scans of a multi-frame
+  cache the head sees (oldest first; one index gives a single-frame head that scan, several give a
+  temporal head that window), so the detection label is predicted from scans 5, 10 or 15 minutes
+  earlier. Several configs in one invocation share the loaded features. `configs/lead/` and
+  `scripts/runpod/lead_heads.sh`.
 
 Known paper/code discrepancy, not altered: the paper describes 2, 3, 3, 3 convolutions per block,
 while the code and the pretrained weights have 2, 2, 3, 3. See `docs/project.md` section 3.

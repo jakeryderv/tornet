@@ -1,0 +1,30 @@
+{
+    "_note": "Frozen pretrained backbone, four-frame feature cache of all years; no-attention control: four frames concatenated along channels, then the maxpool head. Full data: train 2013-2020, validate on the 2021-2022 train partition, test on the 2021-2022 test partition.",
+    "features_dir": "features_4f",
+    "train_years": [
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020
+    ],
+    "val_years": [
+        2021,
+        2022
+    ],
+    "test_years": [
+        2021,
+        2022
+    ],
+    "epochs": 30,
+    "batch_size": 256,
+    "learning_rate": 0.0003,
+    "label_smooth": 0.1,
+    "seed": 1234,
+    "head": "temporal_concat",
+    "head_kwargs": {},
+    "exp_name": "frozen_temporal_concat_full"
+}

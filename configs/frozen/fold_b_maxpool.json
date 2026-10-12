@@ -1,0 +1,24 @@
+{
+    "_note": "Frozen pretrained backbone, four-frame feature cache; single-frame control: the authors' head on the last frame of the four-frame cache. Fold B.",
+    "features_dir": "features_4f",
+    "train_years": [
+        2013,
+        2015
+    ],
+    "val_years": [
+        2014
+    ],
+    "test_years": [
+        2013,
+        2014,
+        2015
+    ],
+    "epochs": 30,
+    "batch_size": 256,
+    "learning_rate": 0.0003,
+    "label_smooth": 0.1,
+    "seed": 1234,
+    "head": "maxpool",
+    "head_kwargs": {},
+    "exp_name": "frozen_maxpool_fold_b"
+}

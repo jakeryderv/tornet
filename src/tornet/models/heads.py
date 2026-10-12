@@ -218,9 +218,22 @@ def build_head_model(
     feature_shape, head: str = "maxpool", outputs: tuple[str, ...] = ("logit",), **head_kwargs
 ) -> keras.Model:  # noqa: E302
     """A standalone model from a cached feature map to a logit (or a dict of named outputs when
-    more than one is requested), for head-only training."""
+    more than one is requested), for head-only training.
+
+    A four-dimensional `feature_shape` (frames, H, W, C) is a multi-frame cache: temporal heads
+    see every frame, and the single-frame heads here see only the last frame, which makes them the
+    controls for the same cache."""
     inputs = keras.Input(feature_shape, name="features")
-    out = HEADS[head](inputs, outputs=tuple(outputs), **head_kwargs)
+    x = inputs
+    if len(feature_shape) == 4:
+        # imported here because tornet.models.temporal builds on the heads in this module
+        from tornet.models.temporal import TEMPORAL_HEADS, LastFrame
+
+        if head in TEMPORAL_HEADS:
+            out = TEMPORAL_HEADS[head](x, outputs=tuple(outputs), **head_kwargs)
+            return keras.Model(inputs=inputs, outputs=out, name=head)
+        x = LastFrame()(x)
+    out = HEADS[head](x, outputs=tuple(outputs), **head_kwargs)
     return keras.Model(inputs=inputs, outputs=out, name=head)
 
 

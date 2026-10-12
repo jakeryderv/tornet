@@ -125,6 +125,19 @@ class FramesToChannels(keras.layers.Layer):
 
 
 @keras.saving.register_keras_serializable()
+class LastFrame(keras.layers.Layer):
+    """(batch, time, H, W, C) -> (batch, H, W, C): the current scan only, so a single-frame head
+    can train on a multi-frame feature cache as the control."""
+
+    def call(self, x):
+        return x[:, -1]
+
+    def compute_output_shape(self, input_shape):
+        b, _t, h, w, c = input_shape
+        return (b, h, w, c)
+
+
+@keras.saving.register_keras_serializable()
 class FramePosition(keras.layers.Layer):
     """Adds a learned embedding per time step to (n, time, C)."""
 
@@ -176,3 +189,21 @@ TEMPORAL_HEADS = {
     "temporal_attention": temporal_attention_head,
     "temporal_concat": temporal_concat_head,
 }
+
+
+def temporal_backbone(backbone: keras.Model, frames: int) -> keras.Model:
+    """Wrap a single-frame backbone (dict inputs, one feature-map output) so it takes
+    (frames, azimuth, range, tilt) radar inputs plus one set of coordinates and returns
+    (batch, frames, H, W, C): frames fold into the batch axis, exactly as `build_model(frames=N)`
+    does, so caching per-frame features of a pretrained model uses the same shared weights."""
+    inputs, folded = {}, {}
+    for name, tensor in backbone.input.items():
+        shape = tuple(tensor.shape[1:])
+        if name == "coordinates":
+            inputs[name] = keras.Input(shape, name=name)
+            folded[name] = RepeatFrames(frames)(inputs[name])
+        else:
+            inputs[name] = keras.Input((frames,) + shape, name=name)
+            folded[name] = FoldTime()(inputs[name])
+    out = UnfoldTime(frames)(backbone(folded))
+    return keras.Model(inputs=inputs, outputs=out, name=f"{backbone.name}_{frames}f")

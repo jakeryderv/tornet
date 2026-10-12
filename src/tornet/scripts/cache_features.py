@@ -4,18 +4,19 @@ Cuts a trained model at the last dropout layer of its convolutional backbone (bl
 sample of the requested years and partitions through it, and writes one float16 .npy of feature
 maps plus one metadata CSV per (partition, year) into the output directory:
 
-    <out>/<partition>_<year>_features.npy   (N, H, W, C) float16
+    <out>/<partition>_<year>_features.npy   (N, H, W, C) float16, or (N, T, H, W, C) with --frames T
     <out>/<partition>_<year>_meta.csv       filename, label, category, ef_number, event_id, time, ...
     <out>/cache.json                        model path, tap layer, feature shape
 
 With --verify <predictions.csv>, the model's own head is applied to the cached features and the
 resulting logits are compared with those in the CSV (from `tornet-test --predictions`), which
-checks that the cache reproduces the full model.
+checks that the cache reproduces the full model (on the last frame for a multi-frame cache).
 
-Usage: tornet-cache-features --years 2013 2014 2015 [--partitions train test] [--out DIR]
+Usage: tornet-cache-features --years 2013 2014 2015 [--partitions train test] [--out DIR] [--frames 4]
 """
 
 import argparse
+import gc
 import json
 import logging
 import os
@@ -25,6 +26,7 @@ import numpy as np
 import pandas as pd
 
 os.environ.setdefault("KERAS_BACKEND", "torch")
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 
 import keras  # noqa: E402
 
@@ -35,6 +37,7 @@ import tornet.models.temporal  # noqa: E402, F401
 from tornet.data.keras_loader import iterate_batches  # noqa: E402
 from tornet.data.loader import get_dataloader  # noqa: E402
 from tornet.models.cnn_baseline import backbone_end  # noqa: E402
+from tornet.models.temporal import temporal_backbone  # noqa: E402
 from tornet.scripts.score import roc_auc  # noqa: E402
 from tornet.scripts.test_keras import META_KEYS, batch_metadata  # noqa: E402
 
@@ -58,7 +61,7 @@ def split_backbone(model: keras.Model) -> tuple[keras.Model, keras.Model]:
     return backbone, head
 
 
-def cache_partition(backbone, data_root, year, partition, out, batch_size, workers):
+def cache_partition(backbone, data_root, year, partition, out, batch_size, workers, frames=1):
     ds = get_dataloader(
         data_root,
         [year],
@@ -67,6 +70,7 @@ def cache_partition(backbone, data_root, year, partition, out, batch_size, worke
         select_keys=list(backbone.input.keys()) + META_KEYS,
         workers=workers,
         use_multiprocessing=workers > 1,
+        n_frames=frames,
     )
     if len(ds) == 0:
         logging.info(f"{partition} {year}: no files, skipping")
@@ -81,6 +85,8 @@ def cache_partition(backbone, data_root, year, partition, out, batch_size, worke
         rows.extend(batch_metadata(x, y, files, ds.data_root))
         if (i + 1) % 20 == 0 or i + 1 == len(ds):
             logging.info(f"{partition} {year}: {i + 1}/{len(ds)} batches, {time.time() - t0:.0f}s")
+        if (i + 1) % 50 == 0:
+            gc.collect()  # Keras on torch leaves collectable cycles holding GPU tensors per call
     features = np.concatenate(feats)
     meta = pd.DataFrame(rows)
     meta["year"] = year
@@ -99,6 +105,8 @@ def verify(head, out, years, predictions_csv):
         if not os.path.exists(fpath):
             continue
         feats = np.load(fpath, mmap_mode="r")
+        if feats.ndim == 5:  # multi-frame cache: the model's head sees the current (last) frame
+            feats = feats[:, -1]
         meta = pd.read_csv(os.path.join(out, f"test_{year}_meta.csv"))
         logits = np.concatenate(
             [
@@ -127,7 +135,15 @@ def main():
     parser.add_argument("--years", type=int, nargs="+", default=list(range(2013, 2023)))
     parser.add_argument("--partitions", nargs="+", default=["train", "test"])
     parser.add_argument("--out", default=None, help="Output dir (default: $TORNET_ROOT/features)")
-    parser.add_argument("--batch_size", type=int, default=64)
+    parser.add_argument(
+        "--frames",
+        type=int,
+        default=1,
+        help="Trailing scans per sample to cache (1-4); more than 1 writes (N, T, H, W, C)",
+    )
+    parser.add_argument(
+        "--batch_size", type=int, default=None, help="Samples per batch (default: 64 // frames)"
+    )
     parser.add_argument("--workers", type=int, default=8)
     parser.add_argument("--verify", default=None, help="predictions CSV from tornet-test")
     args = parser.parse_args()
@@ -146,21 +162,26 @@ def main():
         )
     model = keras.saving.load_model(model_path, compile=False)
     backbone, head = split_backbone(model)
+    tap_layer = backbone.layers[-1].name
+    batch_size = args.batch_size or max(1, 64 // args.frames)
+    if args.frames > 1:
+        backbone = temporal_backbone(backbone, args.frames)
     logging.info(
-        f"tap layer: {backbone.layers[-1].name}, feature shape {backbone.output.shape[1:]}"
+        f"tap layer: {tap_layer}, feature shape {backbone.output.shape[1:]}, batch {batch_size}"
     )
 
     feature_shape = None
     for partition in args.partitions:
         for year in args.years:
             shape = cache_partition(
-                backbone, data_root, year, partition, out, args.batch_size, args.workers
+                backbone, data_root, year, partition, out, batch_size, args.workers, args.frames
             )
             feature_shape = feature_shape or shape
 
     info = {
         "model_path": str(model_path),
-        "tap_layer": backbone.layers[-1].name,
+        "tap_layer": tap_layer,
+        "frames": args.frames,
         "feature_shape": list(feature_shape) if feature_shape else None,
         "years": args.years,
         "partitions": args.partitions,

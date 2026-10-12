@@ -1,7 +1,8 @@
 """Train a classification head on cached backbone features.
 
 Reads the .npy/.csv pairs written by tornet-cache-features, trains one of the heads in
-`tornet.models.heads` on the train years, selects the best epoch on the validation years, then
+`tornet.models.heads` (or, on a multi-frame cache, `tornet.models.temporal`; single-frame heads
+then see the last frame) on the train years, selects the best epoch on the validation years, then
 scores the best checkpoint on the test years. Writes the same run directory layout as tornet-train
 (results.json, history.csv, checkpoints/) plus predictions.csv and scores.json for tornet-score.
 
@@ -38,7 +39,7 @@ from tornet.utils.general import (  # noqa: E402
 logging.basicConfig(level=logging.INFO)
 
 DEFAULT_CONFIG = {
-    "features_dir": None,  # default: $TORNET_ROOT/features
+    "features_dir": None,  # default: $TORNET_ROOT/features; a relative path is under $TORNET_ROOT
     "train_years": [2013, 2015],
     "val_years": [2014],
     "test_years": [2013, 2014, 2015],
@@ -192,7 +193,9 @@ def main(config):
     seed = config.get("seed")
     if seed is not None:
         keras.utils.set_random_seed(int(seed))
-    features_dir = config["features_dir"] or os.path.join(os.environ["TORNET_ROOT"], "features")
+    features_dir = config["features_dir"] or "features"
+    if not os.path.isabs(features_dir):
+        features_dir = os.path.join(os.environ["TORNET_ROOT"], features_dir)
     logging.info(f"features from {features_dir}")
     logging.info(f"Using {keras.config.backend()} backend")
     logging.info(config)
@@ -325,6 +328,7 @@ def main(config):
             "exp_name": config["exp_name"],
             "head": config["head"],
             "head_kwargs": config["head_kwargs"],
+            "frames": int(x_train.shape[1]) if x_train.ndim == 5 else 1,
             "aux_target": aux,
             "contrastive_target": config["contrastive_target"] if embedding else None,
             "aux_weight": float(config["aux_weight"]) if aux else None,

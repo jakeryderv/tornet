@@ -298,3 +298,58 @@ def test_train_embedding_head(trained, tmp_path, monkeypatch):
         embs = np.load(os.path.join(r["expdir"], "embeddings_test.npy"))
         n_test = sum(1 for _rel, kind, *_ in SYNTHETIC_SAMPLES if kind == "test")
         assert embs.shape == (n_test, 8)
+
+
+def test_multi_frame_cache_and_heads(trained, tmp_path, monkeypatch):
+    """A --frames cache holds every frame's features from the shared backbone; its last frame
+    reproduces the single-frame model, temporal heads train on all frames, and single-frame heads
+    train on the last frame as the control."""
+    exp, checkpoint = trained
+    preds = tmp_path / "preds.csv"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["tornet-test", "--model_path", checkpoint, "--years", "2014", "--batch_size", "2",
+         "--workers", "1", "--predictions", str(preds)],
+    )  # fmt: skip
+    test_keras.main()
+
+    out = tmp_path / "features2"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["tornet-cache-features", "--model_path", checkpoint, "--years", "2013", "2014", "--out",
+         str(out), "--frames", "2", "--batch_size", "2", "--workers", "1", "--verify", str(preds)],
+    )  # fmt: skip
+    cache_features.main()
+    info = json.loads((out / "cache.json").read_text())
+    assert info["frames"] == 2 and len(info["feature_shape"]) == 4 and info["feature_shape"][0] == 2
+    assert info["verify"]["max_abs_logit_diff"] < 1e-2
+    feats = np.load(out / "train_2013_features.npy")
+    assert feats.ndim == 5 and feats.shape[1] == 2 and feats.dtype == np.float16
+    # frames differ (the fixture's scans are not identical), so this is not a repeated last frame
+    assert not np.allclose(feats[:, 0].astype(np.float32), feats[:, 1].astype(np.float32))
+
+    for head, kw in [
+        ("maxpool", {}),
+        ("temporal_attention", {"num_heads": 4}),
+        ("temporal_concat", {}),
+    ]:
+        r = train_head.main(
+            {
+                **train_head.DEFAULT_CONFIG,
+                "features_dir": str(out),
+                "train_years": [2013],
+                "val_years": [2014],
+                "test_years": [2014],
+                "head": head,
+                "head_kwargs": kw,
+                "epochs": 1,
+                "batch_size": 2,
+                "exp_dir": str(exp),
+                "exp_name": f"frozen_{head}_fold_x",
+            }
+        )
+        assert r["frames"] == 2 and r["head"] == head and 0.0 <= r["test_AUC"] <= 1.0
+        model = keras.saving.load_model(r["best_checkpoint"], compile=False)
+        assert tuple(model.input.shape[1:]) == tuple(info["feature_shape"])

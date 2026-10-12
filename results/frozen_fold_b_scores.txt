@@ -1,0 +1,45 @@
+
+=== experiments/frozen_maxpool_fold_b_261012_022652/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7021        770 0.8973 [0.884, 0.909] 0.6849 0.4652 0.60 0.740 0.556
+  RC 4436        770 0.9465 [0.937, 0.955] 0.8739 0.6456 0.15 0.817 0.755
+  WC 3355        770 0.8276 [0.808, 0.846] 0.7082 0.4698 0.60 0.752 0.556
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.32 (n=268), EF1 0.55 (n=278), EF2 0.84 (n=122), EF3 0.78 (n=58), EF4 0.93 (n=44)
+  AUC by year: 2013 0.964, 2014 0.892, 2015 0.892
+
+=== experiments/frozen_temporal_attention_fold_b_261012_023840/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7021        770 0.9069 [0.897, 0.918] 0.7021 0.4947 0.54 0.736 0.601
+  RC 4436        770 0.9546 [0.946, 0.962] 0.8846 0.6727 0.15 0.843 0.769
+  WC 3355        770 0.8392 [0.821, 0.855] 0.7267 0.5000 0.49 0.708 0.630
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.37 (n=268), EF1 0.58 (n=278), EF2 0.93 (n=122), EF3 0.79 (n=58), EF4 0.98 (n=44)
+  AUC by year: 2013 0.966, 2014 0.905, 2015 0.899
+
+=== experiments/frozen_temporal_concat_fold_b_261012_025404/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7021        770 0.9031 [0.891, 0.914] 0.7073 0.4813 0.57 0.732 0.584
+  RC 4436        770 0.9489 [0.939, 0.958] 0.8849 0.6741 0.17 0.881 0.742
+  WC 3355        770 0.8382 [0.819, 0.854] 0.7285 0.4919 0.46 0.690 0.631
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.35 (n=268), EF1 0.56 (n=278), EF2 0.90 (n=122), EF3 0.79 (n=58), EF4 0.98 (n=44)
+  AUC by year: 2013 0.970, 2014 0.898, 2015 0.898
+
+=== experiments/frozen_temporal_attention_fold_b_261012_023840/predictions.csv minus experiments/frozen_maxpool_fold_b_261012_022652/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC +0.0096 95% CI [+0.0046, +0.0143]   dAUCPR +0.0172
+  RC: dAUC +0.0081 95% CI [+0.0043, +0.0126]   dAUCPR +0.0106
+  WC: dAUC +0.0116 95% CI [+0.0053, +0.0180]   dAUCPR +0.0185
+
+=== experiments/frozen_temporal_concat_fold_b_261012_025404/predictions.csv minus experiments/frozen_maxpool_fold_b_261012_022652/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC +0.0058 95% CI [+0.0001, +0.0114]   dAUCPR +0.0223
+  RC: dAUC +0.0023 95% CI [-0.0026, +0.0071]   dAUCPR +0.0110
+  WC: dAUC +0.0106 95% CI [+0.0032, +0.0178]   dAUCPR +0.0203
+
+wrote results/frozen_fold_b_scores.json
+
+##### attention paired against concat
+=== experiments/frozen_temporal_attention_fold_b_261012_023840/predictions.csv minus experiments/frozen_temporal_concat_fold_b_261012_025404/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC +0.0038 95% CI [-0.0008, +0.0089]   dAUCPR -0.0051
+  RC: dAUC +0.0058 95% CI [+0.0015, +0.0101]   dAUCPR -0.0004
+  WC: dAUC +0.0010 95% CI [-0.0039, +0.0051]   dAUCPR -0.0018

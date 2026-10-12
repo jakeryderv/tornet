@@ -294,6 +294,58 @@ reference cycles holding GPU tensors every step, in training and in prediction, 
 `tornet-train` and `tornet-test` collect every 50 batches; `tornet-test` divides its default batch
 of 64 by the model's frame count.
 
+### Experiment 4 result: temporal heads on frozen pretrained features (fold B, 2026-10-12)
+
+The cheap version of the temporal question: the published backbone, frozen, run once over the last
+four scans of every sample (`tornet-cache-features --frames 4`; the last frame reproduces the
+pretrained model's logits to 0.001), then heads trained on the cache for 30 epochs
+(`configs/frozen/fold_b_*.json`). The control is the authors' maxpool head retrained on the last
+frame only, from the same cache. Scores on the 2013–2015 test partition
+(`results/frozen_fold_b_scores.{json,txt}`, `results/frozen_fold_b_results.csv`, histories in
+`results/frozen_*_fold_b_history.csv`):
+
+| Run | params | best epoch | val AUC | NC AUC | NC AUCPR | RC AUC | WC AUC |
+|---|---|---|---|---|---|---|---|
+| pretrained reference | | | | 0.8946 | 0.696 | 0.9422 | 0.8270 |
+| frozen, maxpool head, last frame (control) | 0.33M | 22 | 0.9049 | 0.8973 | 0.685 | 0.9465 | 0.8276 |
+| frozen, temporal attention, 4 frames | 0.92M | 10 | 0.9051 | 0.9069 | 0.702 | 0.9546 | 0.8392 |
+| frozen, temporal concat, 4 frames | 0.92M | 19 | 0.9064 | 0.9031 | 0.707 | 0.9489 | 0.8382 |
+
+Paired bootstrap ΔAUC:
+
+| | NC | RC | WC | NC ΔAUCPR |
+|---|---|---|---|---|
+| attention − control | **+0.0096 [+0.0046, +0.0143]** | +0.0081 [+0.0043, +0.0126] | +0.0116 [+0.0053, +0.0180] | +0.017 |
+| concat − control | +0.0058 [+0.0001, +0.0114] | +0.0023 [−0.0026, +0.0071] | +0.0106 [+0.0032, +0.0178] | +0.022 |
+| attention − concat | +0.0038 [−0.0008, +0.0089] | +0.0058 [+0.0015, +0.0101] | +0.0010 [−0.0039, +0.0051] | −0.005 |
+
+What this says:
+
+- **The first significant win for a variant in this project.** Temporal attention over the four
+  frames beats the single-frame control by 0.010 NC AUC with the interval clear of zero, on every
+  view, with the same frozen features and the same training procedure. The gain is on warned
+  negatives (WC +0.012) as much as on random ones (RC +0.008), so this is not only the
+  "earlier frames help with warned storms" effect seen from scratch (Experiment 3).
+- **Most of it is the frames, some of it may be the attention.** Concat gets +0.006 overall and
+  the same WC gain; attention minus concat is +0.004 with the interval touching zero, significant
+  only on RC. Attention has the better AUC, concat the better AUCPR.
+- **Validation does not see any of this.** The three validation AUCs on 2014 are within 0.002
+  and the curves are flat after epoch 5; best epochs (22, 10, 19) are noise. The test differences
+  are real by the paired bootstrap, but a single held-out year at this size cannot resolve 0.01,
+  which is an argument for the full data.
+- **Frozen features already contain temporal signal.** The single-frame backbone was never
+  trained to compare scans, yet a head that compares its per-frame features gains 0.01. A backbone
+  that trains with temporal context (Plan A fine-tuning, Plan B from scratch) is the natural next
+  step if the full-data result holds.
+- **Caveats.** One seed each; the cache is fixed so seeds only vary head initialisation and batch
+  order, and they are cheap (16–30 s per epoch locally). 2013 and 2015 training-year test
+  partitions are in the test set, as in every fold-B number here.
+
+Decision: run this exact protocol at full scale on RunPod (`scripts/runpod/frozen_heads.sh`):
+cache 2013–2022 four-frame features once (about 75 GB on the volume), train the three heads on
+2013–2020 with validation on the 2021–2022 train partition, score on the 2021–2022 test partition,
+15 epochs. Seeds are cheap on the cache and should follow if the first pass is within noise.
+
 ### Training-signal ideas (agreed order: A then B)
 
 - **A. Continuous auxiliary targets, not EF-based** (EF ratings are survey-based, inconsistent at the

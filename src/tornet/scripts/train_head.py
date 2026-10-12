@@ -70,6 +70,9 @@ DEFAULT_CONFIG = {
     "contrastive_sigma": 0.25,
     "temperature": 0.1,
     "seed": 1234,
+    # Threads that slice and convert cached float16 batches to float32 ahead of the GPU (the
+    # per-step cost on a multi-frame cache; numpy releases the GIL for these copies).
+    "loader_workers": 4,
     "exp_name": "head",
     "exp_dir": os.environ.get("EXP_DIR", "experiments"),
     "save_all_checkpoints": False,
@@ -207,6 +210,8 @@ def main(config):
     x_train, m_train = load_features(features_dir, "train", config["train_years"])
     y_train = m_train["label"].to_numpy(dtype=np.float32)
     w_train = sample_weights(m_train, config)
+    workers = int(config.get("loader_workers") or 0)
+    loader_kwargs = {"workers": workers, "use_multiprocessing": False, "max_queue_size": 8}
     ds_train = FeatureBatches(
         x_train,
         y_train,
@@ -216,6 +221,7 @@ def main(config):
         seed=seed or 0,
         aux=second_target(m_train, config),
         aux_name=second_name,
+        **loader_kwargs,
     )
     ds_val = None
     if config["val_years"]:
@@ -228,6 +234,7 @@ def main(config):
             shuffle=False,
             aux=second_target(m_val, config),
             aux_name=second_name,
+            **loader_kwargs,
         )
     logging.info(f"train {x_train.shape}, val {None if ds_val is None else x_val.shape}")
 

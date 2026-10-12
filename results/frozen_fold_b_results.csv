@@ -1,0 +1,4 @@
+run,git_commit,git_dirty,train_years,val_years,epochs_run,best_epoch,AUC,AUCPR
+frozen_maxpool_fold_b_261012_022652,933d166,True,"[2013, 2015]",[2014],30,22,0.9048731327056885,0.6122545599937439
+frozen_temporal_attention_fold_b_261012_023840,2fbed7c,False,"[2013, 2015]",[2014],30,10,0.9051318168640137,0.611709475517273
+frozen_temporal_concat_fold_b_261012_025404,2fbed7c,False,"[2013, 2015]",[2014],30,19,0.9063830375671387,0.6473063230514526

@@ -1,5 +1,5 @@
 {
-    "_note": "Frozen pretrained backbone, four-frame feature cache of all years; per-location self-attention over the four frames, then the maxpool head. Full data: train 2013-2020, validate on the 2021-2022 train partition, test on the 2021-2022 test partition.",
+    "_note": "Frozen pretrained backbone, four-frame feature cache of all years; per-location self-attention over the four frames, then the maxpool head. Full data: train 2013-2020, validate on the 2021-2022 train partition, test on the 2021-2022 test partition. 15 epochs: on fold B the validation curves were flat after epoch 5 and the full training set is about six times larger.",
     "features_dir": "features_4f",
     "train_years": [
         2013,
@@ -19,7 +19,7 @@
         2021,
         2022
     ],
-    "epochs": 30,
+    "epochs": 15,
     "batch_size": 256,
     "learning_rate": 0.0003,
     "label_smooth": 0.1,

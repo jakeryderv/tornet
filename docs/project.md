@@ -574,10 +574,14 @@ on the detector's 8 x 15 heat map per horizon.
 - *Baselines.* Persistence and the ceiling in the first slice; a classical advection forecast
   (last frame moved along the estimated storm motion) in the full version, since a learned
   forecaster that cannot beat advection through the detector has learned nothing beyond motion.
-- *Open, loss-related (to discuss before the runs):* the weight of the detector loss in the
-  variant (0.5 of the field loss as a starting point); whether the field loss should weight
-  velocity channels above reflectivity, since the couplet is what matters (equal weights in the
-  control to keep the comparison clean); epoch count on fold B (six).
+- *Loss focus (agreed 2026-10-13).* The field loss centres on **velocity and reflectivity**:
+  the pre-onset signature is the velocity couplet, with the reflectivity hook and inflow notch
+  as its structural context; the dual-pol products mostly flag debris that is already lofted.
+  This is taken as the starting point without a channel-ablation study (the cache cannot give
+  channel importance, since its features come after the backbone has mixed all twelve
+  channels; an ablation of the full detector is ~20 min locally and remains available if a
+  result makes the actual ratios matter). Details of the weighting and the detector-loss
+  weight are still under discussion.
 
 **Modeling (built 2026-10-13, `tornet.models.forecaster`).** Inputs are the detector's dict of
 radar variables with a time axis of `n_in` = 2 scans (t−15, t−10) plus range-folded mask and

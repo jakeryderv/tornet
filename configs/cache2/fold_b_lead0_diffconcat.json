@@ -1,0 +1,31 @@
+{
+  "_note": "Concat head handed frame-to-frame feature differences as well as the frames. Frames [0, 1, 2, 3] (lead0).",
+  "features_dir": "features_4f",
+  "batch_size": 256,
+  "learning_rate": 0.0003,
+  "label_smooth": 0.1,
+  "loader_workers": 4,
+  "train_years": [
+    2013,
+    2015
+  ],
+  "val_years": [
+    2014
+  ],
+  "test_years": [
+    2013,
+    2014,
+    2015
+  ],
+  "epochs": 30,
+  "head": "temporal_diff_concat",
+  "head_kwargs": {},
+  "frames": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "exp_name": "lead0_diffconcat_fold_b",
+  "exp_dir": "experiments"
+}

@@ -15,6 +15,7 @@ Usage: tornet-train-head <config.json> [<config.json> ...]
 """
 
 import copy
+import glob
 import json
 import logging
 import math
@@ -64,10 +65,16 @@ DEFAULT_CONFIG = {
     "w2": 2.0,
     "wW": 0.5,
     "label_smooth": 0.1,
-    # Optional auxiliary regression target trained jointly with the binary logit:
+    # Optional auxiliary target trained jointly with the binary logit:
     #   "proximity": -min(minutes to the tornado interval, window)/window, in [-1, 0]; nulls -1
     #   "frame_fraction": share of the sample's frames that are tornadic, in [0, 1]
+    #   "frame_labels": the label of every cached frame (one logit each, cross-entropy), read
+    #       from `meta_extra` columns frame_label_0..; with `frames` restricted to older scans
+    #       this asks the head for the label trajectory of scans it does not see
     "aux_target": None,
+    # CSV, or a directory of CSVs, joined onto the cache metadata by filename (relative paths
+    # are under $TORNET_ROOT), e.g. the per-frame labels written by tornet-radar-metrics.
+    "meta_extra": None,
     "aux_weight": 1.0,
     "aux_window": 60.0,
     # For head "embedding": contrastive supervision on the embedding output. The target is a
@@ -138,6 +145,43 @@ def second_target(meta: pd.DataFrame, config) -> np.ndarray | None:
     return aux_targets(meta, config)
 
 
+def frame_label_columns(meta: pd.DataFrame) -> list[str]:
+    """frame_label_0.. in frame order (oldest first)."""
+    cols = [c for c in meta.columns if c.startswith("frame_label_")]
+    return sorted(cols, key=lambda c: int(c.rsplit("_", 1)[1]))
+
+
+def join_extra(meta: pd.DataFrame, extra: pd.DataFrame | None) -> pd.DataFrame:
+    """Left-join extra per-sample columns by filename, keeping the cache order; rows the extra
+    table lacks get NaN."""
+    if extra is None:
+        return meta
+    extra = extra.drop_duplicates("filename")
+    dup = [c for c in extra.columns if c != "filename" and c in meta.columns]
+    return meta.merge(extra.drop(columns=dup), on="filename", how="left", sort=False)
+
+
+def load_extra(config, cache: dict | None = None) -> pd.DataFrame | None:
+    path = config.get("meta_extra")
+    if not path:
+        return None
+    if not os.path.isabs(path):
+        path = os.path.join(os.environ["TORNET_ROOT"], path)
+    key = ("meta_extra", path)
+    if cache is not None and key in cache:
+        return cache[key]
+    if os.path.isdir(path):  # e.g. the per-year tables of tornet-radar-metrics
+        extra = pd.concat(
+            [pd.read_csv(f) for f in sorted(glob.glob(os.path.join(path, "*.csv")))],
+            ignore_index=True,
+        )
+    else:
+        extra = pd.read_csv(path)
+    if cache is not None:
+        cache[key] = extra
+    return extra
+
+
 def aux_targets(meta: pd.DataFrame, config) -> np.ndarray | None:
     """Auxiliary regression target per sample, or None when the config has none."""
     target = config.get("aux_target")
@@ -145,6 +189,11 @@ def aux_targets(meta: pd.DataFrame, config) -> np.ndarray | None:
         return None
     if target == "frame_fraction":
         return meta["frame_fraction"].to_numpy(dtype=np.float32)
+    if target == "frame_labels":
+        cols = frame_label_columns(meta)
+        if not cols:
+            raise ValueError("aux_target frame_labels needs frame_label_* columns (`meta_extra`)")
+        return meta[cols].to_numpy(dtype=np.float32)
     if target == "proximity":
         window = float(config["aux_window"])
         before = meta["minutes_to_start"].to_numpy(dtype=np.float64)
@@ -246,11 +295,14 @@ def main(config, cache: dict | None = None):
     second_name = outputs[1] if len(outputs) > 1 else None
     frames = config.get("frames")
     frames = None if frames is None else [int(i) for i in frames]
+    extra = load_extra(config, cache)
     x_train, m_train = load_features(features_dir, "train", config["train_years"], cache)
+    m_train = join_extra(m_train, extra)
     if frames is not None and x_train.ndim < 5:
         raise ValueError("`frames` needs a multi-frame cache (tornet-cache-features --frames)")
     y_train = m_train["label"].to_numpy(dtype=np.float32)
     w_train = sample_weights(m_train, config)
+    aux_train = second_target(m_train, config)
     workers = int(config.get("loader_workers") or 0)
     loader_kwargs = {"workers": workers, "use_multiprocessing": False, "max_queue_size": 8}
     ds_train = FeatureBatches(
@@ -260,7 +312,7 @@ def main(config, cache: dict | None = None):
         config["batch_size"],
         shuffle=True,
         seed=seed or 0,
-        aux=second_target(m_train, config),
+        aux=aux_train,
         aux_name=second_name,
         frames=frames,
         **loader_kwargs,
@@ -268,6 +320,7 @@ def main(config, cache: dict | None = None):
     ds_val = None
     if config["val_years"]:
         x_val, m_val = load_features(features_dir, "train", config["val_years"], cache)
+        m_val = join_extra(m_val, extra)
         ds_val = FeatureBatches(
             x_val,
             m_val["label"].to_numpy(dtype=np.float32),
@@ -284,6 +337,8 @@ def main(config, cache: dict | None = None):
     head_kwargs = dict(config["head_kwargs"])
     if embedding:
         head_kwargs.setdefault("temperature", config["temperature"])
+    if aux == "frame_labels":  # one logit per cached frame
+        head_kwargs["output_units"] = {"aux": int(aux_train.shape[1])}
     model = build_head_model(
         feature_shape(x_train.shape, frames), config["head"], outputs=outputs, **head_kwargs
     )
@@ -309,8 +364,13 @@ def main(config, cache: dict | None = None):
         )
         metric_prefix = "logit_"
     elif aux:
+        aux_loss = (
+            keras.losses.BinaryCrossentropy(from_logits=True)
+            if aux == "frame_labels"
+            else keras.losses.Huber()
+        )
         model.compile(
-            loss={"logit": bce, "aux": keras.losses.Huber()},
+            loss={"logit": bce, "aux": aux_loss},
             loss_weights={"logit": 1.0, "aux": float(config["aux_weight"])},
             optimizer=keras.optimizers.Adam(learning_rate=lr),
             metrics={"logit": build_metrics()},
@@ -381,6 +441,7 @@ def main(config, cache: dict | None = None):
             "frames": int(x_train.shape[1]) if x_train.ndim == 5 else 1,
             "frames_used": frames,
             "aux_target": aux,
+            "meta_extra": config.get("meta_extra"),
             "contrastive_target": config["contrastive_target"] if embedding else None,
             "aux_weight": float(config["aux_weight"]) if aux else None,
             "params": int(model.count_params()),

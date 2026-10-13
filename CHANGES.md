@@ -72,6 +72,27 @@ classification head and to tooling around cached features:
   temporal head that window), so the detection label is predicted from scans 5, 10 or 15 minutes
   earlier. Several configs in one invocation share the loaded features. `configs/lead/` and
   `scripts/runpod/lead_heads.sh`.
+- Cache round 2 (richer heads on the same cache): `spacetime_transformer` attends over every cell
+  of every frame (time × H × W tokens, convolutional position encoding plus a learned per-frame
+  embedding); `temporal_diff_concat` hands the concat head the frame-to-frame feature differences
+  as well; every head accepts `output_units` so an extra output can be a vector, and
+  `tornet-train-head` has the auxiliary target `frame_labels` (one cross-entropy logit per cached
+  frame, so a head that sees only older scans is also asked for the label trajectory). The
+  per-frame labels come from `meta_extra`, a CSV or directory of CSVs joined onto the cache metadata
+  by filename. `configs/cache2/`.
+- Meta model (the frozen backbone as a feature extractor rather than a thing to put heads on):
+  `tornet-pool-features` reduces a feature cache to one max+mean vector per scan (768 values at
+  width 384; the whole dataset fits in ~1.2 GB); `tornet-radar-metrics` reads the raw chips once
+  for per-frame labels and times, storm location (site and chip centre) and hand-computed
+  rotation metrics per frame and sweep (rotational velocity proxy, azimuthal shear, peak velocity
+  and reflectivity, valid fraction); `tornet-env-fetch` joins near-storm HRRR environment (CAPE,
+  CIN, 0–1 and 0–3 km helicity, 0–1 and 0–6 km shear, LCL height, 2 m temperature and dewpoint;
+  point plus a 27 km box max and mean) from the public AWS archive by HTTP byte range through
+  Herbie, from the run initialised two hours before the scan so the forecast predates the storm;
+  `tornet-meta-model` trains LightGBM on any combination of those groups (`features`) with the
+  authors' sample weights, early stopping on validation AUC, and writes the usual run directory
+  plus gain-based feature importance by group. `configs/meta/`. HRRR exists from 2014-07-30, so
+  earlier samples carry an availability flag and NaN fields; LightGBM handles the gaps natively.
 
 Known paper/code discrepancy, not altered: the paper describes 2, 3, 3, 3 convolutions per block,
 while the code and the pretrained weights have 2, 2, 3, 3. See `docs/project.md` section 3.
@@ -124,6 +145,9 @@ The two scripts under `scripts/tornado_detection/` are now console commands in `
 - `tornet-results` (new): tabulates `results.json` files under `experiments/`, optionally averaging
   folds that share an experiment name.
 - `tornet-cache-features`, `tornet-train-head` and `tornet-embeddings` (new): see Modeling above.
+- `tornet-pool-features`, `tornet-radar-metrics`, `tornet-env-fetch` and `tornet-meta-model`
+  (new): the meta-model pipeline, see Modeling above. `scripts/runpod/cache_round2.sh` runs all of
+  it unattended on a pod and stops the pod when done.
 
 Both original commands default `KERAS_BACKEND` to `torch` when it is unset, and read `TORNET_ROOT`
 at run time rather than at import.
@@ -169,6 +193,9 @@ at run time rather than at import.
   with `decay_steps` set to each run's steps per epoch, `label_smooth` 0.1 (the paper reports 10–20% helped; the shipped config has 0), eight loader
   worker processes (threaded workers segfault in NetCDF/HDF5; processes give ~4x the throughput of a
   single thread), and output directory.
+- `configs/cache2/` and `configs/meta/`: the cache-round-2 heads and the meta-model ablations
+  (embeddings, radar metrics, environment, and their combinations) at the 10-minute lead and at
+  onset, for fold B and the full data.
 
 ## Tests
 
@@ -196,6 +223,9 @@ at run time rather than at import.
   reached 10–16 MB/s.
 - Reference artifacts in `results/`: the pretrained model's per-sample predictions and score report
   on the 2013–2014 test partition.
+
+- Optional extras `env` (Herbie, scipy) and `meta` (LightGBM) in `pyproject.toml`, both in the
+  default `uv sync` groups.
 
 ## Documentation
 

@@ -1,0 +1,40 @@
+{
+  "_note": "Concat head with an auxiliary per-frame label trajectory target (all four cached frames) from tornet-radar-metrics. Frames [0, 1, 2, 3] (lead0).",
+  "features_dir": "features_4f",
+  "meta_extra": "radar_metrics",
+  "batch_size": 256,
+  "learning_rate": 0.0003,
+  "label_smooth": 0.1,
+  "loader_workers": 4,
+  "train_years": [
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020
+  ],
+  "val_years": [
+    2021,
+    2022
+  ],
+  "test_years": [
+    2021,
+    2022
+  ],
+  "epochs": 15,
+  "head": "temporal_concat",
+  "head_kwargs": {},
+  "aux_target": "frame_labels",
+  "aux_weight": 1.0,
+  "frames": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "exp_name": "lead0_onset_full",
+  "exp_dir": "experiments"
+}

@@ -1,0 +1,35 @@
+{
+  "_note": "Embeddings, metadata and rotation metrics. Frames [0, 1] (lead10).",
+  "pooled_dir": "pooled_4f",
+  "radar_dir": "radar_metrics",
+  "env_csv": "env_hrrr/env_hrrr.csv",
+  "train_years": [
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020
+  ],
+  "val_years": [
+    2021,
+    2022
+  ],
+  "test_years": [
+    2021,
+    2022
+  ],
+  "features": [
+    "embedding",
+    "meta",
+    "radar"
+  ],
+  "frames": [
+    0,
+    1
+  ],
+  "exp_name": "meta_lead10_emb_radar_full",
+  "exp_dir": "experiments"
+}

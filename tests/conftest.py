@@ -46,15 +46,28 @@ def write_sample(path, *, category, ef_number, start, event_id=1):
     data_vars["frame_labels"] = ("time", labels)
     data_vars["azimuth_limits"] = ("limits", np.array(AZ_LIMITS, dtype=np.float32))
     data_vars["range_limits"] = ("limits", np.array(RANGE_LIMITS, dtype=np.float32))
+    data_vars["nyquist_velocity"] = (("time", "tilt"), np.full((FRAMES, TILT), 30.0, np.float32))
 
     times = pd.date_range(start, periods=FRAMES, freq="5min")
-    attrs = {"category": category, "event_id": event_id, "ef_number": ef_number}
+    attrs = {
+        "category": category,
+        "event_id": event_id,
+        "ef_number": ef_number,
+        "site_name": "KTLX",
+        "site_lat": 35.333,
+        "site_lon": -97.278,
+    }
     if ef_number >= 0:
         attrs["tornado_start_time"] = start
         attrs["tornado_end_time"] = str(times[-1])
 
     path.parent.mkdir(parents=True, exist_ok=True)
-    xr.Dataset(data_vars, coords={"time": times}, attrs=attrs).to_netcdf(path)
+    coords = {
+        "time": times,
+        "azimuth": np.linspace(AZ_LIMITS[0], AZ_LIMITS[1], AZ, dtype=np.float32),
+        "range": np.linspace(RANGE_LIMITS[0], RANGE_LIMITS[1], RNG, dtype=np.float32),
+    }
+    xr.Dataset(data_vars, coords=coords, attrs=attrs).to_netcdf(path)
 
 
 @pytest.fixture(scope="session")

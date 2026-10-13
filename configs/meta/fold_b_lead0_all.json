@@ -1,0 +1,32 @@
+{
+  "_note": "Everything: embeddings, metadata, rotation metrics and environment. Frames [0, 1, 2, 3] (lead0).",
+  "pooled_dir": "pooled_4f",
+  "radar_dir": "radar_metrics",
+  "env_csv": "env_hrrr/env_hrrr.csv",
+  "train_years": [
+    2013,
+    2015
+  ],
+  "val_years": [
+    2014
+  ],
+  "test_years": [
+    2013,
+    2014,
+    2015
+  ],
+  "features": [
+    "embedding",
+    "meta",
+    "radar",
+    "env"
+  ],
+  "frames": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "exp_name": "meta_lead0_all_fold_b",
+  "exp_dir": "experiments"
+}

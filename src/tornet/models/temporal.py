@@ -12,13 +12,19 @@ Inputs are (batch, time, azimuth, range, tilt); `fold_time` runs the shared back
   C to frames*C inputs, which at C=384, frames=4 adds about as many parameters as one attention
   layer (590k), so the two heads are parameter-matched at depth 1.
 
-Both keep the baseline's per-location logit and global max, so whole-scan inference is unchanged.
+- `temporal_diff_concat`: `temporal_concat` handed the frame-to-frame differences as well.
+- `spacetime_transformer`: self-attention over every cell of every frame (time * H * W tokens),
+  the one head here that can relate a feature to a different location in another scan.
+
+All keep a per-location (or per-token) logit and a global max, so whole-scan inference is
+unchanged. Every head accepts `output_units` to widen a named extra output, e.g. one logit per
+frame for the per-frame label target.
 """
 
 import keras
 from keras import ops
 
-from tornet.models.heads import TakeToken, maxpool_head
+from tornet.models.heads import TakeToken, _encoder, _pool_tokens, maxpool_head
 
 
 @keras.saving.register_keras_serializable()
@@ -153,6 +159,48 @@ class FramePosition(keras.layers.Layer):
         return x + self.embedding
 
 
+@keras.saving.register_keras_serializable()
+class FrameEmbedding(keras.layers.Layer):
+    """Adds a learned embedding per time step to (batch, time, H, W, C)."""
+
+    def build(self, input_shape):
+        self.embedding = self.add_weight(
+            shape=(1, input_shape[1], 1, 1, input_shape[-1]),
+            initializer="zeros",
+            trainable=True,
+            name="frame_embedding",
+        )
+
+    def call(self, x):
+        return x + self.embedding
+
+
+@keras.saving.register_keras_serializable()
+class SpaceTimeTokens(keras.layers.Layer):
+    """(batch, time, H, W, C) -> (batch, time * H * W, C): every cell of every frame a token."""
+
+    def call(self, x):
+        s = ops.shape(x)
+        return ops.reshape(x, (s[0], -1, s[-1]))
+
+    def compute_output_shape(self, input_shape):
+        b, t, h, w, c = input_shape
+        n = None if None in (t, h, w) else t * h * w
+        return (b, n, c)
+
+
+@keras.saving.register_keras_serializable()
+class FrameDifferences(keras.layers.Layer):
+    """(batch, time, H, W, C) -> (batch, time - 1, H, W, C): each frame minus the previous one."""
+
+    def call(self, x):
+        return x[:, 1:] - x[:, :-1]
+
+    def compute_output_shape(self, input_shape):
+        b, t, h, w, c = input_shape
+        return (b, None if t is None else t - 1, h, w, c)
+
+
 def temporal_attention_head(
     x,
     depth: int = 1,
@@ -161,6 +209,7 @@ def temporal_attention_head(
     l2_reg: float = 1e-5,
     hidden=(512, 256),
     outputs=("logit",),
+    output_units: dict | None = None,
 ):
     """Per-location self-attention over frames, then the authors' maxpool head on the last frame's
     attended token at each location."""
@@ -176,18 +225,70 @@ def temporal_attention_head(
     tokens = keras.layers.LayerNormalization(epsilon=1e-6)(tokens)
     last = TakeToken(-1)(tokens)
     maps = SequencesToLocations()([last, x])
-    return maxpool_head(maps, l2_reg=l2_reg, hidden=hidden, outputs=outputs)
+    return maxpool_head(
+        maps, l2_reg=l2_reg, hidden=hidden, outputs=outputs, output_units=output_units
+    )
 
 
-def temporal_concat_head(x, l2_reg: float = 1e-5, hidden=(512, 256), outputs=("logit",)):
-    """No-attention control: frames concatenated along channels, then the maxpool head."""
+def temporal_concat_head(
+    x,
+    l2_reg: float = 1e-5,
+    hidden=(512, 256),
+    outputs=("logit",),
+    output_units: dict | None = None,
+    differences: bool = False,
+):
+    """No-attention control: frames concatenated along channels, then the maxpool head.
+
+    With `differences`, each frame-to-frame difference is concatenated too, so the head is handed
+    the change between scans directly rather than having to learn a subtraction."""
     frames = x.shape[1]
-    return maxpool_head(FramesToChannels(frames)(x), l2_reg=l2_reg, hidden=hidden, outputs=outputs)
+    if differences:
+        x = keras.layers.Concatenate(axis=1)([x, FrameDifferences()(x)])
+        frames = 2 * frames - 1
+    return maxpool_head(
+        FramesToChannels(frames)(x),
+        l2_reg=l2_reg,
+        hidden=hidden,
+        outputs=outputs,
+        output_units=output_units,
+    )
+
+
+def temporal_diff_concat_head(x, **kwargs):
+    """`temporal_concat` with frame differences."""
+    return temporal_concat_head(x, differences=True, **kwargs)
+
+
+def spacetime_transformer_head(
+    x,
+    depth: int = 2,
+    num_heads: int = 6,
+    mlp_ratio: float = 4.0,
+    dropout: float = 0.1,
+    pool: str = "max",
+    outputs=("logit",),
+    output_units: dict | None = None,
+):
+    """Self-attention over every cell of every frame at once (time * H * W tokens), so a feature
+    can be related to any location in any other scan. Position: a convolutional encoding within
+    each frame (as `transformer_head`) plus a learned embedding per frame. Pooling as in
+    `transformer_head`: `max` keeps a logit per token and takes the strongest."""
+    if pool == "cls":
+        raise ValueError("spacetime_transformer pools with max or mean")
+    frames, channels = x.shape[1], x.shape[-1]
+    folded = FoldTime()(x)
+    folded = keras.layers.Add()([folded, keras.layers.DepthwiseConv2D(3, padding="same")(folded)])
+    x = FrameEmbedding()(UnfoldTime(frames)(folded))
+    tokens = _encoder(SpaceTimeTokens()(x), depth, num_heads, channels, mlp_ratio, dropout)
+    return _pool_tokens(tokens, pool, dropout, outputs, output_units=output_units)
 
 
 TEMPORAL_HEADS = {
     "temporal_attention": temporal_attention_head,
     "temporal_concat": temporal_concat_head,
+    "temporal_diff_concat": temporal_diff_concat_head,
+    "spacetime_transformer": spacetime_transformer_head,
 }
 
 

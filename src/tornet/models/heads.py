@@ -86,12 +86,20 @@ def _finish(x, names: tuple[str, ...]):
     return x[names[0]] if len(names) == 1 else x
 
 
-def maxpool_head(x, l2_reg: float = 1e-5, hidden=(512, 256), outputs: tuple[str, ...] = ("logit",)):
+def maxpool_head(
+    x,
+    l2_reg: float = 1e-5,
+    hidden=(512, 256),
+    outputs: tuple[str, ...] = ("logit",),
+    output_units: dict | None = None,
+):
     """The authors' head: per-location MLP via 1x1 convolutions, then the max over locations.
 
     With one output the heatmap layer is named "heatmap" as upstream. Extra outputs each get their
-    own per-location 1x1 convolution and global max, sharing the hidden layers.
+    own per-location 1x1 convolution and global max, sharing the hidden layers; `output_units`
+    widens a named output (e.g. one logit per frame for a per-frame target).
     """
+    output_units = output_units or {}
     for units in hidden:
         x = keras.layers.Conv2D(
             filters=units,
@@ -102,7 +110,9 @@ def maxpool_head(x, l2_reg: float = 1e-5, hidden=(512, 256), outputs: tuple[str,
     out = {}
     for name in outputs:
         layer_name = "heatmap" if len(outputs) == 1 else f"{name}_heatmap"
-        h = keras.layers.Conv2D(filters=1, kernel_size=1, name=layer_name)(x)
+        h = keras.layers.Conv2D(filters=output_units.get(name, 1), kernel_size=1, name=layer_name)(
+            x
+        )
         out[name] = keras.layers.GlobalMaxPooling2D(name=name)(h)
     return _finish(out, outputs)
 
@@ -116,11 +126,32 @@ def _ffn(x, hidden: int, dim: int, dropout: float, activation: str = "gelu"):
     return keras.layers.Add()([x, y])
 
 
-def _pool_tokens(tokens, pool: str, dropout: float, outputs: tuple[str, ...] = ("logit",)):
+def _encoder(tokens, depth: int, num_heads: int, channels: int, mlp_ratio: float, dropout: float):
+    """`depth` pre-norm transformer blocks over (batch, tokens, channels)."""
+    for _ in range(depth):
+        y = keras.layers.LayerNormalization(epsilon=1e-6)(tokens)
+        y = keras.layers.MultiHeadAttention(
+            num_heads=num_heads, key_dim=channels // num_heads, dropout=dropout
+        )(y, y)
+        y = keras.layers.Dropout(dropout)(y)
+        tokens = keras.layers.Add()([tokens, y])
+        tokens = _ffn(tokens, int(mlp_ratio * channels), channels, dropout)
+    return keras.layers.LayerNormalization(epsilon=1e-6)(tokens)
+
+
+def _pool_tokens(
+    tokens,
+    pool: str,
+    dropout: float,
+    outputs: tuple[str, ...] = ("logit",),
+    output_units: dict | None = None,
+):
+    output_units = output_units or {}
     out = {}
     if pool == "max":
         for name in outputs:  # logit per token, then the maximum over tokens
-            per_token = keras.layers.Dense(1, name=f"{name}_per_token")(tokens)
+            units = output_units.get(name, 1)
+            per_token = keras.layers.Dense(units, name=f"{name}_per_token")(tokens)
             out[name] = keras.layers.GlobalMaxPooling1D(name=name)(per_token)
         return _finish(out, outputs)
     if pool == "mean":
@@ -132,7 +163,7 @@ def _pool_tokens(tokens, pool: str, dropout: float, outputs: tuple[str, ...] = (
     else:
         raise ValueError(f"unknown pool {pool!r}; expected max, mean or cls")
     for name in outputs:
-        out[name] = keras.layers.Dense(1, name=name)(pooled)
+        out[name] = keras.layers.Dense(output_units.get(name, 1), name=name)(pooled)
     return _finish(out, outputs)
 
 
@@ -145,6 +176,7 @@ def transformer_head(
     pool: str = "max",
     dim: int | None = None,
     outputs: tuple[str, ...] = ("logit",),
+    output_units: dict | None = None,
 ):
     """Transformer encoder over the feature-map tokens with a convolutional position encoding."""
     channels = x.shape[-1]
@@ -157,16 +189,8 @@ def transformer_head(
     tokens = ToTokens()(x)
     if pool == "cls":
         tokens = ClassToken()(tokens)
-    for _ in range(depth):
-        y = keras.layers.LayerNormalization(epsilon=1e-6)(tokens)
-        y = keras.layers.MultiHeadAttention(
-            num_heads=num_heads, key_dim=channels // num_heads, dropout=dropout
-        )(y, y)
-        y = keras.layers.Dropout(dropout)(y)
-        tokens = keras.layers.Add()([tokens, y])
-        tokens = _ffn(tokens, int(mlp_ratio * channels), channels, dropout)
-    tokens = keras.layers.LayerNormalization(epsilon=1e-6)(tokens)
-    return _pool_tokens(tokens, pool, dropout, outputs)
+    tokens = _encoder(tokens, depth, num_heads, channels, mlp_ratio, dropout)
+    return _pool_tokens(tokens, pool, dropout, outputs, output_units=output_units)
 
 
 def matched_hidden(channels: int, mlp_ratio: float = 4.0) -> int:
@@ -186,6 +210,7 @@ def token_mlp_head(
     pool: str = "max",
     dim: int | None = None,
     outputs: tuple[str, ...] = ("logit",),
+    output_units: dict | None = None,
 ):
     """No-attention control: the transformer head's feed-forward blocks and pooling, nothing else.
 
@@ -204,7 +229,7 @@ def token_mlp_head(
     for _ in range(depth):
         tokens = _ffn(tokens, hidden, channels, dropout)
     tokens = keras.layers.LayerNormalization(epsilon=1e-6)(tokens)
-    return _pool_tokens(tokens, pool, dropout, outputs)
+    return _pool_tokens(tokens, pool, dropout, outputs, output_units=output_units)
 
 
 HEADS = {

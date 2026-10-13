@@ -26,6 +26,10 @@ torch = ["keras>=3.0", "torch>=2.7"]
 # Download pretrained weights from Hugging Face.
 hf = ["huggingface_hub"]
 notebooks = ["jupyter"]
+# Environment fields from the HRRR archive (tornet-env-fetch): Herbie byte-range GRIB reads.
+env = ["herbie-data>=2024.8", "scipy>=1.10"]
+# Gradient-boosting meta model on pooled features, radar metrics and environment.
+meta = ["lightgbm>=4.0", "scipy>=1.10"]
 
 [project.scripts]
 tornet-train = "tornet.scripts.train_keras:cli"
@@ -35,6 +39,10 @@ tornet-score = "tornet.scripts.score:main"
 tornet-cache-features = "tornet.scripts.cache_features:main"
 tornet-train-head = "tornet.scripts.train_head:cli"
 tornet-embeddings = "tornet.scripts.embeddings:main"
+tornet-pool-features = "tornet.scripts.pool_features:main"
+tornet-radar-metrics = "tornet.scripts.radar_metrics:main"
+tornet-env-fetch = "tornet.scripts.env_fetch:main"
+tornet-meta-model = "tornet.scripts.meta_model:main"
 
 [project.urls]
 Homepage = "https://github.com/mit-ll/tornet"
@@ -52,9 +60,11 @@ dev = [
 torch = ["tornet[torch]"]
 # tornet-test downloads the pretrained weights from Hugging Face by default.
 hf = ["tornet[hf]"]
+meta = ["tornet[meta]"]
+env = ["tornet[env]"]
 
 [tool.uv]
-default-groups = ["dev", "torch", "hf"]
+default-groups = ["dev", "torch", "hf", "meta", "env"]
 
 [build-system]
 requires = ["hatchling"]

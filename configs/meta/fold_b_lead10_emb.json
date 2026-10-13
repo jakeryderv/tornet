@@ -1,0 +1,28 @@
+{
+  "_note": "Pooled backbone embeddings plus sample metadata. Frames [0, 1] (lead10).",
+  "pooled_dir": "pooled_4f",
+  "radar_dir": "radar_metrics",
+  "env_csv": "env_hrrr/env_hrrr.csv",
+  "train_years": [
+    2013,
+    2015
+  ],
+  "val_years": [
+    2014
+  ],
+  "test_years": [
+    2013,
+    2014,
+    2015
+  ],
+  "features": [
+    "embedding",
+    "meta"
+  ],
+  "frames": [
+    0,
+    1
+  ],
+  "exp_name": "meta_lead10_emb_fold_b",
+  "exp_dir": "experiments"
+}

@@ -463,6 +463,46 @@ detection ones (Plan A machinery, hours per run on the pod); (b) longer sequence
 TorNet-Temporal (8–22 scans of the same events), where leads of 30–60 min become testable and a
 3D CNN or attention over time is the natural model.
 
+### Experiment 7 plan: exhaust the cache, then the backbone as a feature extractor (2026-10-13)
+
+Agreed direction: keep the transfer-learning framing (the pretrained backbone is never retrained)
+and switch the question from detection to early prediction, "will this storm have a tornado in
+the next 15 minutes", scored at the 10-minute lead where Experiment 6 found the only temporal
+signal. Three parts, all on the existing four-frame cache, run unattended by
+`scripts/runpod/cache_round2.sh`:
+
+- **A. Last round of heads** (`configs/cache2/`), each at lead 10 (frames t−15, t−10) and at
+  onset (all four): `spacetime_transformer` (attention over every cell of every frame, the first
+  head that can relate a feature to another location in another scan; both current heads pool
+  per location first), `temporal_diff_concat` (the concat head handed frame differences, i.e.
+  change between scans as an explicit input), and the concat head with a `frame_labels` auxiliary
+  target (asked for the label of every cached frame, including the ones it cannot see, so the
+  gradient carries "when does it start" rather than only "is it there at the end"). Paired against
+  Experiment 6's lead-10 single-scan and concat heads.
+- **B. Meta model, radar only** (`configs/meta/*_lead10_{emb,radar,emb_radar}.json`): one row per
+  sample from the pooled backbone embeddings (max and mean over the 8 × 15 map per scan, 768
+  values), sample metadata (range to radar, hour, day of year), and rotation metrics computed from
+  the raw velocity field (rotational velocity proxy, azimuthal shear, peak velocity and
+  reflectivity per frame and sweep, with frame-to-frame trends). LightGBM with the authors' sample
+  weights. The `radar`-only config is the "what a forecaster's rotation metrics alone give"
+  floor; `emb` tests whether the backbone's pooled features beat a head on the full map.
+- **C. Meta model with environment** (`configs/meta/*_lead10_{env,all}.json`): HRRR fields at
+  the storm location from the run initialised two hours before the scan (CAPE, CIN, 0–1/0–3 km
+  helicity, 0–1/0–6 km shear, LCL height, 2 m temperature and dewpoint, each as point value and
+  27 km box max and mean), plus derived shear magnitudes and a significant-tornado-parameter
+  composite. This is the one input that addresses what Experiment 6 showed is lost with lead:
+  telling a tornadic storm from a warned one. `env`-only is the environment floor; `all` is the
+  model. Caveats: HRRR exists from 2014-07-30, so 2013 and early-2014 rows carry NaN fields and an
+  availability flag; the honest view remains WC, because nulls drawn at random sit in benign air
+  and inflate NC. Lead 0 runs of `emb` and `all` are included to check the same inputs at onset.
+
+What decides the next step: if C beats B on WC at lead 10, the early-prediction meta model is the
+project and longer leads (TorNet-Temporal) are the extension; if nothing in A–C moves, the frozen
+features are the ceiling and fine-tuning the backbone on the prediction target is the next spend.
+
+Dry run on fold B locally before the pod (heads, radar metrics, environment fetch for 2014–2015,
+meta models); the pod run adds the full years and stops itself when finished.
+
 ### Training-signal ideas (agreed order: A then B)
 
 - **A. Continuous auxiliary targets, not EF-based** (EF ratings are survey-based, inconsistent at the
@@ -558,6 +598,21 @@ uv run tornet-score experiments/<maxpool>/predictions.csv experiments/<attention
 At full scale the same steps run from `scripts/runpod/frozen_heads.sh` on a pod mounting the
 network volume (loader benchmark, cache of all years, the three `configs/frozen/full_*.json` runs,
 paired scores).
+
+**Cache round 2 and the meta model** (experiment 7; everything reads the four-frame cache):
+
+```
+uv run tornet-radar-metrics --years 2013 2014 2015 --workers 8          # $TORNET_ROOT/radar_metrics
+uv run tornet-pool-features --features_dir features_4f --out pooled_4f  # $TORNET_ROOT/pooled_4f
+uv run tornet-env-fetch --years 2014 2015 --workers 8                   # $TORNET_ROOT/env_hrrr (resumable)
+uv run tornet-train-head configs/cache2/fold_b_lead10_*.json configs/cache2/fold_b_lead0_*.json
+uv run tornet-meta-model configs/meta/fold_b_lead10_*.json configs/meta/fold_b_lead0_*.json
+uv run tornet-score experiments/<lead10_maxpool>/predictions.csv experiments/<lead10_concat>/predictions.csv experiments/<new heads and meta models>/predictions.csv
+```
+
+At full scale `scripts/runpod/cache_round2.sh` runs the same steps unattended (environment fetch
+in the background while the heads use the GPU) and stops the pod when done through `runpodctl`,
+which needs the laptop's `~/.runpod/config.toml` copied to the pod at launch.
 
 A variant is a new `exp_name` prefix on the same configs. Subset scores sit below the paper's because
 of less training data and a higher tornado base rate (13% vs 6%); compare the hybrid against the

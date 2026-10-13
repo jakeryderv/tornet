@@ -11,6 +11,8 @@ The software/firmware is provided to you on an As-Is basis
 Delivered to the U.S. Government with Unlimited Rights, as defined in DFARS Part 252.227-7013 or 7014 (Feb 2014). Notwithstanding any copyright notice, U.S. Government rights in this work are defined by DFARS 252.227-7013 or DFARS 252.227-7014 as detailed above. Use of this work other than as specifically authorized by the U.S. Government may violate any copyrights that exist in this work.
 """
 
+import inspect
+
 import keras
 import numpy as np
 
@@ -101,14 +103,14 @@ def build_model(
     head_kwargs = dict(head_kwargs or {})
     if temporal:
         x = UnfoldTime(frames)(x)
-        head_kwargs.setdefault("l2_reg", l2_reg)
-        output = TEMPORAL_HEADS[head](x, **head_kwargs)
+        head_fn = TEMPORAL_HEADS[head]
     else:
         if head not in HEADS:
             raise ValueError(f"unknown head {head!r}; expected one of {sorted(HEADS)}")
-        if head == "maxpool":
-            head_kwargs.setdefault("l2_reg", l2_reg)
-        output = HEADS[head](x, **head_kwargs)
+        head_fn = HEADS[head]
+    if "l2_reg" in inspect.signature(head_fn).parameters:  # the convolutional heads
+        head_kwargs.setdefault("l2_reg", l2_reg)
+    output = head_fn(x, **head_kwargs)
     return keras.Model(inputs=inputs, outputs=output)
 
 

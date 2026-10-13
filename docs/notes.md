@@ -1,5 +1,1 @@
-2. Contextual features second. This is end-to-end training with a transformer head, where attention can finally influence what the backbone computes. Start by fine-tuning from the pretrained backbone at a low learning rate, about forty minutes a run with the full loader, before any from-scratch training. It only makes sense after step 1 because you'd want the better loss in place for it.
-
-3. Temporal attention last. It quadruples backbone compute, the loader is already the bottleneck, and it changes the task toward prediction. That's the RunPod-scale experiment, and the thing most likely to become the headline if it works.
-
-Option B: metric learning. Don't regress to a number at all. Learn an embedding where samples cluster, with a contrastive or prototype loss, and classify by distance to a tornado centroid versus a null centroid. This is the literal "cluster into the target" reading. Its real advantage is label-noise robustness, since a mislabeled sample pulls a centroid slightly rather than flipping a boundary, which matches your experience with this data. Costlier to get right and harder to compare against the baseline, since the output isn't a calibrated probability.
+A continuous multichannel mask is essentially a stack of 2D spatial maps, where each pixel contains continuous numerical values instead of just binary (0/1) labels.

@@ -1,0 +1,35 @@
+{
+  "_note": "Forecaster variant: MAE plus the frozen detector's tornado loss on each forecast scan (weight 0.5), so forecasts are pushed to be readable by the detector.",
+  "train_years": [
+    2013,
+    2015
+  ],
+  "val_years": [
+    2014
+  ],
+  "epochs": 6,
+  "batch_size": 16,
+  "learning_rate": 0.0001,
+  "decay_rate": 0.958,
+  "n_in": 2,
+  "horizons": 2,
+  "start_filters": 48,
+  "decoder_filters": [
+    256,
+    128,
+    64,
+    32
+  ],
+  "l2_reg": 1e-05,
+  "init_from": "pretrained",
+  "encoder_trainable": true,
+  "detector": "pretrained",
+  "exp_dir": "experiments",
+  "dataloader_kwargs": {
+    "workers": 8,
+    "use_multiprocessing": true,
+    "max_queue_size": 8
+  },
+  "detector_weight": 0.5,
+  "exp_name": "forecast_mae_detector_fold_b"
+}

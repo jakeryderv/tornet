@@ -42,7 +42,7 @@ tornet-embeddings = "tornet.scripts.embeddings:main"
 tornet-pool-features = "tornet.scripts.pool_features:main"
 tornet-radar-metrics = "tornet.scripts.radar_metrics:main"
 tornet-env-fetch = "tornet.scripts.env_fetch:main"
-tornet-meta-model = "tornet.scripts.meta_model:main"
+tornet-meta-model = "tornet.scripts.meta_model:cli"
 
 [project.urls]
 Homepage = "https://github.com/mit-ll/tornet"

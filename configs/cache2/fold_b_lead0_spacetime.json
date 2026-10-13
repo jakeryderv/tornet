@@ -1,7 +1,7 @@
 {
-  "_note": "Self-attention over every cell of every frame; the one head that can relate features across locations and scans. Frames [0, 1, 2, 3] (lead0).",
+  "_note": "Self-attention over every cell of every frame; the one head that can relate features across locations and scans. Frames [0, 1, 2, 3] (lead0). Batch 64: attention over 4x120 tokens at batch 256 needs 1.3 GB per layer for the scores alone and runs a 12 GB GPU out of memory.",
   "features_dir": "features_4f",
-  "batch_size": 256,
+  "batch_size": 64,
   "learning_rate": 0.0003,
   "label_smooth": 0.1,
   "loader_workers": 4,

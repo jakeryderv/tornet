@@ -540,6 +540,45 @@ wherever the environment looks favourable; the forecast fields are viewable, so 
 couplet is visible); storms in one partition only (check by event id in the catalog); Grad-CAM
 on the detector's 8 x 15 heat map per horizon.
 
+**Task definition (agreed 2026-10-13).**
+
+- *Unit.* One sample's four frames, oldest first, real timestamps. A prefix of frames goes in,
+  the rest come out, all horizons at once (never autoregressive). Horizon = minutes from the
+  last input frame to the target frame.
+
+  | frames in | frames out | horizons |
+  |---|---|---|
+  | 0 | 1, 2, 3 | +5, +10, +15 min |
+  | 0, 1 | 2, 3 | +5, +10 |
+  | 0, 1, 2 | 3 | +5 |
+
+  First slice: the middle row only. Full version: one model trained on all three prefixes.
+- *Target.* The full radar chip at each horizon, twelve channels, in the detector's normalised
+  representation with empty gates at the background value (−3), so the target is defined
+  everywhere and no mask enters the loss. The range-folding flag is carried forward from the
+  last input frame, not predicted.
+- *Training set.* Every sample, unrestricted: tornadic in every label pattern, warned, random
+  nulls. The forecaster learns storm dynamics from all of them.
+- *Evaluation set, scoped.* A tornadic sample is a prediction case for a given prefix only if
+  **no input frame has the tornado and the last target frame does**: the tornado appears after
+  everything the forecaster saw. For two frames in, that is the per-frame label patterns
+  `0 0 0 1` and `0 0 1 1` (208 of the 272 tornadic samples in the 2021–2022 test partition;
+  `0 1 1 1` is excluded because frame 1 already shows it and persistence would fire).
+  Negatives: all warned storms (the WC view), plus random nulls for NC. Ongoing-tornado cases
+  (tornado already in an input frame) are reported separately as a secondary line.
+- *Scores, per horizon.* Primary: the frozen detector's skill on the forecast, the label being
+  the real frame's label at that horizon, WC first, NC second. Summary: "tornado by the end of
+  the window" from the final-horizon forecast. Secondary: MAE of the forecast against the real
+  frame. Floor: detector on the last input frame (persistence). Ceiling: detector on the real
+  frame. Paired bootstraps against the floor.
+- *Baselines.* Persistence and the ceiling in the first slice; a classical advection forecast
+  (last frame moved along the estimated storm motion) in the full version, since a learned
+  forecaster that cannot beat advection through the detector has learned nothing beyond motion.
+- *Open, loss-related (to discuss before the runs):* the weight of the detector loss in the
+  variant (0.5 of the field loss as a starting point); whether the field loss should weight
+  velocity channels above reflectivity, since the couplet is what matters (equal weights in the
+  control to keep the comparison clean); epoch count on fold B (six).
+
 **Modeling (built 2026-10-13, `tornet.models.forecaster`).** Inputs are the detector's dict of
 radar variables with a time axis of `n_in` = 2 scans (t−15, t−10) plus range-folded mask and
 coordinates. Encoder = the pretrained backbone's four blocks run on each scan with shared

@@ -503,7 +503,7 @@ features are the ceiling and fine-tuning the backbone on the prediction target i
 Dry run on fold B locally before the pod (heads, radar metrics, environment fetch for 2014–2015,
 meta models); the pod run adds the full years and stops itself when finished.
 
-### Step 2 design: forecast the radar, detect on the forecast (agreed 2026-10-13, not started)
+### Step 2 design: forecast the radar, detect on the forecast (agreed 2026-10-13; fold B runs started the same day)
 
 Decided after Experiment 7 was launched; runs only after its results are in and the user says go.
 
@@ -540,9 +540,32 @@ wherever the environment looks favourable; the forecast fields are viewable, so 
 couplet is visible); storms in one partition only (check by event id in the catalog); Grad-CAM
 on the detector's 8 x 15 heat map per horizon.
 
-**Cost.** Forecaster = small spatiotemporal U-Net on 120 x 240 chips. Prototype on fold B
-locally (free, hours): does MAE beat persistence, does the detector loss help. Full data on the
-pod: loader-bound like the fine-tune, ~4 h and ~$10 per run, ~$20 for the pair.
+**Modeling (built 2026-10-13, `tornet.models.forecaster`).** Inputs are the detector's dict of
+radar variables with a time axis of `n_in` = 2 scans (t−15, t−10) plus range-folded mask and
+coordinates. Encoder = the pretrained backbone's four blocks run on each scan with shared
+weights, initialised from the published weights and fine-tuned, keeping each block's pre-pool map
+(120×240×48, 60×120×96, 30×60×192, 15×30×384) and the 8×15×384 bottleneck; the two scans'
+maps are concatenated along channels at every scale. Decoder = four stages of bilinear resize,
+skip concatenation and two 3×3 convolutions (256, 128, 64, 32 filters), then a 1×1 convolution
+to `horizons` = 2 scans × 12 channels at full resolution. Output lives in the detector's own
+normalised, background-filled representation (NaN gates are −3), so the target is defined
+everywhere and no mask is needed in the loss; the range-folded mask is persisted from the last
+input scan. 14.3M parameters, 9.6M trainable (the rest is the frozen detector). With the
+detector inside the graph (`detector_weight` > 0) each forecast scan is denormalised and
+handed to the published model, giving a tornado logit per horizon that is trained against the
+horizon's label. No public pretrained nowcaster fits 12-channel polar chips (DGMR, Earthformer
+and the SEVIR models are single-field Cartesian; the TorNet-Temporal ResNet3D is Cartesian
+24-channel), so the TorNet backbone is the pretrained piece and the decoder is new.
+
+**Commands.** `tornet-train-forecaster configs/forecast/fold_b_mae.json` (control) and
+`fold_b_mae_detector.json` (detector loss, weight 0.5); `tornet-score-forecast --model_path
+<run>/checkpoints/best.keras --years 2014` writes, per horizon, the detector's predictions on
+persistence, forecast and truth plus `summary.json` with MAE against truth and paired
+bootstraps. Storm leakage: no event id appears in both partitions (checked on the catalog).
+
+**Cost.** Fold B locally: about 0.5 s per batch of 16 on the laptop GPU, roughly 15 min per
+epoch plus validation, six epochs, about 2 h per run. Full data on the pod: loader-bound like
+the fine-tune, ~4 h and ~$10 per run, ~$20 for the pair.
 
 ### Training-signal ideas (agreed order: A then B)
 

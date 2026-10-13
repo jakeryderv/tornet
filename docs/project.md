@@ -503,6 +503,47 @@ features are the ceiling and fine-tuning the backbone on the prediction target i
 Dry run on fold B locally before the pod (heads, radar metrics, environment fetch for 2014–2015,
 meta models); the pod run adds the full years and stops itself when finished.
 
+### Step 2 design: forecast the radar, detect on the forecast (agreed 2026-10-13, not started)
+
+Decided after Experiment 7 was launched; runs only after its results are in and the user says go.
+
+**Idea.** Train a forecaster that predicts the future radar chip (all channels plus the validity
+mask, in polar coordinates) at +5, +10 and +15 min from the frames observed so far, and score
+each forecast with the *frozen* pretrained detector. The detector's numbers stay comparable with
+everything measured so far, the forecasts are inspectable as radar fields, and the experiment has
+its floor and ceiling already: the detector on the last observed frame (persistence) is the
+Experiment 6 single-scan lead curve (0.795 / 0.821 / 0.855 at 15 / 10 / 5 min on 2021-2022),
+and the detector on the real onset frame is the ceiling (0.892). The question is whether forecast
+frames push the detector above persistence toward the ceiling, horizon by horizon.
+
+**Training pairs** from every sample's four frames: input t-15 -> targets t-10, t-5, t; input
+t-15..t-10 -> targets t-5, t; input t-15..t-5 -> target t. Real scan timestamps (from
+`tornet-radar-metrics`), not nominal spacing. Loss masked to valid gates; the forecaster also
+predicts the validity mask.
+
+**The known failure and the fix.** An MAE/Huber forecaster predicts the conditional mean, which
+blurs exactly the few-pixel velocity couplet the detector needs, so a plain regression forecaster
+is expected to sit near the persistence floor. Two runs with the same forecaster:
+
+1. control: masked MAE on the future fields;
+2. variant: masked MAE plus the frozen detector's tornado loss on the forecast (the detector as a
+   differentiable feature-space loss, the same device as a perceptual loss). This is the
+   differentiable form of "reward forecasts the detector recognises"; reinforcement learning is
+   not needed because the reward is differentiable and the model's output does not change what it
+   observes next.
+
+If the variant still blurs velocity, the next lever is an adversarial critic (DGMR-style), and
+after that a diffusion forecaster with ensembles; neither is planned yet.
+
+**Guards.** WC view and false-alarm rate per horizon (the variant can learn to paint couplets
+wherever the environment looks favourable; the forecast fields are viewable, so a hallucinated
+couplet is visible); storms in one partition only (check by event id in the catalog); Grad-CAM
+on the detector's 8 x 15 heat map per horizon.
+
+**Cost.** Forecaster = small spatiotemporal U-Net on 120 x 240 chips. Prototype on fold B
+locally (free, hours): does MAE beat persistence, does the detector loss help. Full data on the
+pod: loader-bound like the fine-tune, ~4 h and ~$10 per run, ~$20 for the pair.
+
 ### Training-signal ideas (agreed order: A then B)
 
 - **A. Continuous auxiliary targets, not EF-based** (EF ratings are survey-based, inconsistent at the

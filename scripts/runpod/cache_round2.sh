@@ -46,7 +46,8 @@ stop_pod() {
   fi
   log "stopping pod $RUNPOD_POD_ID"
   sync
-  if command -v runpodctl >/dev/null 2>&1 && runpodctl pod stop "$RUNPOD_POD_ID"; then
+  # new CLI: `runpodctl pod stop`; the one baked into the pod images: `runpodctl stop pod`
+  if command -v runpodctl >/dev/null 2>&1 && { runpodctl pod stop "$RUNPOD_POD_ID" || runpodctl stop pod "$RUNPOD_POD_ID"; }; then
     log "stop requested via runpodctl"
   elif [ -n "$RUNPOD_API_KEY" ] && curl -sS -f -X POST "https://rest.runpod.io/v2/pods/$RUNPOD_POD_ID/action" \
       -H "Authorization: Bearer $RUNPOD_API_KEY" -H "Content-Type: application/json" \

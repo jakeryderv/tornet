@@ -16,6 +16,7 @@ dependencies = [
   "netCDF4>=1.7",
   "matplotlib>=3.8",
   "tqdm",
+  "segmentation-models-pytorch>=0.5.0",
 ]
 
 [project.optional-dependencies]
@@ -45,6 +46,7 @@ tornet-env-fetch = "tornet.scripts.env_fetch:main"
 tornet-meta-model = "tornet.scripts.meta_model:cli"
 tornet-train-forecaster = "tornet.scripts.train_forecaster:cli"
 tornet-score-forecast = "tornet.scripts.score_forecast:main"
+tornet-forecast = "tornet.scripts.forecast_smp:cli"
 
 [project.urls]
 Homepage = "https://github.com/mit-ll/tornet"

@@ -1,0 +1,30 @@
+{
+  "_note": "Forecaster B: transformer bottleneck over the 8x15 tokens on the TorNet encoder, heat-map weighting.",
+  "train_years": [
+    2013,
+    2015
+  ],
+  "val_years": [
+    2014
+  ],
+  "test_years": [
+    2014
+  ],
+  "n_in": 2,
+  "horizons": 2,
+  "target_products": [
+    "VEL",
+    "DBZ"
+  ],
+  "encoder": "tornet",
+  "encoder_weights": "pretrained",
+  "bottleneck": "transformer",
+  "epochs": 6,
+  "batch_size": 16,
+  "learning_rate": 0.0001,
+  "encoder_lr_scale": 0.1,
+  "workers": 8,
+  "exp_dir": "experiments",
+  "heatmap_weight": 2.0,
+  "exp_name": "fc_b_transformer_fold_b"
+}

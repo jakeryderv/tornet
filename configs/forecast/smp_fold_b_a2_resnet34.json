@@ -1,0 +1,30 @@
+{
+  "_note": "Encoder swap: ImageNet ResNet34 via SMP on the same U-Net and losses as the heat-map run.",
+  "train_years": [
+    2013,
+    2015
+  ],
+  "val_years": [
+    2014
+  ],
+  "test_years": [
+    2014
+  ],
+  "n_in": 2,
+  "horizons": 2,
+  "target_products": [
+    "VEL",
+    "DBZ"
+  ],
+  "encoder": "resnet34",
+  "encoder_weights": "imagenet",
+  "bottleneck": "cnn",
+  "epochs": 6,
+  "batch_size": 16,
+  "learning_rate": 0.0001,
+  "encoder_lr_scale": 1.0,
+  "workers": 8,
+  "exp_dir": "experiments",
+  "heatmap_weight": 2.0,
+  "exp_name": "fc_a2_resnet34_fold_b"
+}

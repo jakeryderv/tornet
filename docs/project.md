@@ -503,7 +503,7 @@ features are the ceiling and fine-tuning the backbone on the prediction target i
 Dry run on fold B locally before the pod (heads, radar metrics, environment fetch for 2014–2015,
 meta models); the pod run adds the full years and stops itself when finished.
 
-### Step 2 design: forecast the radar, detect on the forecast (agreed 2026-10-13; fold B runs started the same day)
+### Step 2 design: forecast the radar, predict and detect on the forecast (agreed 2026-10-13; built, not yet run)
 
 Decided after Experiment 7 was launched; runs only after its results are in and the user says go.
 
@@ -583,32 +583,68 @@ on the detector's 8 x 15 heat map per horizon.
   result makes the actual ratios matter). Details of the weighting and the detector-loss
   weight are still under discussion.
 
-**Modeling (built 2026-10-13, `tornet.models.forecaster`).** Inputs are the detector's dict of
-radar variables with a time axis of `n_in` = 2 scans (t−15, t−10) plus range-folded mask and
-coordinates. Encoder = the pretrained backbone's four blocks run on each scan with shared
-weights, initialised from the published weights and fine-tuned, keeping each block's pre-pool map
-(120×240×48, 60×120×96, 30×60×192, 15×30×384) and the 8×15×384 bottleneck; the two scans'
-maps are concatenated along channels at every scale. Decoder = four stages of bilinear resize,
-skip concatenation and two 3×3 convolutions (256, 128, 64, 32 filters), then a 1×1 convolution
-to `horizons` = 2 scans × 12 channels at full resolution. Output lives in the detector's own
-normalised, background-filled representation (NaN gates are −3), so the target is defined
-everywhere and no mask is needed in the loss; the range-folded mask is persisted from the last
-input scan. 14.3M parameters, 9.6M trainable (the rest is the frozen detector). With the
-detector inside the graph (`detector_weight` > 0) each forecast scan is denormalised and
-handed to the published model, giving a tornado logit per horizon that is trained against the
-horizon's label. No public pretrained nowcaster fits 12-channel polar chips (DGMR, Earthformer
-and the SEVIR models are single-field Cartesian; the TorNet-Temporal ResNet3D is Cartesian
-24-channel), so the TorNet backbone is the pretrained piece and the decoder is new.
+**Modeling, revised (agreed and built 2026-10-13; `tornet-forecast`, one script,
+`src/tornet/scripts/forecast_smp.py`).** Multi-task in PyTorch with Segmentation Models PyTorch
+(SMP): one U-Net that forecasts velocity and reflectivity at each horizon *and* predicts a
+tornado probability per horizon from its bottleneck, with the frozen TorNet detector kept as
+the external yardstick.
 
-**Commands.** `tornet-train-forecaster configs/forecast/fold_b_mae.json` (control) and
-`fold_b_mae_detector.json` (detector loss, weight 0.5); `tornet-score-forecast --model_path
-<run>/checkpoints/best.keras --years 2014` writes, per horizon, the detector's predictions on
-persistence, forecast and truth plus `summary.json` with MAE against truth and paired
-bootstraps. Storm leakage: no event id appears in both partitions (checked on the catalog).
+```
+observed scans (n_in x 14 channels, polar)       all 12 products + range-folded in
+        |
+encoder: the TorNet CNN ported to torch (tornet.models.torch_backbone), initialised from the
+         published weights and fine-tuned at a tenth of the learning rate; run per scan,
+         features concatenated across scans at every scale (pre-pool maps at strides 1-8 as
+         skips, bottleneck at 16, the SMP feature convention)
+        |
+bottleneck: identity (A) or a small transformer over the 8x15 tokens (B)
+        |
+SMP U-Net decoder (256/128/64/32) -> regression head: VEL + DBZ per horizon, 120x240
+bottleneck features --------------> SMP classification head: tornado logit per horizon
+```
 
-**Cost.** Fold B locally: about 0.5 s per batch of 16 on the laptop GPU, roughly 15 min per
-epoch plus validation, six epochs, about 2 h per run. Full data on the pod: loader-bound like
-the fine-tune, ~4 h and ~$10 per run, ~$20 for the pair.
+*Why TorNet as the encoder.* It is the only pretrained network trained on these storms, these
+channels and this polar geometry. ImageNet encoders (ResNet34, ConvNeXt) offer a stronger
+architecture, not better pretraining for radar; that is tested as a controlled encoder swap on
+the same U-Net (`configs/forecast/smp_fold_b_a2_resnet34.json`), not assumed.
+
+*Channels.* All twelve products go in (the encoder was trained on them). Only VEL and DBZ are
+predicted; for anything that needs a full chip (the frozen detector), the other products and
+the range-folded channels are persisted from the last observed scan. The truth chip keeps its
+own range-folded channels: they change between scans (mean absolute change 0.08 over 15 min)
+and move the detector's logit by up to 9, so persisting them onto the truth would corrupt the
+ceiling.
+
+*Losses.* L1 on VEL and DBZ in the detector's normalised space, per-product weights (both 1.0),
+optionally multiplied by `1 + heatmap_weight x` the frozen detector's min-max-normalised heat map
+on the real target scan (the "focus the regression where the detector would look" idea,
+`heatmap_weight` 2.0 in the configs); weighted cross-entropy on the per-horizon labels with the
+authors' sample weights; optionally the frozen detector's cross-entropy on the forecast chip
+(`detector_weight` 0.5).
+
+*Port verification.* `TorNetDetector` (encoder + max-pool head) with weights copied from the
+published Keras model reproduces its logits to 0.002 on real 2014 test files and matches the
+cached `results/predictions_pretrained_2013_2015.csv`.
+
+*Evaluation.* Test years, per horizon: the classification head's probability and the frozen
+detector on persistence / forecast / truth, written as tornet-score CSVs with the label pattern
+(e.g. `0011`) and `pre_onset` / `ongoing` flags; `summary.json` has AUC/AUCPR per view for all
+cases and for the pre-onset subset, MAE against truth for forecast and persistence, and paired
+bootstraps against persistence.
+
+*Phases and configs (`configs/forecast/smp_*.json`, fold B, ~2 h each locally).*
+
+| phase | run | what it answers |
+|---|---|---|
+| 0 | port + verify (done) | the torch encoder is the published network |
+| 1 | channel ablation / gradient maps on the frozen detector (optional, 20 min) | which products carry the detector's skill |
+| 2 | A control; A + heat-map weighting; A + heat-map + detector loss | does forecasting beat persistence; does focusing the loss sharpen it |
+| 4 | A2: ImageNet ResNet34 encoder, same U-Net and losses | does a generic pretrained encoder help on radar |
+| 5 | B: transformer bottleneck on the better encoder | does attention at the bottleneck add anything |
+| 6 | full data on the pod for the winners (~$10 per run) | the real numbers |
+
+The Keras U-Net built earlier the same day (`tornet-train-forecaster`, `tornet-score-forecast`)
+stays as a reference implementation and is not on this path.
 
 ### Training-signal ideas (agreed order: A then B)
 

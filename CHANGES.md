@@ -148,8 +148,8 @@ The two scripts under `scripts/tornado_detection/` are now console commands in `
 - `tornet-pool-features`, `tornet-radar-metrics`, `tornet-env-fetch` and `tornet-meta-model`
   (new): the meta-model pipeline, see Modeling above. `scripts/runpod/cache_round2.sh` runs all of
   it unattended on a pod and stops the pod when done.
-- `tornet-train-forecaster` and `tornet-score-forecast` (new): the radar forecaster, see
-  Modeling above.
+- `tornet-train-forecaster` and `tornet-score-forecast` (new): the Keras radar forecaster, kept
+  as a reference. `tornet-forecast` (new): the SMP multi-task forecaster, see Modeling above.
 
 Both original commands default `KERAS_BACKEND` to `torch` when it is unset, and read `TORNET_ROOT`
 at run time rather than at import.

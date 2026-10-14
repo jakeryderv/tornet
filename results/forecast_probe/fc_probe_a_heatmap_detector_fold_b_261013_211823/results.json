@@ -1,0 +1,53 @@
+{
+  "exp_name": "fc_probe_a_heatmap_detector_fold_b",
+  "encoder": "tornet",
+  "bottleneck": "cnn",
+  "params": 10128842,
+  "trainable": 10128842,
+  "epochs_run": 4,
+  "best_checkpoint": "experiments/fc_probe_a_heatmap_detector_fold_b_261013_211823/checkpoints/best.pt",
+  "last_checkpoint": "experiments/fc_probe_a_heatmap_detector_fold_b_261013_211823/checkpoints/last.pt",
+  "history_last": {
+    "epoch": 4,
+    "train_loss": 1.1713511023521423,
+    "train_field": 0.9738417925834656,
+    "train_cls": 0.12250671628614267,
+    "train_detector": 0.15000518371661503,
+    "train_AUC_h0": 0.9363588686342592,
+    "train_AUC_h1": 0.9180887441622928,
+    "val_loss": 1.1258002672195435,
+    "val_field": 0.8911136231422424,
+    "val_cls": 0.1451322472045819,
+    "val_detector": 0.1791087864736716,
+    "val_AUC_h0": 0.8743164417852575,
+    "val_AUC_h1": 0.8627300653289539,
+    "seconds": 100.49024701118469
+  },
+  "git_commit": "c97917f",
+  "git_dirty": false,
+  "expdir": "experiments/fc_probe_a_heatmap_detector_fold_b_261013_211823",
+  "pre_onset_WC_AUC": {
+    "h0": {
+      "persistence": 0.7525036818851252,
+      "forecast": 0.7083736587418472,
+      "truth": 0.7704975804754892,
+      "head": 0.7528034925310331
+    },
+    "h1": {
+      "persistence": 0.7323220411663808,
+      "forecast": 0.7316466552315609,
+      "truth": 0.7980167238421956,
+      "head": 0.7524924957118353
+    }
+  },
+  "mae": {
+    "h0": {
+      "forecast": 0.4150935411453247,
+      "persistence": 0.4036458730697632
+    },
+    "h1": {
+      "forecast": 0.5099145770072937,
+      "persistence": 0.5326187014579773
+    }
+  }
+}

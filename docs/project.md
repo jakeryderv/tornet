@@ -719,6 +719,35 @@ bootstraps against persistence.
 The Keras U-Net built earlier the same day (`tornet-train-forecaster`, `tornet-score-forecast`)
 stays as a reference implementation and is not on this path.
 
+**Probe result (2026-10-14; capped fold B: 6,000 train files from 2013+2015, 2,000 val files
+from 2014, 4 epochs; scored on the full 2014 test partition, 2,546 samples, 220 pre-onset
+tornado cases, 133 ongoing).** Control on the pod (`fc_probe_a_control_fold_b`, ~5 min);
+the heat-map + detector-loss variant on the laptop after RunPod reclaimed the pod's GPU
+(`fc_probe_a_heatmap_detector_fold_b`, ~15 min). Pre-onset cases vs warned storms (WC AUC):
+
+| horizon | persistence (floor) | judge on forecast: control | variant | trained head: control | variant | truth (ceiling) |
+|---|---|---|---|---|---|---|
+| +5 min | 0.753 | 0.599 | 0.708 | 0.747 | 0.753 | 0.771 |
+| +10 min | 0.732 | 0.593 | 0.732 | 0.749 | 0.752 | 0.798 |
+
+Pixel MAE (VEL+DBZ, normalised units) vs persistence: control 0.387 / 0.492 vs 0.404 / 0.533
+(better at both horizons); variant 0.415 / 0.510 (slightly worse than persistence at +5).
+
+- **The blur is real and the detector loss fixes most of it.** A plain-L1 forecast is closer to
+  the real scan in pixels yet carries far less tornado signature than the last observed scan
+  (judge −0.15 WC vs persistence, significant). Weighting the L1 by the judge's heat map and
+  adding the judge's loss on the forecast lifts the judge's reading from 0.59 to 0.71 / 0.73,
+  i.e. back to the persistence floor at +10 min (−0.001 n.s.) and within 0.044 of it at +5, at
+  the cost of a small pixel-error increase. On 6,000 files and 4 epochs the drawn forecast does
+  not yet beat persistence through the judge; whether more data and epochs push it over is the
+  open question for the full fold B runs.
+- **The trained head is the stronger predictor already.** At +10 min it is above the floor in
+  both runs (control +0.017 [−0.002, +0.038]; variant +0.020 [+0.001, +0.040]) and at +5 it sits
+  on it, with the ceiling 0.045 higher. This is the fine-tuned backbone learning the prediction
+  target, which Experiments 4–7 showed the frozen features cannot do.
+- Mechanics all hold: loading, mixed precision, the frozen judge in the graph, maps saved,
+  pre-onset scoping. Runs: `results/forecast_probe/`.
+
 ### Training-signal ideas (agreed order: A then B)
 
 - **A. Continuous auxiliary targets, not EF-based** (EF ratings are survey-based, inconsistent at the

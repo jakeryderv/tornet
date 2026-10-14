@@ -676,10 +676,13 @@ together with the frozen detector's maps on persistence, forecast and truth). `"
 SMP's pool-then-linear head as the alternative; it decides from the strongest feature values
 rather than the strongest location and has no map.
 
-*Why TorNet as the encoder.* It is the only pretrained network trained on these storms, these
-channels and this polar geometry. ImageNet encoders (ResNet34, ConvNeXt) offer a stronger
-architecture, not better pretraining for radar; that is tested as a controlled encoder swap on
-the same U-Net (`configs/forecast/smp_fold_b_a2_resnet34.json`), not assumed.
+*Why TorNet as the encoder, and only TorNet (decided 2026-10-14).* It is the only pretrained
+network trained on these storms, these channels and this polar geometry, and the project's
+thesis is reuse of it. An ImageNet encoder swap (ResNet34 via SMP) was considered and dropped:
+it would mix architecture, initialisation and capacity in one number, it answers a different
+project's question, and the probe pointed at the loss rather than capacity as the lever. The
+script still accepts any SMP encoder name, but no config uses one. If capacity ever becomes the
+question, a wider or deeper TorNet-style stack from the published weights is the cleaner test.
 
 *Channels.* All twelve products go in (the encoder was trained on them). Only VEL and DBZ are
 predicted; for anything that needs a full chip (the frozen detector), the other products and
@@ -712,8 +715,7 @@ bootstraps against persistence.
 | 0 | port + verify (done) | the torch encoder is the published network |
 | 1 | channel ablation / gradient maps on the frozen detector (optional, 20 min) | which products carry the detector's skill |
 | 2 | A control; A + heat-map weighting; A + heat-map + detector loss | does forecasting beat persistence; does focusing the loss sharpen it |
-| 4 | A2: ImageNet ResNet34 encoder, same U-Net and losses | does a generic pretrained encoder help on radar |
-| 5 | B: transformer bottleneck on the better encoder | does attention at the bottleneck add anything |
+| 5 | B: transformer bottleneck | does attention at the bottleneck add anything |
 | 6 | full data on the pod for the winners (~$10 per run) | the real numbers |
 
 The Keras U-Net built earlier the same day (`tornet-train-forecaster`, `tornet-score-forecast`)

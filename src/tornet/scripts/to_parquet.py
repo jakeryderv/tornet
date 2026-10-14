@@ -247,7 +247,7 @@ def verify(root: str, out: str, years: list[int], samples: int, seed: int = 0) -
                 row = meta.iloc[int(idx)]
                 shard = os.path.join(data_dir, shards[int(row["shard"])])
                 ds = load_dataset("parquet", data_files=shard, split="train").with_format("numpy")
-                i = ds["filename"].tolist().index(row["filename"])
+                i = list(ds["filename"]).index(row["filename"])
                 got = ds[i]
                 ref = read_file(
                     os.path.join(root, row["filename"]), variables=ALL_VARIABLES, n_frames=4

@@ -2,7 +2,7 @@
 # Repackage TorNet as Parquet and publish it on the Hugging Face Hub, from a CPU pod with the
 # TorNet volume at /workspace. Phases, each idempotent:
 #   convert [years...]  netCDF -> Parquet shards on the container disk ($OUT), given years
-#                       (default all ten); a partition-year whose metadata file exists is skipped
+#                       (default all ten); resumes per shard, so reruns only rebuild what is missing
 #   integrity           read every shard fully, delete unreadable ones (then convert rebuilds them)
 #   verify [years...]   row counts vs the catalog and exact round trip of random samples
 #   repair              integrity, convert (rebuilds deleted shards), integrity, verify, catalog
@@ -33,9 +33,10 @@ case "$phase" in
     log "syncing environment"; uv sync --quiet || { log "uv sync failed"; exit 1; }
     years=("$@"); [ ${#years[@]} -gt 0 ] || years=(2013 2014 2015 2016 2017 2018 2019 2020 2021 2022)
     log "convert years ${years[*]} with $WORKERS workers into $OUT"
+    # the converter resumes per shard (complete shards are only read for their metadata), so
+    # every partition-year is passed through; deleted or missing shards get rebuilt
     for y in "${years[@]}"; do
       for p in train test; do
-        if [ -f "$OUT/metadata/$p-$y.parquet" ]; then log "$p/$y exists, skipping"; continue; fi
         log "convert $p/$y"
         uv run tornet-to-parquet convert --out "$OUT" --partitions "$p" --years "$y" --workers "$WORKERS" \
           || { log "CONVERT FAILED $p/$y"; exit 1; }

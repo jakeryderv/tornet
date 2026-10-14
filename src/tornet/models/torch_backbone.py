@@ -15,6 +15,10 @@ builds internally before its first convolution (see tornet.data.forecast.normali
 
 from __future__ import annotations
 
+import os
+
+os.environ.setdefault("KERAS_BACKEND", "torch")  # the checkpoint is read through Keras
+
 import numpy as np
 import torch
 from torch import nn

@@ -35,6 +35,10 @@ Usage: tornet-forecast <config.json>
 
 from __future__ import annotations
 
+import os
+
+os.environ.setdefault("KERAS_BACKEND", "torch")  # the checkpoint is read through Keras
+
 import copy
 import json
 import logging

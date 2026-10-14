@@ -16,6 +16,7 @@ Usage:
     tornet-to-parquet convert --out DIR [--partitions train test] [--years 2013 ...]
                               [--shard-size 256] [--workers N]   (one shard per worker at a
                               time; a worker holds ~1.5 GB per 256 samples)
+    tornet-to-parquet verify --out DIR [--years ...] [--samples N]
     tornet-to-parquet catalog --out DIR
 """
 
@@ -214,6 +215,67 @@ def convert(
         )
 
 
+def verify(root: str, out: str, years: list[int], samples: int, seed: int = 0) -> None:
+    """Every converted partition-year: row count equals the catalog's, shard files are all
+    there, and `samples` random rows read back through `datasets` equal the netCDF exactly."""
+    from datasets import load_dataset
+
+    catalog = pd.read_csv(os.path.join(root, "catalog.csv"), parse_dates=["start_time", "end_time"])
+    catalog["year"] = catalog["start_time"].dt.year
+    rng = np.random.default_rng(seed)
+    checked, problems = 0, []
+    for partition in ("train", "test"):
+        for year in years:
+            meta_path = os.path.join(out, "metadata", f"{partition}-{year}.parquet")
+            expected = int(((catalog["type"] == partition) & (catalog["year"] == year)).sum())
+            if not os.path.exists(meta_path):
+                if expected:
+                    problems.append(
+                        f"{partition}/{year}: not converted ({expected} files in catalog)"
+                    )
+                continue
+            meta = pd.read_parquet(meta_path)
+            data_dir = os.path.join(out, "data", partition, str(year))
+            shards = sorted(f for f in os.listdir(data_dir) if f.endswith(".parquet"))
+            n_shards = int(meta["shard"].max()) + 1
+            if len(meta) != expected or len(shards) != n_shards:
+                problems.append(
+                    f"{partition}/{year}: {len(meta)} rows vs {expected} in catalog, {len(shards)} shards vs {n_shards}"
+                )
+                continue
+            for idx in rng.choice(len(meta), size=min(samples, len(meta)), replace=False):
+                row = meta.iloc[int(idx)]
+                shard = os.path.join(data_dir, shards[int(row["shard"])])
+                ds = load_dataset("parquet", data_files=shard, split="train").with_format("numpy")
+                i = ds["filename"].tolist().index(row["filename"])
+                got = ds[i]
+                ref = read_file(
+                    os.path.join(root, row["filename"]), variables=ALL_VARIABLES, n_frames=4
+                )
+                ok = all(
+                    np.array_equal(
+                        got[v].astype(np.float16), ref[v].astype(np.float16), equal_nan=True
+                    )
+                    for v in ALL_VARIABLES
+                )
+                ok = ok and np.array_equal(
+                    got["range_folded_mask"], ref["range_folded_mask"].astype(np.uint8)
+                )
+                ok = ok and list(got["frame_labels"]) == ref["frame_labels"][0].tolist()
+                ok = ok and list(got["time"]) == ref["time"].tolist()
+                checked += 1
+                if not ok:
+                    problems.append(
+                        f"{partition}/{year}: {row['filename']} differs from the netCDF"
+                    )
+            logging.info("%s/%d ok: %d rows, %d shards", partition, year, len(meta), n_shards)
+    if problems:
+        for p in problems:
+            logging.error(p)
+        raise SystemExit(f"verify failed: {len(problems)} problems")
+    logging.info("verify ok: %d samples compared exactly", checked)
+
+
 def merge_catalog(out: str) -> None:
     files = sorted(os.listdir(os.path.join(out, "metadata")))
     df = pd.concat(
@@ -235,6 +297,13 @@ def main() -> None:
     c.add_argument("--years", nargs="+", type=int, default=list(range(2013, 2023)))
     c.add_argument("--shard-size", type=int, default=256)
     c.add_argument("--workers", type=int, default=min(os.cpu_count() or 4, 8))
+    v = sub.add_parser("verify")
+    v.add_argument("--root", default=os.environ.get("TORNET_ROOT"))
+    v.add_argument("--out", required=True)
+    v.add_argument("--years", nargs="+", type=int, default=list(range(2013, 2023)))
+    v.add_argument(
+        "--samples", type=int, default=5, help="random rows per partition-year to compare"
+    )
     m = sub.add_parser("catalog")
     m.add_argument("--out", required=True)
     a = p.parse_args()
@@ -243,6 +312,10 @@ def main() -> None:
         if not a.root:
             raise SystemExit("set --root or TORNET_ROOT")
         convert(a.root, a.out, a.partitions, a.years, a.shard_size, a.workers)
+    elif a.command == "verify":
+        if not a.root:
+            raise SystemExit("set --root or TORNET_ROOT")
+        verify(a.root, a.out, a.years, a.samples)
     else:
         merge_catalog(a.out)
 

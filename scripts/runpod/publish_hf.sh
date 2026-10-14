@@ -3,7 +3,9 @@
 # TorNet volume at /workspace. Phases, each idempotent:
 #   convert [years...]  netCDF -> Parquet shards on the container disk ($OUT), given years
 #                       (default all ten); a partition-year whose metadata file exists is skipped
+#   verify [years...]   row counts vs the catalog and exact round trip of random samples
 #   catalog             merge the per-year metadata into catalog.parquet and copy the card
+#   auto                convert 2013, verify it, convert the rest, verify all, catalog (no upload)
 #   upload              hf upload-large-folder (resumable) to $HF_REPO, then stop the pod
 # The pod is NOT stopped after convert/catalog: stopping wipes the container disk.
 # Usage: cd /workspace/tornet-repo && UV_PROJECT_ENVIRONMENT=/root/venv setsid nohup \
@@ -38,6 +40,18 @@ case "$phase" in
       done
     done
     log "convert done: $(du -sh "$OUT" | cut -f1) in $OUT"
+    ;;
+  verify)
+    uv run tornet-to-parquet verify --out "$OUT" ${1:+--years "$@"} || { log "VERIFY FAILED"; exit 1; }
+    log "verify ok"
+    ;;
+  auto)
+    bash "$0" convert 2013 || exit 1
+    bash "$0" verify 2013 || exit 1
+    bash "$0" convert 2014 2015 2016 2017 2018 2019 2020 2021 2022 || exit 1
+    bash "$0" verify || exit 1
+    bash "$0" catalog || exit 1
+    log "auto done: ready for upload (pod left running; container disk holds $OUT)"
     ;;
   catalog)
     uv run tornet-to-parquet catalog --out "$OUT" || { log "CATALOG FAILED"; exit 1; }

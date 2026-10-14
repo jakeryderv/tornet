@@ -26,7 +26,7 @@ import argparse
 import logging
 import os
 import time
-from multiprocessing import Pool
+from multiprocessing import get_context
 
 import numpy as np
 import pandas as pd
@@ -148,13 +148,36 @@ def build_table(rows: list[dict], feats) -> pa.Table:
     return pa.Table.from_arrays(cols, schema=schema)
 
 
+def _init_worker() -> None:
+    """Processes are the parallelism; keep Arrow single-threaded inside each worker. (A forked
+    worker inheriting the parent's Arrow thread pool deadlocked inside write_table.)"""
+    pa.set_cpu_count(1)
+    pa.set_io_thread_count(1)
+
+
+def shard_complete(path: str, n_rows: int) -> bool:
+    """True when `path` is a readable Parquet file holding exactly `n_rows` rows."""
+    if not os.path.exists(path):
+        return False
+    try:
+        return pq.read_metadata(path).num_rows == n_rows
+    except Exception:
+        return False
+
+
 def convert_shard(job: dict) -> list[dict]:
-    """One worker, one shard: read its files, build the table, write it; returns metadata."""
+    """One worker, one shard: read its files, build the table, write it; returns metadata.
+    A shard already complete on disk is read for its metadata instead of rebuilt."""
+    n = len(job["files"])
+    if shard_complete(job["path"], n):
+        table = pq.read_table(job["path"], columns=SCALARS)
+        return [row | {"shard": job["shard"]} for row in table.to_pylist()]
     feats = features()
     rows = [read_one((job["root"], f, c)) for f, c in job["files"]]
-    pq.write_table(build_table(rows, feats), job["path"], compression="zstd")
-    meta = [{k: r[k] for k in SCALARS} | {"shard": job["shard"]} for r in rows]
-    return meta
+    tmp = job["path"] + ".tmp"
+    pq.write_table(build_table(rows, feats), tmp, compression="zstd")
+    os.replace(tmp, job["path"])
+    return [{k: r[k] for k in SCALARS} | {"shard": job["shard"]} for r in rows]
 
 
 def convert(
@@ -192,7 +215,8 @@ def convert(
     logging.info("%d shards over %d partition-years, %d workers", len(jobs), len(groups), workers)
     meta: dict[tuple[str, int], list[dict]] = {}
     t0, done, n_files = time.time(), 0, 0
-    with Pool(workers) as pool:
+    ctx = get_context("spawn")
+    with ctx.Pool(workers, initializer=_init_worker) as pool:
         for job, rows in zip(jobs, pool.imap(convert_shard, jobs), strict=True):
             meta.setdefault((job["partition"], job["year"]), []).extend(rows)
             done += 1

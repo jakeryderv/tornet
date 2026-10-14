@@ -3,7 +3,9 @@
 # TorNet volume at /workspace. Phases, each idempotent:
 #   convert [years...]  netCDF -> Parquet shards on the container disk ($OUT), given years
 #                       (default all ten); a partition-year whose metadata file exists is skipped
+#   integrity           read every shard fully, delete unreadable ones (then convert rebuilds them)
 #   verify [years...]   row counts vs the catalog and exact round trip of random samples
+#   repair              integrity, convert (rebuilds deleted shards), integrity, verify, catalog
 #   catalog             merge the per-year metadata into catalog.parquet and copy the card
 #   auto                convert 2013, verify it, convert the rest, verify all, catalog (no upload)
 #   upload              hf upload-large-folder (resumable) to $HF_REPO, then stop the pod
@@ -41,6 +43,18 @@ case "$phase" in
     done
     log "convert done: $(du -sh "$OUT" | cut -f1) in $OUT"
     ;;
+  integrity)
+    uv run tornet-to-parquet integrity --out "$OUT" --workers "${INTEGRITY_WORKERS:-16}" || { log "INTEGRITY FAILED"; exit 1; }
+    log "integrity ok"
+    ;;
+  repair)
+    bash "$0" integrity || true
+    bash "$0" convert || exit 1
+    bash "$0" integrity || exit 1
+    bash "$0" verify || exit 1
+    bash "$0" catalog || exit 1
+    log "repair done: ready for upload"
+    ;;
   verify)
     uv run tornet-to-parquet verify --out "$OUT" ${1:+--years "$@"} || { log "VERIFY FAILED"; exit 1; }
     log "verify ok"
@@ -49,6 +63,7 @@ case "$phase" in
     bash "$0" convert 2013 || exit 1
     bash "$0" verify 2013 || exit 1
     bash "$0" convert 2014 2015 2016 2017 2018 2019 2020 2021 2022 || exit 1
+    bash "$0" integrity || { bash "$0" convert || exit 1; bash "$0" integrity || exit 1; }
     bash "$0" verify || exit 1
     bash "$0" catalog || exit 1
     log "auto done: ready for upload (pod left running; container disk holds $OUT)"

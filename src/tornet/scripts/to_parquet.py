@@ -16,6 +16,7 @@ Usage:
     tornet-to-parquet convert --out DIR [--partitions train test] [--years 2013 ...]
                               [--shard-size 256] [--workers N]   (one shard per worker at a
                               time; a worker holds ~1.5 GB per 256 samples)
+    tornet-to-parquet integrity --out DIR [--workers N]   read every shard fully, delete bad ones
     tornet-to-parquet verify --out DIR [--years ...] [--samples N]
     tornet-to-parquet catalog --out DIR
 """
@@ -239,6 +240,46 @@ def convert(
         )
 
 
+def _read_shard_fully(path: str) -> tuple[str, int | None, str | None]:
+    """Decompress and decode every page of a shard. Returns (path, rows, error)."""
+    try:
+        return path, pq.read_table(path).num_rows, None
+    except Exception as e:
+        return path, None, str(e).splitlines()[0]
+
+
+def integrity(out: str, workers: int) -> list[str]:
+    """Read every shard under out/data completely; return the paths that fail or whose row
+    count disagrees with their footer. Bad shards are deleted so `convert` rebuilds them."""
+    paths = sorted(
+        os.path.join(d, f)
+        for d, _, files in os.walk(os.path.join(out, "data"))
+        for f in files
+        if f.endswith(".parquet")
+    )
+    bad, t0 = [], time.time()
+    ctx = get_context("spawn")
+    with ctx.Pool(workers, initializer=_init_worker) as pool:
+        for i, (path, rows, err) in enumerate(pool.imap_unordered(_read_shard_fully, paths), 1):
+            expected = None
+            try:
+                expected = pq.read_metadata(path).num_rows
+            except Exception as e:
+                err = err or str(e).splitlines()[0]
+            if err or rows != expected:
+                bad.append(path)
+                logging.error(
+                    "bad shard %s: %s",
+                    os.path.relpath(path, out),
+                    err or f"{rows} rows vs footer {expected}",
+                )
+                os.remove(path)
+            if i % 100 == 0 or i == len(paths):
+                logging.info("integrity %d/%d shards, %.0f s", i, len(paths), time.time() - t0)
+    logging.info("integrity: %d shards read, %d bad (deleted)", len(paths), len(bad))
+    return bad
+
+
 def verify(root: str, out: str, years: list[int], samples: int, seed: int = 0) -> None:
     """Every converted partition-year: row count equals the catalog's, shard files are all
     there, and `samples` random rows read back through `datasets` equal the netCDF exactly."""
@@ -268,25 +309,33 @@ def verify(root: str, out: str, years: list[int], samples: int, seed: int = 0) -
                 )
                 continue
             for idx in rng.choice(len(meta), size=min(samples, len(meta)), replace=False):
-                row = meta.iloc[int(idx)]
-                shard = os.path.join(data_dir, shards[int(row["shard"])])
-                ds = load_dataset("parquet", data_files=shard, split="train").with_format("numpy")
-                i = list(ds["filename"]).index(row["filename"])
-                got = ds[i]
-                ref = read_file(
-                    os.path.join(root, row["filename"]), variables=ALL_VARIABLES, n_frames=4
-                )
-                ok = all(
-                    np.array_equal(
-                        got[v].astype(np.float16), ref[v].astype(np.float16), equal_nan=True
+                try:
+                    row = meta.iloc[int(idx)]
+                    shard = os.path.join(data_dir, shards[int(row["shard"])])
+                    ds = load_dataset("parquet", data_files=shard, split="train").with_format(
+                        "numpy"
                     )
-                    for v in ALL_VARIABLES
-                )
-                ok = ok and np.array_equal(
-                    got["range_folded_mask"], ref["range_folded_mask"].astype(np.uint8)
-                )
-                ok = ok and list(got["frame_labels"]) == ref["frame_labels"][0].tolist()
-                ok = ok and list(got["time"]) == ref["time"].tolist()
+                    i = list(ds["filename"]).index(row["filename"])
+                    got = ds[i]
+                    ref = read_file(
+                        os.path.join(root, row["filename"]), variables=ALL_VARIABLES, n_frames=4
+                    )
+                    ok = all(
+                        np.array_equal(
+                            got[v].astype(np.float16), ref[v].astype(np.float16), equal_nan=True
+                        )
+                        for v in ALL_VARIABLES
+                    )
+                    ok = ok and np.array_equal(
+                        got["range_folded_mask"], ref["range_folded_mask"].astype(np.uint8)
+                    )
+                    ok = ok and list(got["frame_labels"]) == ref["frame_labels"][0].tolist()
+                    ok = ok and list(got["time"]) == ref["time"].tolist()
+                except Exception as e:  # a corrupt shard is a finding, not a crash
+                    problems.append(
+                        f"{partition}/{year}: {os.path.basename(shard)} unreadable: {e}"
+                    )
+                    continue
                 checked += 1
                 if not ok:
                     problems.append(
@@ -328,6 +377,9 @@ def main() -> None:
     v.add_argument(
         "--samples", type=int, default=5, help="random rows per partition-year to compare"
     )
+    g = sub.add_parser("integrity", help="read every shard fully; delete the unreadable ones")
+    g.add_argument("--out", required=True)
+    g.add_argument("--workers", type=int, default=min(os.cpu_count() or 4, 16))
     m = sub.add_parser("catalog")
     m.add_argument("--out", required=True)
     a = p.parse_args()
@@ -340,6 +392,9 @@ def main() -> None:
         if not a.root:
             raise SystemExit("set --root or TORNET_ROOT")
         verify(a.root, a.out, a.years, a.samples)
+    elif a.command == "integrity":
+        if integrity(a.out, a.workers):
+            raise SystemExit("integrity failed: bad shards deleted, rerun convert")
     else:
         merge_catalog(a.out)
 

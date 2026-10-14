@@ -8,7 +8,8 @@
 #   repair              integrity, convert (rebuilds deleted shards), integrity, verify, catalog
 #   catalog             merge the per-year metadata into catalog.parquet and copy the card
 #   auto                convert 2013, verify it, convert the rest, verify all, catalog (no upload)
-#   upload              hf upload-large-folder (resumable) to $HF_REPO, then stop the pod
+#   upload              hf upload-large-folder (resumable) to $HF_REPO; stops the pod on success only
+#   publish             convert, integrity, verify, catalog, upload, stop on success (unattended)
 # The pod is NOT stopped after convert/catalog: stopping wipes the container disk.
 # Usage: cd /workspace/tornet-repo && UV_PROJECT_ENVIRONMENT=/root/venv setsid nohup \
 #   bash scripts/runpod/publish_hf.sh convert 2013 2014 2015 > /workspace/publish_hf.log 2>&1 < /dev/null &
@@ -75,11 +76,24 @@ case "$phase" in
     log "catalog done"
     ;;
   upload)
+    # the pod stops ONLY after a successful upload: stopping wipes the container disk and the shards
     [ -f "$OUT/catalog.parquet" ] || { log "no catalog.parquet: run the catalog phase first"; exit 1; }
     log "upload $OUT -> $HF_REPO"
-    uv run hf upload-large-folder "$HF_REPO" "$OUT" --repo-type dataset --num-workers "${UPLOAD_WORKERS:-16}" \
-      && log "upload done" || log "UPLOAD FAILED (rerun: it resumes)"
-    [ "${STOP_POD:-1}" = "1" ] && stop_pod
+    if uv run hf upload-large-folder "$HF_REPO" "$OUT" --repo-type dataset --num-workers "${UPLOAD_WORKERS:-16}"; then
+      log "upload done"
+      [ "${STOP_POD:-1}" = "1" ] && stop_pod
+    else
+      log "UPLOAD FAILED (pod left running; rerun the upload phase, it resumes)"
+      exit 1
+    fi
+    ;;
+  publish)
+    # the whole thing unattended: convert, integrity, verify, catalog, upload, stop on success
+    bash "$0" convert || exit 1
+    bash "$0" integrity || { bash "$0" convert || exit 1; bash "$0" integrity || exit 1; }
+    bash "$0" verify || exit 1
+    bash "$0" catalog || exit 1
+    bash "$0" upload || exit 1
     ;;
   *) log "unknown phase $phase"; exit 2 ;;
 esac

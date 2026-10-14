@@ -94,9 +94,10 @@ def test_pattern_flags():
 
 
 @pytest.mark.parametrize(
-    "encoder,bottleneck", [("tornet", "cnn"), ("tornet", "transformer"), ("resnet18", "cnn")]
+    "encoder,bottleneck,cls_head",
+    [("tornet", "cnn", "tornet"), ("tornet", "transformer", "tornet"), ("resnet18", "cnn", "smp")],
 )
-def test_forecastnet_shapes(encoder, bottleneck):
+def test_forecastnet_shapes(encoder, bottleneck, cls_head):
     cfg = {
         **forecast_smp.DEFAULT_CONFIG,
         "n_in": N_IN,
@@ -105,6 +106,7 @@ def test_forecastnet_shapes(encoder, bottleneck):
         "encoder_weights": None,
         "start_filters": 4,
         "bottleneck": bottleneck,
+        "cls_head": cls_head,
         "transformer": {"depth": 1, "heads": 2, "dropout": 0.0},
         "decoder_channels": [8, 8, 8, 8],
     }
@@ -113,6 +115,11 @@ def test_forecastnet_shapes(encoder, bottleneck):
     coords = torch.randn(2, 2, AZ, RNG)
     out = model(x, coords)
     assert out["fields"].shape == (2, HORIZONS, 4, AZ, RNG) and out["logits"].shape == (2, HORIZONS)
+    if cls_head == "tornet":  # the likelihood map, and the logit is its maximum
+        assert out["cls_map"].shape == (2, HORIZONS, -(-AZ // 16), -(-RNG // 16))
+        assert torch.allclose(out["cls_map"].amax(dim=(2, 3)), out["logits"])
+    else:
+        assert "cls_map" not in out
     chip = forecast_smp.full_chip(out["fields"][:, 0], x[:, -1], model.target_channels)
     assert chip.shape == (2, 14, AZ, RNG) and torch.equal(chip[:, 12:], x[:, -1, 12:])
 
@@ -161,6 +168,13 @@ def test_script_end_to_end(tornet_root, keras_detector, tmp_path, monkeypatch):
             "pattern",
             "pre_onset",
         } <= set(df.columns)
+    maps = np.load(os.path.join(scores, "maps_h0.npz"))
+    assert set(maps.files) == {"filenames", "head", "persistence", "forecast", "truth"}
+    assert (
+        maps["head"].shape
+        == maps["truth"].shape
+        == (summary["horizons"][0]["n"], -(-AZ // 16), -(-RNG // 16))
+    )
     hist = pd.read_csv(os.path.join(r["expdir"], "history.csv"))
     assert {"train_loss", "train_field", "train_cls", "train_detector", "val_loss"} <= set(
         hist.columns

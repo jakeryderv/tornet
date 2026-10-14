@@ -80,23 +80,26 @@ class TorNetEncoder(nn.Module):
 
 
 class TorNetHead(nn.Module):
-    """The authors' max-pool head: two 1x1 convolutions, a 1x1 heat map, max over locations."""
+    """The authors' max-pool head: two 1x1 convolutions, a 1x1 heat map (one map per output),
+    max over locations. The map before the max is the paper's spatial likelihood map."""
 
-    def __init__(self, in_channels: int, hidden: tuple[int, ...] = (512, 256)):
+    def __init__(
+        self, in_channels: int, hidden: tuple[int, ...] = (512, 256), out_channels: int = 1
+    ):
         super().__init__()
         layers, channels = [], in_channels
         for units in hidden:
             layers += [nn.Conv2d(channels, units, 1), nn.ReLU()]
             channels = units
         self.hidden = nn.Sequential(*layers)
-        self.heatmap = nn.Conv2d(channels, 1, 1)
+        self.heatmap = nn.Conv2d(channels, out_channels, 1)
 
     def heat(self, features: torch.Tensor) -> torch.Tensor:
-        """Per-location logits, (batch, 1, H, W)."""
+        """Per-location logits, (batch, out_channels, H, W)."""
         return self.heatmap(self.hidden(features))
 
     def forward(self, features: torch.Tensor) -> torch.Tensor:
-        return self.heat(features).amax(dim=(2, 3))  # (batch, 1)
+        return self.heat(features).amax(dim=(2, 3))  # (batch, out_channels)
 
     def conv_layers(self) -> list[nn.Conv2d]:
         return [m for m in self.hidden if isinstance(m, nn.Conv2d)] + [self.heatmap]

@@ -600,8 +600,15 @@ encoder: the TorNet CNN ported to torch (tornet.models.torch_backbone), initiali
 bottleneck: identity (A) or a small transformer over the 8x15 tokens (B)
         |
 SMP U-Net decoder (256/128/64/32) -> regression head: VEL + DBZ per horizon, 120x240
-bottleneck features --------------> SMP classification head: tornado logit per horizon
+bottleneck features --------------> classification head: tornado logit per horizon
 ```
+
+*Classification head.* Default `cls_head: "tornet"`: the authors' design on the fine-tuned
+bottleneck, two 1x1 convolutions then one logit per cell per horizon and the max over cells, so
+the paper's spatial likelihood map comes with it (saved per horizon in `maps_h<k>.npz`
+together with the frozen detector's maps on persistence, forecast and truth). `"smp"` gives
+SMP's pool-then-linear head as the alternative; it decides from the strongest feature values
+rather than the strongest location and has no map.
 
 *Why TorNet as the encoder.* It is the only pretrained network trained on these storms, these
 channels and this polar geometry. ImageNet encoders (ResNet34, ConvNeXt) offer a stronger

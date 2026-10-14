@@ -12,6 +12,8 @@ evaluation, CLI.
             |
     SMP U-Net decoder ---------------------------> regression head: VEL + DBZ at each horizon
     bottleneck features ------------------------> classification head: tornado logit per horizon
+                                                  (default: the authors' per-cell-logits-then-max
+                                                   head, so a likelihood map comes with it)
 
 Losses: weighted L1 on the predicted products in the detector's normalised space (optionally
 weighted spatially by the frozen detector's heat map on the real target scan), weighted
@@ -24,7 +26,9 @@ Evaluation (test years), per horizon: the classification head's probability, and
 TorNet detector on persistence / forecast / truth, written as tornet-score CSVs with the per-frame
 label pattern so the pre-onset subset (no input frame tornadic, last target frame tornadic) can
 be scored on its own; summary.json holds AUC/AUCPR per view for all and pre-onset cases, MAE
-against truth for forecast and persistence, and paired bootstraps against persistence.
+against truth for forecast and persistence, and paired bootstraps against persistence;
+maps_h<k>.npz holds the 8x15 likelihood maps of the head and of the frozen detector on
+persistence, forecast and truth.
 
 Usage: tornet-forecast <config.json>
 """
@@ -46,7 +50,12 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from tornet.data.forecast_torch import ForecastDataset, channel_indices, collate
-from tornet.models.torch_backbone import TorNetEncoder, load_keras_weights, pretrained_detector
+from tornet.models.torch_backbone import (
+    TorNetEncoder,
+    TorNetHead,
+    load_keras_weights,
+    pretrained_detector,
+)
 from tornet.scripts.score import VIEWS, paired_difference, roc_auc, view_metrics
 from tornet.utils.general import git_revision, make_exp_dir
 
@@ -71,7 +80,9 @@ DEFAULT_CONFIG = {
     "bottleneck": "cnn",  # "cnn" (identity) or "transformer"
     "transformer": {"depth": 2, "heads": 8, "dropout": 0.1},
     "decoder_channels": [256, 128, 64, 32],
-    "cls_dropout": 0.2,
+    "cls_head": "tornet",  # "tornet": per-cell logits then max (the authors' head, gives a
+    #                        likelihood map); "smp": SMP's pool-then-linear head
+    "cls_dropout": 0.2,  # SMP head only
     # losses
     "field_weight": 1.0,
     "product_weights": {"VEL": 1.0, "DBZ": 1.0},
@@ -202,9 +213,12 @@ class ForecastNet(nn.Module):
         self.regression = SegmentationHead(
             dec[-1], self.horizons * len(self.target_channels), kernel_size=3
         )
-        self.classification = ClassificationHead(
-            enc_channels[-1], self.horizons, pooling="max", dropout=float(cfg["cls_dropout"])
-        )
+        if cfg.get("cls_head", "tornet") == "tornet":
+            self.classification = TorNetHead(enc_channels[-1], out_channels=self.horizons)
+        else:
+            self.classification = ClassificationHead(
+                enc_channels[-1], self.horizons, pooling="max", dropout=float(cfg["cls_dropout"])
+            )
 
     def encode(self, x: torch.Tensor, coords: torch.Tensor) -> list[torch.Tensor]:
         b, n = x.shape[:2]
@@ -221,10 +235,14 @@ class ForecastNet(nn.Module):
         feats[-1] = self.bottleneck(feats[-1])
         fields = self.regression(self.decoder(feats))
         b, _, a, r = fields.shape
-        return {
-            "fields": fields.reshape(b, self.horizons, len(self.target_channels), a, r),
-            "logits": self.classification(feats[-1]),
-        }
+        out = {"fields": fields.reshape(b, self.horizons, len(self.target_channels), a, r)}
+        if isinstance(self.classification, TorNetHead):
+            cls_map = self.classification.heat(feats[-1])  # (B, horizons, 8, 15) likelihood map
+            out["cls_map"] = cls_map
+            out["logits"] = cls_map.amax(dim=(2, 3))
+        else:
+            out["logits"] = self.classification(feats[-1])
+        return out
 
 
 def build_model(cfg) -> ForecastNet:
@@ -443,12 +461,16 @@ def evaluate(cfg, model, device, expdir, years):
     horizons = int(cfg["horizons"])
     rows = {w: [[] for _ in range(horizons)] for w in ("head", "persistence", "forecast", "truth")}
     mae = {"forecast": [[] for _ in range(horizons)], "persistence": [[] for _ in range(horizons)]}
+    maps = {w: [[] for _ in range(horizons)] for w in ("head", "persistence", "forecast", "truth")}
+    map_files = []
     for batch in loader:
         x, coords = batch["x"].to(device), batch["coords"].to(device)
         with torch.autocast(device.type, enabled=bool(cfg["amp"]) and device.type == "cuda"):
             out = model(x, coords)
         fields = out["fields"].float()
         head_logits = out["logits"].float().cpu().numpy()
+        head_map = out["cls_map"].float().cpu().numpy() if "cls_map" in out else None
+        map_files += [m["filename"] for m in batch["meta"]]
         future = batch["future"].to(device)
         last = x[:, -1]
         pre_onset, ongoing, patterns = pattern_flags(
@@ -460,8 +482,13 @@ def evaluate(cfg, model, device, expdir, years):
                 "forecast": full_chip(fields[:, h], last, tc),
                 "truth": future[:, h],  # the real scan with its own range-folded channels
             }
-            logits = {w: detector(c, coords).squeeze(1).cpu().numpy() for w, c in chips.items()}
+            heats = {w: detector.heat(c, coords) for w, c in chips.items()}  # (B, 1, 8, 15)
+            logits = {w: hm.amax(dim=(2, 3)).squeeze(1).cpu().numpy() for w, hm in heats.items()}
             logits["head"] = head_logits[:, h]
+            for w, hm in heats.items():
+                maps[w][h].append(hm.squeeze(1).cpu().numpy().astype(np.float16))
+            if head_map is not None:
+                maps["head"][h].append(head_map[:, h].astype(np.float16))
             mae["forecast"][h].append(
                 (fields[:, h] - future[:, h, tc]).abs().mean(dim=(1, 2, 3)).cpu().numpy()
             )
@@ -525,6 +552,11 @@ def evaluate(cfg, model, device, expdir, years):
         logging.info(
             f"h{h} lead {entry['lead_minutes_median']:.0f} min, pre-onset WC AUC: {line}; "
             f"MAE forecast {entry['mae_forecast']:.4f} persistence {entry['mae_persistence']:.4f}"
+        )
+    for h in range(horizons):  # likelihood maps for the visual phase (N x 8 x 15 each)
+        arrays = {w: np.concatenate(v[h]) for w, v in maps.items() if v[h]}
+        np.savez_compressed(
+            os.path.join(out_dir, f"maps_h{h}.npz"), filenames=np.array(map_files), **arrays
         )
     with open(os.path.join(out_dir, "summary.json"), "w") as f:
         json.dump(summary, f, indent=2)

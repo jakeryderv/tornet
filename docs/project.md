@@ -569,7 +569,7 @@ Decision: the early-prediction meta model is the main line. The forecaster (Step
 remains worth running because it is the only path that changes the frozen features, and a
 better encoder feeds this same table; a pod probe of it started the same night.
 
-### Step 2 design: forecast the radar, predict and detect on the forecast (agreed 2026-10-13; built; probed and trimmed 2026-10-14)
+### Step 2 design: forecast the radar, predict and detect on the forecast (agreed 2026-10-13; built; probed, trimmed and run on fold B 2026-10-14)
 
 Decided after Experiment 7 was launched; runs only after its results are in and the user says go.
 
@@ -738,8 +738,9 @@ detector on persistence / forecast / truth, written as tornet-score CSVs with th
 cases and for the pre-onset subset, MAE against truth for forecast and persistence (headline over
 the focus products, and per product), and paired bootstraps against persistence.
 
-*Configs (`configs/forecast/`, fold B, ~2 h each locally, ~45 min on the pod).* Trimmed on
-2026-10-14 after the probe; see "Trim" below for what was dropped and why.
+*Configs (`configs/forecast/`, fold B, ~35 min each on the laptop at 6 epochs: ~5.7 min per epoch
+plus ~7 min of scoring).* Trimmed on 2026-10-14 after the probe; see "Trim" below for what was
+dropped and why.
 
 | config | varies | what it answers |
 |---|---|---|
@@ -803,6 +804,69 @@ and to remove code no longer on the table.
 - Removed the Keras U-Net forecaster, the ImageNet encoder option and the SMP classification
   head; replaced the two probe configs with `smoke_detector`. Evaluation (floor / forecast /
   truth / head, pre-onset scoping, paired bootstraps, likelihood maps) is untouched.
+
+**Fold B result (2026-10-14; full fold B: train 2013+2015, select on the 2014 training
+partition, 6 epochs; scored on the 2014 test partition, 2,546 samples, 220 pre-onset tornado
+cases, 133 ongoing).** The three trimmed configs ran back to back on the laptop overnight
+(23:21 to 01:00; `results/forecast_fold_b/`, checkpoints left under `experiments/`). Pre-onset
+cases vs warned storms (WC AUC); the paired bootstrap against persistence is in brackets where
+it decides the reading.
+
+| horizon | persistence (floor) | judge on forecast: control | detector | detector 12ch | trained head: control | detector | detector 12ch | truth (ceiling) |
+|---|---|---|---|---|---|---|---|---|
+| +5 min | 0.753 | 0.597 | 0.727 | 0.629 | 0.721 | 0.739 | 0.747 | 0.770 |
+| +10 min | 0.732 | 0.595 | 0.736 [−0.021, +0.027] | 0.691 | 0.741 | 0.757 [−0.003, +0.050] | 0.753 [+0.001, +0.043] | 0.798 |
+
+Pixel MAE against the real future scan (normalised units), forecast vs persistence:
+
+| product | control +5 | detector +5 | 12ch +5 | persistence +5 | control +10 | detector +10 | 12ch +10 | persistence +10 |
+|---|---|---|---|---|---|---|---|---|
+| VEL | 0.360 | 0.352 | 0.416 | 0.409 | 0.445 | 0.445 | 0.503 | 0.528 |
+| DBZ | 0.326 | 0.330 | 0.382 | 0.398 | 0.431 | 0.430 | 0.492 | 0.537 |
+| KDP | persisted | persisted | 0.474 | 0.350 | persisted | persisted | 0.541 | 0.480 |
+| RHOHV / ZDR / WIDTH | persisted | persisted | 0.470 / 0.353 / 0.454 | 0.460 / 0.362 / 0.460 | persisted | persisted | 0.592 / 0.425 / 0.532 | 0.603 / 0.438 / 0.564 |
+
+- **The drawn forecast reaches the persistence floor and stops there.** With four times the
+  probe's data and six epochs the detector-loss forecast sits at +0.004 [−0.021, +0.027] vs
+  persistence at +10 min and −0.025 [−0.066, +0.014] at +5: the same picture as the probe
+  (−0.001 and −0.044), with tighter intervals. Plain L1 stays far below (−0.14 / −0.16,
+  significant) while drawing the closest pixels, so the blur reading holds at full scale. More
+  data and epochs did not push the indirect route over the floor. By the agreed rule the
+  transformer bottleneck stays held.
+- **The trained head is the one output above the floor, and only at +10 min.** Detector config
+  +0.024 [−0.003, +0.050], 12ch +0.021 [+0.001, +0.043], control +0.009 [−0.015, +0.034]; the
+  head's gain over the published detector on the latest scan is about two points of WC AUC and
+  sits at the edge of significance. At +5 min every head is on or below the floor, and the
+  control head is significantly below it (−0.031 [−0.063, −0.001]): fine-tuning the backbone
+  with no detector term costs the head something at the shortest horizon that the detector term
+  gives back. The ceiling stays 0.045 / 0.066 above the floor, so the head closes about a third
+  of the gap at +10 and none at +5.
+- **The 12-channel variant did not help the drawing and slightly helped the head.** Its judge
+  reading is 0.629 / 0.691, well below the four-channel config (0.727 / 0.736), and the pixel
+  table shows why it is not a clean comparison: KDP is drawn *worse* than persistence at both
+  horizons (0.474 vs 0.350, 0.541 vs 0.480) and VEL is worse at +5, i.e. the 0.1 anchor was too
+  weak to hold the extra planes near the truth and the detector term pulled KDP somewhere the
+  detector likes but the sky does not. That is the gaming the per-product MAE check was added to
+  catch. Two confounds before reading more into it: the checkpoint rule selects on the head's
+  validation AUC, which picked **epoch 1** for the 12ch run (epoch 3 for the detector config,
+  epoch 2 for the control), so the 12ch forecast scored is a one-epoch drawing (validation field
+  loss 0.383 at epoch 1 vs 0.334 at epoch 6); and the head's small gain (+0.008 at +5, −0.004
+  at +10 vs the four-channel config) is well inside noise.
+- **Checkpoint selection is misaligned with the indirect route.** Selecting on head AUC rewards
+  the direct route early and ignores how the drawing is doing; it also explains the probe's
+  4-epoch runs looking as good as these 6-epoch ones. The script has no score-only mode, so
+  rescoring `last.pt` needs a small addition (~7 min per run once built). Worth doing before any
+  further loss work on the 12ch variant; a route-aware rule (mean of head AUC and judge-on-forecast
+  AUC on the validation files) is the natural fix.
+- Where this leaves the two routes: the direct head is the usable predictor (about +0.02 WC AUC
+  at +10 min over the published detector on the latest scan, on 220 pre-onset cases); the drawn
+  forecast is interpretable but adds nothing over copying the last scan, in pixels or through
+  the judge. Options in rough order of cost: (1) rescore `last.pt` and fix the selection rule;
+  (2) `cls_weight: 0` ablation to see whether the head competes with the drawing for the
+  encoder; (3) a stronger anchor (0.5) or a per-product anchor for the 12ch variant, if (1) does
+  not already close the KDP gap; (4) supervise the head's 8×15 map with the frozen detector's
+  heat map on the real future scan; (5) only then the transformer bottleneck, which the rule
+  says to leave held for now.
 
 ### Training-signal ideas (agreed order: A then B)
 

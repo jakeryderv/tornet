@@ -1,0 +1,56 @@
+{
+  "exp_name": "fc_a_heatmap_detector_fold_b",
+  "bottleneck": "cnn",
+  "target_products": [
+    "VEL",
+    "DBZ"
+  ],
+  "params": 10128842,
+  "trainable": 10128842,
+  "epochs_run": 6,
+  "best_checkpoint": "/home/jake/dev/projects/tornet/experiments/fc_a_heatmap_detector_fold_b_261013_235636/checkpoints/best.pt",
+  "last_checkpoint": "/home/jake/dev/projects/tornet/experiments/fc_a_heatmap_detector_fold_b_261013_235636/checkpoints/last.pt",
+  "history_last": {
+    "epoch": 6,
+    "train_loss": 0.9763279641992522,
+    "train_field": 0.8062914129560157,
+    "train_cls": 0.11022335023807873,
+    "train_detector": 0.11962640034962602,
+    "train_AUC_h0": 0.9424356020051475,
+    "train_AUC_h1": 0.9348076570673607,
+    "val_loss": 1.0354692585633505,
+    "val_field": 0.7974445248508327,
+    "val_cls": 0.1507039692524659,
+    "val_detector": 0.17464152883224016,
+    "val_AUC_h0": 0.87037375177391,
+    "val_AUC_h1": 0.8651298928396877,
+    "seconds": 342.1491286754608
+  },
+  "git_commit": "bc87284",
+  "git_dirty": false,
+  "expdir": "/home/jake/dev/projects/tornet/experiments/fc_a_heatmap_detector_fold_b_261013_235636",
+  "pre_onset_WC_AUC": {
+    "h0": {
+      "persistence": 0.7525036818851252,
+      "forecast": 0.7270881548495687,
+      "truth": 0.7704975804754892,
+      "head": 0.7387386913528298
+    },
+    "h1": {
+      "persistence": 0.7323220411663808,
+      "forecast": 0.7359616209262436,
+      "truth": 0.7980167238421956,
+      "head": 0.7567645797598628
+    }
+  },
+  "mae": {
+    "h0": {
+      "forecast": 0.34065693616867065,
+      "persistence": 0.4036456346511841
+    },
+    "h1": {
+      "forecast": 0.4372652471065521,
+      "persistence": 0.5326187610626221
+    }
+  }
+}

@@ -213,12 +213,13 @@ td.num,th.num{text-align:right}
 <p class="hint" id="countText"></p>
 </div>
 
-<h2>4. What the probe measured</h2>
-<p>Two short runs on a capped fold B (6,000 training files, 4 epochs), scored on the 2014 test year: 2,546 samples, 220 pre-onset tornado cases. Pre-onset cases against warned storms, AUC. The frozen detector reads three chips; the trained head gives its own answer.</p>
+<h2>4. What the runs measured</h2>
+<p>Two short probe runs on a capped fold B (6,000 training files, 4 epochs), then the three full fold B runs (2013 + 2015 training, 6 epochs, overnight on the laptop, 2026-10-14). All scored on the 2014 test year: 2,546 samples, 220 pre-onset tornado cases. Pre-onset cases against warned storms, AUC. The frozen detector reads three chips; the trained head gives its own answer.</p>
 <div class="band">
 <div class="controls">
+  <span class="ctl"><span class="lab">data</span><span class="seg" role="group" aria-label="data" id="dSeg"><button data-d="probe" aria-pressed="false">probe · capped</button><button data-d="foldb" aria-pressed="true">full fold B</button></span></span>
   <span class="ctl"><span class="lab">horizon</span><span class="seg" role="group" aria-label="horizon" id="hSeg"><button data-h="0" aria-pressed="false">+5 min</button><button data-h="1" aria-pressed="true">+10 min</button></span></span>
-  <span class="ctl"><span class="lab">run</span><span class="seg" role="group" aria-label="run" id="rSeg"><button data-r="control" aria-pressed="false">control · plain L1</button><button data-r="variant" aria-pressed="true">variant · heat map + detector CE</button></span></span>
+  <span class="ctl"><span class="lab">run</span><span class="seg" role="group" aria-label="run" id="rSeg"><button data-r="control" aria-pressed="false">control · plain L1</button><button data-r="variant" aria-pressed="true">detector · heat map + detector CE</button><button data-r="twelve" aria-pressed="false" id="rTwelve">detector 12ch · all channels drawn</button></span></span>
 </div>
 <div class="bar" id="bar">
   <div class="axis"></div>
@@ -228,31 +229,27 @@ td.num,th.num{text-align:right}
   <div class="tick below ceil" id="tCeil"><i></i><b></b>ceiling: judge on real future scan</div>
 </div>
 <p class="hint" id="barText"></p>
-<div class="tbl"><table>
-<tr><th>pixel error, VEL + DBZ (normalised units)</th><th class="num">+5 min</th><th class="num">+10 min</th></tr>
-<tr><td>persistence (copy the last scan)</td><td class="num">0.404</td><td class="num">0.533</td></tr>
-<tr><td>control forecast</td><td class="num">0.387</td><td class="num">0.492</td></tr>
-<tr><td>variant forecast</td><td class="num">0.415</td><td class="num">0.510</td></tr>
-</table></div>
-<p class="hint">Read together: the control draws the closest pixels, yet the judge sees less tornado in it than in the last real scan (blur). The variant gives up a little pixel accuracy to keep the signature and gets the judge back to the floor. The direct head barely moves between runs: the loss change repaired the drawing, and only the drawing.</p>
+<div class="tbl"><table id="maeTbl"></table></div>
+<p class="hint" id="maeText"></p>
 </div>
 
 <h2>5. The runs</h2>
 <div class="tbl"><table>
 <tr><th>config</th><th>varies</th><th>answers</th><th>status</th></tr>
 <tr><td class="mono">probe (control, variant)</td><td>6,000 files, 4 epochs</td><td>do the mechanics work; is the blur real</td><td><span class="pill done">done · section 4</span></td></tr>
-<tr><td class="mono">fold_b_control</td><td>plain L1 on VEL + DBZ, CE on the head</td><td>the floor for the loss comparison</td><td><span class="pill next">next · pod</span></td></tr>
-<tr><td class="mono">fold_b_detector</td><td>+ heat-map weighting + detector CE</td><td>does the forecast clear persistence with full fold B</td><td><span class="pill next">next · pod</span></td></tr>
-<tr><td class="mono">fold_b_detector_12ch</td><td>all 12 channels drawn, 0.1 anchor on the other 8</td><td>was the velocity + reflectivity focus right</td><td><span class="pill next">next · pod</span></td></tr>
-<tr><td class="mono">fold_b_transformer</td><td>bottleneck B, same losses as fold_b_detector</td><td>does attention at the bottleneck add anything</td><td><span class="pill">held until A clears the floor</span></td></tr>
+<tr><td class="mono">fold_b_control</td><td>plain L1 on VEL + DBZ, CE on the head</td><td>the floor for the loss comparison</td><td><span class="pill done">done · judge 0.595, head 0.741 at +10</span></td></tr>
+<tr><td class="mono">fold_b_detector</td><td>+ heat-map weighting + detector CE</td><td>does the forecast clear persistence with full fold B</td><td><span class="pill done">done · no: judge +0.004 vs floor, head +0.024</span></td></tr>
+<tr><td class="mono">fold_b_detector_12ch</td><td>all 12 channels drawn, 0.1 anchor on the other 8</td><td>was the velocity + reflectivity focus right</td><td><span class="pill done">done · drawing worse, KDP gamed; epoch-1 checkpoint</span></td></tr>
+<tr><td class="mono">fold_b_transformer</td><td>bottleneck B, same losses as fold_b_detector</td><td>does attention at the bottleneck add anything</td><td><span class="pill">still held: no A run cleared the floor</span></td></tr>
 <tr><td class="mono">smoke_detector</td><td>fold_b_detector on 6,000 files</td><td>a fresh pod works before a long run</td><td><span class="pill">utility</span></td></tr>
 </table></div>
-<p>Dropped after the probe: the heat-map-only run (a nice-to-know ablation), the ImageNet encoder swap (TorNet is the only encoder) and the alternative pool-then-linear head. Three fold B runs on the pod are about three hours and $8. One command per row: <code>tornet-forecast configs/forecast/&lt;name&gt;.json</code>; the script is <code>src/tornet/scripts/forecast_smp.py</code>.</p>
+<p>Dropped after the probe: the heat-map-only run (a nice-to-know ablation), the ImageNet encoder swap (TorNet is the only encoder) and the alternative pool-then-linear head. The three fold B runs took 1 h 40 min on the laptop (about 35 min each). One command per row: <code>tornet-forecast configs/forecast/&lt;name&gt;.json</code>; the script is <code>src/tornet/scripts/forecast_smp.py</code>. Runs live in <code>results/forecast_fold_b/</code>.</p>
+<p><b>What fold B settled.</b> The drawn forecast reaches the persistence floor and stops there, with four times the probe's data and six epochs: the indirect route adds nothing over copying the last scan, in pixels or through the judge. The trained head is the only output above the floor, about +0.02 WC AUC at +10 min and at the edge of significance; at +5 min nothing beats the floor. The checkpoint rule (best validation head AUC) picked epoch 1 for the 12ch run, so its drawing is under-trained; rescoring the last checkpoint and a route-aware selection rule come before any more loss work.</p>
 </div>
 
 <script>
 (function(){
-  const S = {bott:'A', ch:4, loss:false, compare:false, trace:'none', sel:'enc', step:0, nIn:2, h:1, run:'variant'};
+  const S = {bott:'A', ch:4, loss:false, compare:false, trace:'none', sel:'enc', step:0, nIn:2, h:1, run:'variant', data:'foldb'};
   const info = {
     in0:{title:'Observed scan, 15 minutes before',state:'data',source:'TorNet NetCDF file, read by the authors’ own loader',shape:'120 × 240 × 14: six radar products on two elevation sweeps (12) plus two range-folded flags',note:'Already in the form TorNet sees internally: normalised to about [−1, 1], empty gates filled with −3. All twelve products go in.'},
     in1:{title:'Observed scan, 10 minutes before',state:'data',source:'same file, next scan',shape:'120 × 240 × 14',note:'Two scans is the minimum for motion. The forecaster predicts the two scans after this one.'},
@@ -265,9 +262,9 @@ td.num,th.num{text-align:right}
     cls:{title:'Classification head, TorNet style',state:'new',source:'the authors’ head design from the torch port: 1×1 conv 512 → 1×1 conv 256 → 1×1 conv to one logit per horizon per cell → max over cells',shape:'8×15×768 → 8×15×2 likelihood map → 2 logits',note:'Same decision rule as the original TorNet: the strongest location decides. Reads 768 stacked channels, not 384, so it starts from random weights. Updated only by its own cross-entropy. Never sees the drawn forecast.'},
     chip4:{title:'Forecast chip, one per horizon',state:'data',source:'assembled from the regression output and the last observed scan',shape:'120 × 240 × 14: drawn VEL and DBZ, the other ten channels and the range-folded flags carried forward from scan −10',note:'A complete radar scan as TorNet expects it, so the judge can read it. The copied channels are 5 or 10 minutes stale, which costs about 0.08 logit on average against the real scan.'},
     chip12:{title:'Forecast chip, one per horizon',state:'data',source:'assembled from the regression output and the last observed scan',shape:'120 × 240 × 14: all twelve products drawn, only the two range-folded flags carried forward from scan −10',note:'Nearly the whole chip is drawn. The gaming check is per-product pixel error: if the judge’s score rises while the secondary products drift away from the real scan, the critic is being fooled and the anchor needs to be heavier.'},
-    pout:{title:'Direct route: the trained head’s answer',state:'data',source:'the classification head',shape:'P(tornado at +5), P(tornado at +10), plus the 8×15 map',note:'Learned directly from the prediction target. In the probe this was the stronger predictor: 0.752 at +10 min against a floor of 0.732. “Better” means better than the published TorNet on the latest real scan, never better than TorNet given the true future scan.'},
+    pout:{title:'Direct route: the trained head’s answer',state:'data',source:'the classification head',shape:'P(tornado at +5), P(tornado at +10), plus the 8×15 map',note:'Learned directly from the prediction target. The stronger predictor in the probe and on full fold B: 0.757 at +10 min against a floor of 0.732 (detector config), the only output above the floor, and only at +10. “Better” means better than the published TorNet on the latest real scan, never better than TorNet given the true future scan (0.798).'},
     judge:{title:'Frozen detector: TorNet copy 2, complete',state:'frozen',source:'the same Hugging Face checkpoint, backbone and head, weights never updated',shape:'reads a 120×240×14 chip, returns a logit and its 8×15 map',note:'Used three ways: it scores persistence, forecast and truth in evaluation; its map on the real future scan can weight the L1; and optionally its cross-entropy on the forecast chip is a training loss. In that last role gradients pass back through it like light through a fixed lens, into the decoder and encoder, while its own weights stay put.'},
-    pjudge:{title:'Indirect route: the judge’s answer on the forecast',state:'data',source:'frozen detector on the forecast chip',shape:'P(tornado) per horizon, plus the map',note:'If this is high where the head is high, the drawn forecast carries the tornado signature. In the probe plain L1 left it at 0.59 (far below the floor: blur); the detector-aware loss brought it to 0.73 at +10 min, exactly the floor, not yet above it.'}
+    pjudge:{title:'Indirect route: the judge’s answer on the forecast',state:'data',source:'frozen detector on the forecast chip',shape:'P(tornado) per horizon, plus the map',note:'If this is high where the head is high, the drawn forecast carries the tornado signature. Plain L1 leaves it at 0.59 (far below the floor: blur) in the probe and on full fold B; the detector-aware loss brings it to 0.736 at +10 min on fold B, the floor exactly (+0.004), not above it. More data and epochs did not change that.'}
   };
   const stateTag = {train:['train','fine-tuned from TorNet'],frozen:['frozen','frozen TorNet'],new:['new','new, random start'],data:['data','data'],glue:['data','no parameters']};
   const detail = document.getElementById('detail');
@@ -381,25 +378,56 @@ td.num,th.num{text-align:right}
   }
   document.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{S.nIn=+b.dataset.n;renderFrames();});
 
-  // probe results: pre-onset WC AUC, capped fold B, 2014 test year
+  // results: pre-onset WC AUC on the 2014 test year. probe = capped fold B (6,000 files, 4 epochs); foldb = full fold B (6 epochs)
   const R = {
-    0:{floor:0.753, ceil:0.771, control:{ind:0.599, dir:0.747}, variant:{ind:0.708, dir:0.753}},
-    1:{floor:0.732, ceil:0.798, control:{ind:0.593, dir:0.749}, variant:{ind:0.732, dir:0.752}}
+    probe:{
+      0:{floor:0.753, ceil:0.771, control:{ind:0.599, dir:0.747}, variant:{ind:0.708, dir:0.753}},
+      1:{floor:0.732, ceil:0.798, control:{ind:0.593, dir:0.749}, variant:{ind:0.732, dir:0.752}}
+    },
+    foldb:{
+      0:{floor:0.753, ceil:0.770, control:{ind:0.597, dir:0.721}, variant:{ind:0.727, dir:0.739}, twelve:{ind:0.629, dir:0.747}},
+      1:{floor:0.732, ceil:0.798, control:{ind:0.595, dir:0.741}, variant:{ind:0.736, dir:0.757}, twelve:{ind:0.691, dir:0.753}}
+    }
+  };
+  // pixel MAE against the real future scan, normalised units: [+5, +10]
+  const MAE = {
+    probe:{rows:[['persistence (copy the last scan)',[0.404,0.533]],['control forecast',[0.387,0.492]],['detector forecast',[0.415,0.510]]], head:'pixel error, VEL + DBZ'},
+    foldb:{rows:[['persistence, VEL / DBZ',['0.409 / 0.398','0.528 / 0.537']],['control forecast, VEL / DBZ',['0.360 / 0.326','0.445 / 0.431']],['detector forecast, VEL / DBZ',['0.352 / 0.330','0.445 / 0.430']],['detector 12ch forecast, VEL / DBZ',['0.416 / 0.382','0.503 / 0.492']],['detector 12ch forecast, KDP (persistence)',['0.474 (0.350)','0.541 (0.480)']]], head:'pixel error by product'}
+  };
+  const NOTE = {
+    probe:{control:'Plain L1 blurs the couplet away; the judge sees less tornado in the drawing than in the last real scan.',
+           variant:{1:'The detector-aware loss puts the drawing exactly on the floor (−0.001, not significant). The head is above it (+0.020, interval +0.001 to +0.040).', 0:'The drawing is still 0.044 under the floor at the shortest horizon; the head sits on the floor.'}},
+    foldb:{control:{1:'Plain L1 at full scale: the drawing stays 0.14 under the floor (significant) while drawing the closest pixels. The head is +0.009 over the floor, interval −0.015 to +0.034.', 0:'Plain L1 at full scale: the drawing is 0.16 under the floor. The head is significantly below the floor here (−0.031, interval −0.063 to −0.001): fine-tuning without the detector term costs the head at the shortest horizon.'},
+           variant:{1:'Four times the probe data and six epochs: the drawing reaches the floor and stops (+0.004, interval −0.021 to +0.027). The head is +0.024 over the floor, interval −0.003 to +0.050. The transformer bottleneck stays held.', 0:'The drawing is 0.025 under the floor (interval −0.066 to +0.014); the head 0.014 under (not significant). Nothing beats the floor at +5 min.'},
+           twelve:{1:'Drawing all twelve channels made the drawing worse through the judge (−0.041, interval −0.074 to −0.009) and left the head about where the four-channel run put it (+0.021, interval +0.001 to +0.043). The scored checkpoint is epoch 1 (best validation head AUC), so the drawing is under-trained; and KDP is drawn worse than persistence, the gaming the per-product check was added to catch.', 0:'The drawing is 0.124 under the floor; the head sits on it (−0.005). Same caveats: epoch-1 checkpoint, KDP drawn worse than persistence.'}}
+  };
+  const MAE_TEXT = {
+    probe:'Read together: the control draws the closest pixels, yet the judge sees less tornado in it than in the last real scan (blur). The variant gives up a little pixel accuracy to keep the signature and gets the judge back to the floor. The direct head barely moves between runs: the loss change repaired the drawing, and only the drawing.',
+    foldb:'At full scale the control and detector forecasts draw VEL and DBZ equally well, both clearly better than persistence, so the detector term no longer costs pixel accuracy. The 12ch run is worse on every product and draws KDP worse than copying the last scan: the 0.1 anchor was too weak and the detector term pulled KDP where the detector likes it. Its checkpoint is also one epoch in.'
   };
   const LO=0.56, HI=0.82;
   function pos(v){ return (6 + 88*(v-LO)/(HI-LO)).toFixed(1)+'%'; }
   function setTick(id, v){ const el=document.getElementById(id); el.style.left=pos(v); el.querySelector('b').textContent=v.toFixed(3); }
   function renderBar(){
-    const r = R[S.h], run = r[S.run];
+    const D = R[S.data];
+    if(!D[S.h][S.run]) S.run='variant';
+    document.getElementById('rTwelve').hidden = S.data==='probe';
+    const r = D[S.h], run = r[S.run];
     setTick('tFloor', r.floor); setTick('tCeil', r.ceil); setTick('tInd', run.ind); setTick('tDir', run.dir);
+    document.querySelectorAll('#dSeg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.d===S.data));
     document.querySelectorAll('#hSeg button').forEach(b=>b.setAttribute('aria-pressed', +b.dataset.h===S.h));
     document.querySelectorAll('#rSeg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.r===S.run));
     const fmt=d=>(d>=0?'+':'−')+Math.abs(d).toFixed(3);
     let t = `Against the floor: indirect ${fmt(run.ind-r.floor)}, direct ${fmt(run.dir-r.floor)}. The ceiling is ${fmt(r.ceil-r.floor)} above the floor. `;
-    if(S.run==='control') t += 'Plain L1 blurs the couplet away; the judge sees less tornado in the drawing than in the last real scan.';
-    else t += S.h===1 ? 'The detector-aware loss puts the drawing exactly on the floor (−0.001, not significant). The head is above it (+0.020, interval +0.001 to +0.040).' : 'The drawing is still 0.044 under the floor at the shortest horizon; the head sits on the floor.';
+    const n = NOTE[S.data][S.run];
+    t += typeof n==='string' ? n : n[S.h];
     document.getElementById('barText').textContent = t;
+    const m = MAE[S.data];
+    document.getElementById('maeTbl').innerHTML = `<tr><th>${m.head} (normalised units)</th><th class="num">+5 min</th><th class="num">+10 min</th></tr>` +
+      m.rows.map(([k,v])=>`<tr><td>${k}</td><td class="num">${v[0]}</td><td class="num">${v[1]}</td></tr>`).join('');
+    document.getElementById('maeText').textContent = MAE_TEXT[S.data];
   }
+  document.querySelectorAll('#dSeg button').forEach(b=>b.onclick=()=>{S.data=b.dataset.d;renderBar();});
   document.querySelectorAll('#hSeg button').forEach(b=>b.onclick=()=>{S.h=+b.dataset.h;renderBar();});
   document.querySelectorAll('#rSeg button').forEach(b=>b.onclick=()=>{S.run=b.dataset.r;renderBar();});
 

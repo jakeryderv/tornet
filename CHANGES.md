@@ -248,6 +248,9 @@ at run time rather than at import.
   reached 10–16 MB/s.
 - Reference artifacts in `results/`: the pretrained model's per-sample predictions and score report
   on the 2013–2014 test partition.
+- Forecaster runs in `results/forecast_probe/` (capped fold B, two configs) and
+  `results/forecast_fold_b/` (full fold B, three configs, 2026-10-14): histories, `results.json`,
+  per-view predictions, likelihood maps and `summary.json`; checkpoints stay under `experiments/`.
 
 - Optional extras `env` (Herbie, scipy) and `meta` (LightGBM) in `pyproject.toml`, both in the
   default `uv sync` groups.

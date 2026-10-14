@@ -1,0 +1,68 @@
+{
+  "config": {
+    "train_years": [
+      2013,
+      2015
+    ],
+    "val_years": [
+      2014
+    ],
+    "test_years": [
+      2014
+    ],
+    "n_in": 2,
+    "horizons": 2,
+    "target_products": [
+      "VEL",
+      "DBZ"
+    ],
+    "focus_products": [
+      "VEL",
+      "DBZ"
+    ],
+    "anchor_weight": 0.1,
+    "encoder_weights": "pretrained",
+    "encoder_trainable": true,
+    "start_filters": 48,
+    "bottleneck": "cnn",
+    "transformer": {
+      "depth": 2,
+      "heads": 8,
+      "dropout": 0.1
+    },
+    "decoder_channels": [
+      256,
+      128,
+      64,
+      32
+    ],
+    "field_weight": 1.0,
+    "heatmap_weight": 2.0,
+    "cls_weight": 1.0,
+    "detector_weight": 0.5,
+    "sample_weights": {
+      "wN": 1.0,
+      "w0": 1.0,
+      "w1": 1.0,
+      "w2": 2.0,
+      "wW": 0.5
+    },
+    "detector": "pretrained",
+    "epochs": 6,
+    "batch_size": 16,
+    "learning_rate": 0.0001,
+    "encoder_lr_scale": 0.1,
+    "weight_decay": 0.0001,
+    "grad_clip": 1.0,
+    "amp": true,
+    "workers": 8,
+    "max_files": null,
+    "seed": 1234,
+    "bootstrap": 1000,
+    "exp_name": "fc_a_heatmap_detector_fold_b",
+    "exp_dir": "/home/jake/dev/projects/tornet/experiments",
+    "_note": "Fold B primary: heat-map weighted L1 on VEL + DBZ plus the frozen detector's loss on the forecast chip (0.5). Same recipe as the probe variant."
+  },
+  "params": 10128842,
+  "trainable": 10128842
+}

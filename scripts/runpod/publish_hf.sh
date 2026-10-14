@@ -8,7 +8,7 @@
 #   repair              integrity, convert (rebuilds deleted shards), integrity, verify, catalog
 #   catalog             merge the per-year metadata into catalog.parquet and copy the card
 #   auto                convert 2013, verify it, convert the rest, verify all, catalog (no upload)
-#   upload              hf upload-large-folder (resumable) to $HF_REPO; stops the pod on success only
+#   upload              hf upload (multi-commit, resumable) to $HF_REPO; stops the pod on success only
 #   publish             convert, integrity, verify, catalog, upload, stop on success (unattended)
 # The pod is NOT stopped after convert/catalog: stopping wipes the container disk.
 # Usage: cd /workspace/tornet-repo && UV_PROJECT_ENVIRONMENT=/root/venv setsid nohup \
@@ -79,7 +79,8 @@ case "$phase" in
     # the pod stops ONLY after a successful upload: stopping wipes the container disk and the shards
     [ -f "$OUT/catalog.parquet" ] || { log "no catalog.parquet: run the catalog phase first"; exit 1; }
     log "upload $OUT -> $HF_REPO"
-    if uv run hf upload-large-folder "$HF_REPO" "$OUT" --repo-type dataset --num-workers "${UPLOAD_WORKERS:-16}"; then
+    # huggingface_hub 2.x: `hf upload` splits a big folder into several commits and resumes on rerun
+    if uv run hf upload "$HF_REPO" "$OUT" . --repo-type dataset --commit-message "TorNet v1.1 as Parquet"; then
       log "upload done"
       [ "${STOP_POD:-1}" = "1" ] && stop_pod
     else

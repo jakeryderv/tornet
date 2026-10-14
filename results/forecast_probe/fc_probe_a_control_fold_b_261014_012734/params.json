@@ -1,0 +1,70 @@
+{
+  "config": {
+    "train_years": [
+      2013,
+      2015
+    ],
+    "val_years": [
+      2014
+    ],
+    "test_years": [
+      2014
+    ],
+    "n_in": 2,
+    "horizons": 2,
+    "target_products": [
+      "VEL",
+      "DBZ"
+    ],
+    "encoder": "tornet",
+    "encoder_weights": "pretrained",
+    "encoder_trainable": true,
+    "start_filters": 48,
+    "bottleneck": "cnn",
+    "transformer": {
+      "depth": 2,
+      "heads": 8,
+      "dropout": 0.1
+    },
+    "decoder_channels": [
+      256,
+      128,
+      64,
+      32
+    ],
+    "cls_head": "tornet",
+    "cls_dropout": 0.2,
+    "field_weight": 1.0,
+    "product_weights": {
+      "VEL": 1.0,
+      "DBZ": 1.0
+    },
+    "heatmap_weight": 0.0,
+    "cls_weight": 1.0,
+    "detector_weight": 0.0,
+    "sample_weights": {
+      "wN": 1.0,
+      "w0": 1.0,
+      "w1": 1.0,
+      "w2": 2.0,
+      "wW": 0.5
+    },
+    "detector": "pretrained",
+    "epochs": 4,
+    "batch_size": 16,
+    "learning_rate": 0.0001,
+    "encoder_lr_scale": 0.1,
+    "weight_decay": 0.0001,
+    "grad_clip": 1.0,
+    "amp": true,
+    "workers": 12,
+    "max_files": 6000,
+    "seed": 1234,
+    "bootstrap": 1000,
+    "exp_name": "fc_probe_a_control_fold_b",
+    "exp_dir": "/workspace/experiments",
+    "_note": "Pod probe on a capped fold B: 6000 train files (2013+2015), 2000 val files (2014), full 2014 test partition, 4 epochs. Control losses."
+  },
+  "params": 10128842,
+  "trainable": 10128842
+}

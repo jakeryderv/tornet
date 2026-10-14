@@ -1,0 +1,51 @@
+{
+  "exp_name": "fc_probe_a_control_fold_b",
+  "encoder": "tornet",
+  "bottleneck": "cnn",
+  "params": 10128842,
+  "trainable": 10128842,
+  "epochs_run": 4,
+  "best_checkpoint": "/workspace/experiments/fc_probe_a_control_fold_b_261014_012734/checkpoints/best.pt",
+  "last_checkpoint": "/workspace/experiments/fc_probe_a_control_fold_b_261014_012734/checkpoints/last.pt",
+  "history_last": {
+    "epoch": 4,
+    "train_loss": 0.554574713309606,
+    "train_field": 0.4334425152142843,
+    "train_cls": 0.12113219834864139,
+    "train_AUC_h0": 0.9359526909722222,
+    "train_AUC_h1": 0.920841731187888,
+    "val_loss": 0.5545243570009868,
+    "val_field": 0.4013789359728495,
+    "val_cls": 0.15314541987578073,
+    "val_AUC_h0": 0.867645777552274,
+    "val_AUC_h1": 0.8567735764532103,
+    "seconds": 50.46938347816467
+  },
+  "git_commit": "a285f31",
+  "git_dirty": true,
+  "expdir": "/workspace/experiments/fc_probe_a_control_fold_b_261014_012734",
+  "pre_onset_WC_AUC": {
+    "h0": {
+      "persistence": 0.7525036818851252,
+      "forecast": 0.5992268041237113,
+      "truth": 0.7704975804754892,
+      "head": 0.747112350094677
+    },
+    "h1": {
+      "persistence": 0.7323220411663808,
+      "forecast": 0.5930585334476844,
+      "truth": 0.7980167238421956,
+      "head": 0.7489601200686107
+    }
+  },
+  "mae": {
+    "h0": {
+      "forecast": 0.3866465389728546,
+      "persistence": 0.4036458730697632
+    },
+    "h1": {
+      "forecast": 0.491720974445343,
+      "persistence": 0.5326187014579773
+    }
+  }
+}

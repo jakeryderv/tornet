@@ -1,0 +1,48 @@
+{
+  "AUC": 0.948758065700531,
+  "AUCPR": 0.7205544114112854,
+  "best_epoch": 5,
+  "epochs_run": 15,
+  "exp_name": "lead0_spacetime_full",
+  "head": "spacetime_transformer",
+  "head_kwargs": {
+    "depth": 2,
+    "num_heads": 6,
+    "pool": "max"
+  },
+  "frames": 4,
+  "frames_used": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "aux_target": null,
+  "meta_extra": null,
+  "contrastive_target": null,
+  "aux_weight": null,
+  "params": 3555457,
+  "seed": 1234,
+  "train_years": [
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020
+  ],
+  "val_years": [
+    2021,
+    2022
+  ],
+  "git_commit": "67fd96e",
+  "git_dirty": true,
+  "best_checkpoint": "experiments/lead0_spacetime_full_261013_191123/checkpoints/best.keras",
+  "last_checkpoint": "experiments/lead0_spacetime_full_261013_191123/checkpoints/last.keras",
+  "expdir": "experiments/lead0_spacetime_full_261013_191123",
+  "test_AUC": 0.8951188325881958,
+  "test_AUCPR": 0.3293561637401581,
+  "predictions": "experiments/lead0_spacetime_full_261013_191123/predictions.csv"
+}

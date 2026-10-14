@@ -228,6 +228,12 @@ at run time rather than at import.
 
 - Optional extras `env` (Herbie, scipy) and `meta` (LightGBM) in `pyproject.toml`, both in the
   default `uv sync` groups.
+- Full-data derived tables from the 2026-10-13 pod run live on the volume and locally under
+  `~/data/tornet/full/`: `radar_metrics/` (per-frame labels, storm locations, rotation metrics
+  for all 203k samples), `env_hrrr/env_hrrr.csv` (HRRR environment for 18,230 storm hours,
+  1,969 without data before 2014-07-30) and `pooled_4f/` (max+mean pooled backbone features,
+  1.2 GB). `configs/cache2` and `configs/meta` no longer set `exp_dir`, so pod runs land under
+  `$EXP_DIR`.
 
 ## Documentation
 

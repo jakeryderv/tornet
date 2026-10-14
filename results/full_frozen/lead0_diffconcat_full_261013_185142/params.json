@@ -1,0 +1,57 @@
+{
+  "config": {
+    "features_dir": "features_4f",
+    "train_years": [
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020
+    ],
+    "val_years": [
+      2021,
+      2022
+    ],
+    "test_years": [
+      2021,
+      2022
+    ],
+    "head": "temporal_diff_concat",
+    "head_kwargs": {},
+    "frames": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "epochs": 15,
+    "batch_size": 256,
+    "learning_rate": 0.0003,
+    "decay_steps": null,
+    "decay_rate": 0.958,
+    "wN": 1.0,
+    "w0": 1.0,
+    "w1": 1.0,
+    "w2": 2.0,
+    "wW": 0.5,
+    "label_smooth": 0.1,
+    "aux_target": null,
+    "meta_extra": null,
+    "aux_weight": 1.0,
+    "aux_window": 60.0,
+    "contrastive_target": "label",
+    "contrastive_weight": 1.0,
+    "contrastive_sigma": 0.25,
+    "temperature": 0.1,
+    "seed": 1234,
+    "loader_workers": 4,
+    "exp_name": "lead0_diffconcat_full",
+    "exp_dir": "experiments",
+    "save_all_checkpoints": false,
+    "_note": "Concat head handed frame-to-frame feature differences as well as the frames. Frames [0, 1, 2, 3] (lead0)."
+  },
+  "params": 1508353
+}

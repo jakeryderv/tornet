@@ -1,0 +1,67 @@
+{
+  "AUC": 0.9206003138251859,
+  "AUCPR": 0.6729491473727667,
+  "best_iteration": 130,
+  "exp_name": "meta_lead10_emb_full",
+  "features": [
+    "embedding",
+    "meta"
+  ],
+  "frames_used": [
+    0,
+    1
+  ],
+  "n_features": 1541,
+  "gain_by_group": {
+    "emb": 0.9023,
+    "meta": 0.0977
+  },
+  "top_features": [
+    "emb_f1_137",
+    "emb_f1_521",
+    "emb_f1_385",
+    "emb_f1_1",
+    "emb_f1_302",
+    "meta_doy_sin",
+    "emb_f1_596",
+    "emb_f1_479",
+    "emb_f1_670",
+    "meta_doy_cos",
+    "emb_f1_271",
+    "emb_f1_212",
+    "emb_f1_138",
+    "emb_f1_655",
+    "meta_hour_cos",
+    "meta_hour_sin",
+    "emb_f1_736",
+    "emb_f0_271",
+    "emb_f0_670",
+    "emb_f1_286",
+    "emb_f1_692",
+    "emb_f1_308",
+    "emb_f0_655",
+    "emb_f1_25",
+    "emb_f1_95"
+  ],
+  "train_years": [
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020
+  ],
+  "val_years": [
+    2021,
+    2022
+  ],
+  "seed": 1234,
+  "git_commit": "67fd96e",
+  "git_dirty": true,
+  "expdir": "experiments/meta_lead10_emb_full_261013_213102",
+  "test_AUC": 0.8248058557510376,
+  "test_AUCPR": 0.16601791977882385,
+  "predictions": "experiments/meta_lead10_emb_full_261013_213102/predictions.csv"
+}

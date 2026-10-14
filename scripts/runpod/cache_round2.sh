@@ -12,6 +12,8 @@
 #   4. HRRR environment for every storm hour from 2014-07-30 (network, hours) -> $TORNET_ROOT/env_hrrr
 #   5. meta models: configs/meta/full_*.json (CPU, minutes) -> $EXP_DIR/meta_*_full_*
 #   6. paired scores against the Experiment 6 lead-10 heads  -> $EXP_DIR/cache2_full_scores.*
+#      (configs must not set exp_dir, or runs land under the repo instead of $EXP_DIR; the
+#      2026-10-13 run did, so its runs were pulled from /workspace/tornet-repo/experiments)
 #   7. stop the pod (runpodctl with ~/.runpod/config.toml copied from the laptop, or
 #      RUNPOD_API_KEY in the pod environment for the REST fallback)
 #

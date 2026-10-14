@@ -1,0 +1,60 @@
+{
+  "config": {
+    "pooled_dir": "pooled_4f",
+    "radar_dir": "radar_metrics",
+    "env_csv": "env_hrrr/env_hrrr.csv",
+    "features": [
+      "embedding",
+      "meta",
+      "radar",
+      "env"
+    ],
+    "frames": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "train_years": [
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020
+    ],
+    "val_years": [
+      2021,
+      2022
+    ],
+    "test_years": [
+      2021,
+      2022
+    ],
+    "wN": 1.0,
+    "w0": 1.0,
+    "w1": 1.0,
+    "w2": 2.0,
+    "wW": 0.5,
+    "params": {
+      "objective": "binary",
+      "learning_rate": 0.03,
+      "num_leaves": 63,
+      "min_child_samples": 50,
+      "feature_fraction": 0.3,
+      "bagging_fraction": 0.8,
+      "bagging_freq": 1,
+      "lambda_l2": 1.0,
+      "verbose": -1,
+      "num_threads": 0
+    },
+    "num_rounds": 3000,
+    "early_stopping": 150,
+    "seed": 1234,
+    "exp_name": "meta_lead0_all_full",
+    "exp_dir": "experiments",
+    "_note": "Everything: embeddings, metadata, rotation metrics and environment. Frames [0, 1, 2, 3] (lead0)."
+  }
+}

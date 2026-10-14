@@ -1,0 +1,137 @@
+
+=== results/full_frozen/lead10_maxpool_full_261012_224831/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7045        272 0.8212 [0.797, 0.846] 0.1543 0.1582 0.40 0.227 0.342
+  RC 4692        272 0.8971 [0.877, 0.918] 0.4614 0.3333 0.23 0.493 0.507
+  WC 2625        272 0.6785 [0.640, 0.709] 0.1881 0.1700 0.40 0.253 0.342
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.22 (n=133), EF1 0.47 (n=111), EF2 0.43 (n=28)
+  AUC by year: 2021 0.809, 2022 0.838
+
+=== results/full_frozen/lead10_concat_full_261012_225240/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7045        272 0.8329 [0.809, 0.856] 0.1638 0.1541 0.39 0.212 0.360
+  RC 4692        272 0.9063 [0.888, 0.924] 0.4848 0.3482 0.24 0.492 0.544
+  WC 2625        272 0.6951 [0.664, 0.729] 0.1980 0.1745 0.26 0.208 0.518
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.23 (n=133), EF1 0.51 (n=111), EF2 0.36 (n=28)
+  AUC by year: 2021 0.820, 2022 0.851
+
+=== results/full_frozen/lead10_spacetime_full_261013_194047/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7045        272 0.8274 [0.802, 0.852] 0.1656 0.1591 0.21 0.202 0.426
+  RC 4692        272 0.9025 [0.884, 0.923] 0.4810 0.3700 0.16 0.536 0.544
+  WC 2625        272 0.6865 [0.658, 0.720] 0.1996 0.1760 0.16 0.206 0.544
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.26 (n=133), EF1 0.62 (n=111), EF2 0.46 (n=28)
+  AUC by year: 2021 0.810, 2022 0.853
+
+=== results/full_frozen/lead10_diffconcat_full_261013_193305/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7045        272 0.8322 [0.808, 0.856] 0.1638 0.1633 0.45 0.248 0.324
+  RC 4692        272 0.9058 [0.888, 0.925] 0.4823 0.3540 0.28 0.544 0.504
+  WC 2625        272 0.6938 [0.660, 0.725] 0.1986 0.1743 0.28 0.210 0.504
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.18 (n=133), EF1 0.47 (n=111), EF2 0.43 (n=28)
+  AUC by year: 2021 0.821, 2022 0.848
+
+=== results/full_frozen/lead10_onset_full_261013_193654/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7045        272 0.8320 [0.808, 0.854] 0.1671 0.1552 0.33 0.192 0.449
+  RC 4692        272 0.9065 [0.889, 0.923] 0.4807 0.3456 0.33 0.601 0.449
+  WC 2625        272 0.6918 [0.661, 0.725] 0.2030 0.1730 0.33 0.220 0.449
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.30 (n=133), EF1 0.62 (n=111), EF2 0.46 (n=28)
+  AUC by year: 2021 0.819, 2022 0.849
+
+=== results/full_frozen/meta_lead10_emb_full_261013_213102/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7045        272 0.8248 [0.799, 0.848] 0.1676 0.1432 0.25 0.172 0.460
+  RC 4692        272 0.9017 [0.884, 0.921] 0.5054 0.3541 0.19 0.524 0.522
+  WC 2625        272 0.6805 [0.647, 0.713] 0.1978 0.1602 0.12 0.175 0.654
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.32 (n=133), EF1 0.61 (n=111), EF2 0.50 (n=28)
+  AUC by year: 2021 0.805, 2022 0.856
+
+=== results/full_frozen/meta_lead10_radar_full_261013_213330/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7045        272 0.7631 [0.742, 0.791] 0.1137 0.1196 0.31 0.179 0.265
+  RC 4692        272 0.8300 [0.810, 0.852] 0.2798 0.2028 0.24 0.309 0.371
+  WC 2625        272 0.6376 [0.601, 0.674] 0.1650 0.1461 0.29 0.229 0.287
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.20 (n=133), EF1 0.36 (n=111), EF2 0.21 (n=28)
+  AUC by year: 2021 0.746, 2022 0.788
+
+=== results/full_frozen/meta_lead10_env_full_261013_213245/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7045        272 0.8295 [0.806, 0.848] 0.1487 0.1521 0.24 0.186 0.456
+  RC 4692        272 0.9044 [0.888, 0.921] 0.4246 0.3528 0.14 0.429 0.665
+  WC 2625        272 0.6887 [0.652, 0.722] 0.1863 0.1838 0.13 0.198 0.717
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.38 (n=133), EF1 0.57 (n=111), EF2 0.39 (n=28)
+  AUC by year: 2021 0.840, 2022 0.817
+
+=== results/full_frozen/meta_lead10_emb_radar_full_261013_213156/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7045        272 0.8363 [0.810, 0.860] 0.1893 0.1595 0.33 0.207 0.408
+  RC 4692        272 0.9098 [0.892, 0.927] 0.5329 0.3744 0.16 0.483 0.625
+  WC 2625        272 0.6981 [0.664, 0.729] 0.2195 0.1744 0.16 0.195 0.625
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.28 (n=133), EF1 0.54 (n=111), EF2 0.50 (n=28)
+  AUC by year: 2021 0.816, 2022 0.870
+
+=== results/full_frozen/meta_lead10_all_full_261013_213021/predictions.csv ===
+view    n  confirmed    AUC     AUC 95% CI  AUCPR   CSI* thr*    P*    R*
+  NC 7045        272 0.8703 [0.853, 0.885] 0.2241 0.1773 0.25 0.214 0.511
+  RC 4692        272 0.9435 [0.928, 0.956] 0.6544 0.4494 0.15 0.605 0.636
+  WC 2625        272 0.7329 [0.707, 0.758] 0.2454 0.1923 0.23 0.231 0.533
+  * at the CSI-maximising threshold for that view
+  recall by EF at the NC threshold: EF0 0.39 (n=133), EF1 0.65 (n=111), EF2 0.54 (n=28)
+  AUC by year: 2021 0.856, 2022 0.895
+
+=== results/full_frozen/lead10_concat_full_261012_225240/predictions.csv minus results/full_frozen/lead10_maxpool_full_261012_224831/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC +0.0118 95% CI [+0.0057, +0.0165]   dAUCPR +0.0095
+  RC: dAUC +0.0092 95% CI [+0.0040, +0.0139]   dAUCPR +0.0234
+  WC: dAUC +0.0167 95% CI [+0.0081, +0.0249]   dAUCPR +0.0100
+
+=== results/full_frozen/lead10_spacetime_full_261013_194047/predictions.csv minus results/full_frozen/lead10_maxpool_full_261012_224831/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC +0.0063 95% CI [-0.0020, +0.0141]   dAUCPR +0.0113
+  RC: dAUC +0.0053 95% CI [-0.0012, +0.0122]   dAUCPR +0.0196
+  WC: dAUC +0.0080 95% CI [-0.0033, +0.0214]   dAUCPR +0.0116
+
+=== results/full_frozen/lead10_diffconcat_full_261013_193305/predictions.csv minus results/full_frozen/lead10_maxpool_full_261012_224831/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC +0.0110 95% CI [+0.0039, +0.0182]   dAUCPR +0.0096
+  RC: dAUC +0.0087 95% CI [+0.0019, +0.0145]   dAUCPR +0.0209
+  WC: dAUC +0.0153 95% CI [+0.0064, +0.0259]   dAUCPR +0.0105
+
+=== results/full_frozen/lead10_onset_full_261013_193654/predictions.csv minus results/full_frozen/lead10_maxpool_full_261012_224831/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC +0.0108 95% CI [+0.0037, +0.0174]   dAUCPR +0.0128
+  RC: dAUC +0.0094 95% CI [+0.0026, +0.0152]   dAUCPR +0.0193
+  WC: dAUC +0.0134 95% CI [+0.0032, +0.0244]   dAUCPR +0.0150
+
+=== results/full_frozen/meta_lead10_emb_full_261013_213102/predictions.csv minus results/full_frozen/lead10_maxpool_full_261012_224831/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC +0.0037 95% CI [-0.0084, +0.0142]   dAUCPR +0.0133
+  RC: dAUC +0.0045 95% CI [-0.0049, +0.0153]   dAUCPR +0.0440
+  WC: dAUC +0.0020 95% CI [-0.0114, +0.0146]   dAUCPR +0.0097
+
+=== results/full_frozen/meta_lead10_radar_full_261013_213330/predictions.csv minus results/full_frozen/lead10_maxpool_full_261012_224831/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC -0.0580 95% CI [-0.0808, -0.0307]   dAUCPR -0.0406
+  RC: dAUC -0.0671 95% CI [-0.0882, -0.0475]   dAUCPR -0.1816
+  WC: dAUC -0.0409 95% CI [-0.0786, -0.0027]   dAUCPR -0.0230
+
+=== results/full_frozen/meta_lead10_env_full_261013_213245/predictions.csv minus results/full_frozen/lead10_maxpool_full_261012_224831/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC +0.0083 95% CI [-0.0275, +0.0344]   dAUCPR -0.0055
+  RC: dAUC +0.0073 95% CI [-0.0126, +0.0253]   dAUCPR -0.0368
+  WC: dAUC +0.0102 95% CI [-0.0324, +0.0534]   dAUCPR -0.0018
+
+=== results/full_frozen/meta_lead10_emb_radar_full_261013_213156/predictions.csv minus results/full_frozen/lead10_maxpool_full_261012_224831/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC +0.0151 95% CI [+0.0035, +0.0277]   dAUCPR +0.0350
+  RC: dAUC +0.0127 95% CI [+0.0018, +0.0250]   dAUCPR +0.0715
+  WC: dAUC +0.0196 95% CI [+0.0046, +0.0319]   dAUCPR +0.0314
+
+=== results/full_frozen/meta_lead10_all_full_261013_213021/predictions.csv minus results/full_frozen/lead10_maxpool_full_261012_224831/predictions.csv (paired bootstrap on common files) ===
+  NC: dAUC +0.0491 95% CI [+0.0298, +0.0652]   dAUCPR +0.0698
+  RC: dAUC +0.0463 95% CI [+0.0313, +0.0600]   dAUCPR +0.1930
+  WC: dAUC +0.0544 95% CI [+0.0319, +0.0748]   dAUCPR +0.0573
+
+wrote results/full_frozen/cache2_lead10_full_scores.json

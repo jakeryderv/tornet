@@ -1,0 +1,13 @@
+{
+  "AUC": 0.8911386728286743,
+  "AUCPR": 0.31537866592407227,
+  "BinaryAccuracy": 0.9427962899208069,
+  "Precision": 0.34140434861183167,
+  "Recall": 0.5183823704719543,
+  "F1": 0.4116787612438202,
+  "years": [
+    2021,
+    2022
+  ],
+  "checkpoint": "experiments/lead0_onset_full_261013_190511/checkpoints/best.keras"
+}

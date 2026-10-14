@@ -1,0 +1,67 @@
+{
+  "AUC": 0.843643113180812,
+  "AUCPR": 0.35276467262121136,
+  "best_iteration": 249,
+  "exp_name": "meta_lead10_radar_full",
+  "features": [
+    "meta",
+    "radar"
+  ],
+  "frames_used": [
+    0,
+    1
+  ],
+  "n_features": 32,
+  "gain_by_group": {
+    "meta": 0.4338,
+    "radar": 0.5662
+  },
+  "top_features": [
+    "meta_doy_sin",
+    "meta_doy_cos",
+    "radar_nyquist",
+    "meta_rng_center_km",
+    "radar_r1_s0_dbzmax",
+    "meta_hour_cos",
+    "meta_hour_sin",
+    "radar_r1_s0_valid",
+    "radar_r0_s1_dbzmax",
+    "radar_r1_s1_vrot",
+    "radar_r1_s1_dbzmax",
+    "radar_r1_s1_velmax",
+    "radar_r1_s1_valid",
+    "radar_r0_s1_vrot",
+    "radar_r0_s0_valid",
+    "radar_r0_s0_dbzmax",
+    "radar_r1_s0_vrot",
+    "radar_r0_s1_valid",
+    "radar_r1_s0_azshear",
+    "radar_r0_s1_velmax",
+    "radar_r0_s0_vrot",
+    "radar_r1_s1_azshear",
+    "radar_r0_s1_azshear",
+    "radar_r0_s0_azshear",
+    "radar_r1_s0_velmax"
+  ],
+  "train_years": [
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020
+  ],
+  "val_years": [
+    2021,
+    2022
+  ],
+  "seed": 1234,
+  "git_commit": "67fd96e",
+  "git_dirty": true,
+  "expdir": "experiments/meta_lead10_radar_full_261013_213330",
+  "test_AUC": 0.7631762027740479,
+  "test_AUCPR": 0.11237330734729767,
+  "predictions": "experiments/meta_lead10_radar_full_261013_213330/predictions.csv"
+}

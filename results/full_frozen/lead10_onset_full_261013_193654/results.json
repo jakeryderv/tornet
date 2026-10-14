@@ -1,0 +1,42 @@
+{
+  "AUC": 0.8995449542999268,
+  "AUCPR": 0.517183780670166,
+  "best_epoch": 15,
+  "epochs_run": 15,
+  "exp_name": "lead10_onset_full",
+  "head": "temporal_concat",
+  "head_kwargs": {},
+  "frames": 4,
+  "frames_used": [
+    0,
+    1
+  ],
+  "aux_target": "frame_labels",
+  "meta_extra": "radar_metrics",
+  "contrastive_target": null,
+  "aux_weight": 1.0,
+  "params": 526341,
+  "seed": 1234,
+  "train_years": [
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020
+  ],
+  "val_years": [
+    2021,
+    2022
+  ],
+  "git_commit": "67fd96e",
+  "git_dirty": true,
+  "best_checkpoint": "experiments/lead10_onset_full_261013_193654/checkpoints/best.keras",
+  "last_checkpoint": "experiments/lead10_onset_full_261013_193654/checkpoints/last.keras",
+  "expdir": "experiments/lead10_onset_full_261013_193654",
+  "test_AUC": 0.8319299817085266,
+  "test_AUCPR": 0.16461867094039917,
+  "predictions": "experiments/lead10_onset_full_261013_193654/predictions.csv"
+}

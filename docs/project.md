@@ -503,6 +503,72 @@ features are the ceiling and fine-tuning the backbone on the prediction target i
 Dry run on fold B locally before the pod (heads, radar metrics, environment fetch for 2014–2015,
 meta models); the pod run adds the full years and stops itself when finished.
 
+### Experiment 7 result: cache round 2 and the meta model (RunPod, 2026-10-13)
+
+Everything on the frozen four-frame cache of the published backbone, full data (train 2013–2020,
+val and test 2021–2022, 7,045 test samples, 272 confirmed), one seed, pod `39f2naos69etsv`
+for 3.4 h (~$8.50) running `scripts/runpod/cache_round2.sh` unattended. Paired bootstraps
+against the Experiment 6 single-scan head at the same lead; run directories and scores under
+`results/full_frozen/` (`cache2_lead10_full_scores.*`, `cache2_lead10_vs_concat_scores.json`,
+`cache2_lead10_env_effect_scores.json`, `cache2_lead0_full_scores.*`).
+
+**Lead 10 min (heads and meta models see scans t−15 and t−10; label at t).**
+
+| model | NC AUC | NC AUCPR | WC AUC | ΔNC vs single scan | ΔWC vs single scan |
+|---|---|---|---|---|---|
+| single scan t−10 (Exp 6) | 0.821 | 0.154 | 0.679 | — | — |
+| concat head (Exp 6) | 0.833 | 0.164 | 0.695 | +0.012 [+0.006, +0.017] | +0.017 [+0.008, +0.025] |
+| space-time transformer head | 0.827 | 0.166 | 0.687 | +0.006 n.s. | +0.008 n.s. |
+| diff-concat head | 0.832 | 0.164 | 0.694 | +0.011 [+0.004, +0.018] | +0.015 [+0.006, +0.026] |
+| onset (frame-label aux) head | 0.832 | 0.167 | 0.692 | +0.011 [+0.004, +0.017] | +0.013 [+0.003, +0.024] |
+| meta: embeddings + metadata | 0.825 | 0.168 | 0.681 | +0.004 n.s. | +0.002 n.s. |
+| meta: radar metrics + metadata | 0.763 | 0.114 | 0.638 | −0.058 | −0.041 |
+| meta: environment + metadata | 0.830 | 0.149 | 0.689 | +0.008 n.s. | +0.010 n.s. |
+| meta: embeddings + radar + metadata | 0.836 | 0.189 | 0.698 | +0.015 [+0.004, +0.028] | +0.020 [+0.005, +0.032] |
+| **meta: everything (+ environment)** | **0.870** | **0.224** | **0.733** | **+0.049 [+0.030, +0.065]** | **+0.054 [+0.032, +0.075]** |
+
+Same-lead pairings that isolate the pieces: everything minus concat head +0.037 NC [+0.020,
++0.054], +0.038 WC [+0.014, +0.060]; everything minus (embeddings + radar), i.e. the
+environment's own contribution on top of radar, +0.034 NC [+0.019, +0.046], +0.035 WC [+0.017,
++0.050]. LightGBM gain shares in the everything model: embeddings 0.64, environment 0.24, time
+and range 0.08, radar metrics 0.04.
+
+**Lead 0 (detection, all four scans; control = frozen maxpool head, 0.8915 NC).** Space-time
+transformer +0.004 n.s., diff-concat −0.004, onset −0.000, meta embeddings −0.008 n.s.; meta
+everything **0.9125 NC, +0.021 [+0.009, +0.034], +0.022 WC [+0.009, +0.035]**.
+
+Reading:
+
+- **The three richer heads add nothing over concat.** Attention over all cells and frames,
+  explicit frame differences and the onset trajectory target all land within 0.002 of the plain
+  concat head at lead 10 and within noise of the control at lead 0. Together with Experiments 4–6
+  this closes the question: no classifier design extracts more early-warning skill from the
+  frozen features. The cache is exhausted on the head side.
+- **Gradient boosting on pooled features matches the heads, no more.** Embeddings alone tie the
+  single-scan head; with the hand-computed rotation metrics they edge past concat by a
+  non-significant +0.003 (but +0.025 AUCPR). Radar metrics alone are far below the backbone,
+  so the backbone's features carry much more than peak rotation and shear.
+- **The environment is the result.** Adding HRRR fields issued two hours before the scan lifts
+  the warned-versus-confirmed view by +0.035 on top of radar, and the whole model sits +0.054
+  WC above the single-scan head, roughly three times the best any head achieved. Environment
+  alone is no better than a single scan, so it is complementary: radar says a storm is
+  organising, environment says whether this storm can produce. This is exactly the gap
+  Experiment 6 identified (what lead erases is the ability to separate tornadic from warned
+  storms), and it is the first input in the project to close part of it. The gain also appears
+  at onset (+0.022 WC), where the detector already sees the tornado, so environment acts as a
+  prior as well as a precursor.
+- **Caveats.** One seed. HRRR exists from 2014-07-30, so 1,969 of 18,230 storm hours (all of
+  2013, early 2014) have NaN environment; LightGBM handles the gaps, but the training signal
+  for environment comes from 2014-08 onward. Fields come from the fxx=2 forecast of the run
+  initialised two hours before the scan, so the model had not seen the storm, but a real-time
+  system would have slightly staler data at some hours. Null storms sit in benign environments,
+  which inflates NC and RC (RC 0.94); WC is the number to quote. Metadata (hour, season, range)
+  carries 8% of the gain, which is climatology and legitimate but worth remembering.
+
+Decision: the early-prediction meta model is the main line. The forecaster (Step 2, below)
+remains worth running because it is the only path that changes the frozen features, and a
+better encoder feeds this same table; a pod probe of it started the same night.
+
 ### Step 2 design: forecast the radar, predict and detect on the forecast (agreed 2026-10-13; built, not yet run)
 
 Decided after Experiment 7 was launched; runs only after its results are in and the user says go.

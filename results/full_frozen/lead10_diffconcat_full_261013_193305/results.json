@@ -1,0 +1,42 @@
+{
+  "AUC": 0.9000536203384399,
+  "AUCPR": 0.5239229798316956,
+  "best_epoch": 7,
+  "epochs_run": 15,
+  "exp_name": "lead10_diffconcat_full",
+  "head": "temporal_diff_concat",
+  "head_kwargs": {},
+  "frames": 4,
+  "frames_used": [
+    0,
+    1
+  ],
+  "aux_target": null,
+  "meta_extra": null,
+  "contrastive_target": null,
+  "aux_weight": null,
+  "params": 721921,
+  "seed": 1234,
+  "train_years": [
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020
+  ],
+  "val_years": [
+    2021,
+    2022
+  ],
+  "git_commit": "67fd96e",
+  "git_dirty": true,
+  "best_checkpoint": "experiments/lead10_diffconcat_full_261013_193305/checkpoints/best.keras",
+  "last_checkpoint": "experiments/lead10_diffconcat_full_261013_193305/checkpoints/last.keras",
+  "expdir": "experiments/lead10_diffconcat_full_261013_193305",
+  "test_AUC": 0.8322176933288574,
+  "test_AUCPR": 0.1615450084209442,
+  "predictions": "experiments/lead10_diffconcat_full_261013_193305/predictions.csv"
+}

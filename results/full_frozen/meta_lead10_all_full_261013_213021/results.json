@@ -1,0 +1,71 @@
+{
+  "AUC": 0.94564524636941,
+  "AUCPR": 0.7262358929057076,
+  "best_iteration": 353,
+  "exp_name": "meta_lead10_all_full",
+  "features": [
+    "embedding",
+    "meta",
+    "radar",
+    "env"
+  ],
+  "frames_used": [
+    0,
+    1
+  ],
+  "n_features": 1623,
+  "gain_by_group": {
+    "emb": 0.6391,
+    "env": 0.2425,
+    "meta": 0.078,
+    "radar": 0.0404
+  },
+  "top_features": [
+    "emb_f1_137",
+    "emb_f1_385",
+    "emb_f1_521",
+    "emb_f1_1",
+    "emb_f1_655",
+    "emb_f1_670",
+    "meta_doy_sin",
+    "emb_f1_95",
+    "meta_doy_cos",
+    "emb_f1_596",
+    "meta_hour_cos",
+    "env_stp_mean",
+    "emb_f1_352",
+    "meta_hour_sin",
+    "env_stp_pt",
+    "emb_f1_271",
+    "emb_f1_286",
+    "env_stp_max",
+    "env_mlcin_mean",
+    "env_sbcin_mean",
+    "emb_f1_308",
+    "env_vshr01_mean",
+    "env_d2m_max",
+    "emb_f0_655",
+    "env_ushr01_mean"
+  ],
+  "train_years": [
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020
+  ],
+  "val_years": [
+    2021,
+    2022
+  ],
+  "seed": 1234,
+  "git_commit": "67fd96e",
+  "git_dirty": true,
+  "expdir": "experiments/meta_lead10_all_full_261013_213021",
+  "test_AUC": 0.8702737092971802,
+  "test_AUCPR": 0.2227565348148346,
+  "predictions": "experiments/meta_lead10_all_full_261013_213021/predictions.csv"
+}

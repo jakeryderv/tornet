@@ -1,0 +1,792 @@
+INFO:root:203133 samples in 18230 hours; 0 hours done, 18230 to fetch with 12 workers (fxx=2, halo=4)
+INFO:root:50/18230 hours (50 without data), 563602/h, eta 2 min
+INFO:root:100/18230 hours (100 without data), 808662/h, eta 1 min
+INFO:root:150/18230 hours (150 without data), 968065/h, eta 1 min
+INFO:root:200/18230 hours (200 without data), 1067860/h, eta 1 min
+INFO:root:250/18230 hours (250 without data), 1125003/h, eta 1 min
+INFO:root:300/18230 hours (300 without data), 1168873/h, eta 1 min
+INFO:root:350/18230 hours (350 without data), 1230102/h, eta 1 min
+INFO:root:400/18230 hours (400 without data), 1271967/h, eta 1 min
+INFO:root:450/18230 hours (450 without data), 1312610/h, eta 1 min
+INFO:root:500/18230 hours (500 without data), 1334650/h, eta 1 min
+INFO:root:550/18230 hours (550 without data), 1340267/h, eta 1 min
+INFO:root:600/18230 hours (600 without data), 1339855/h, eta 1 min
+INFO:root:650/18230 hours (650 without data), 1340874/h, eta 1 min
+INFO:root:700/18230 hours (700 without data), 1341658/h, eta 1 min
+INFO:root:750/18230 hours (750 without data), 1348103/h, eta 1 min
+INFO:root:800/18230 hours (800 without data), 1353290/h, eta 1 min
+INFO:root:850/18230 hours (850 without data), 1359762/h, eta 1 min
+INFO:root:900/18230 hours (900 without data), 1363179/h, eta 1 min
+INFO:root:950/18230 hours (950 without data), 1377564/h, eta 1 min
+INFO:root:1000/18230 hours (1000 without data), 1380429/h, eta 1 min
+INFO:root:1050/18230 hours (1050 without data), 1388173/h, eta 1 min
+INFO:root:1100/18230 hours (1100 without data), 1395185/h, eta 1 min
+INFO:root:1150/18230 hours (1150 without data), 1401914/h, eta 1 min
+INFO:root:1200/18230 hours (1200 without data), 1412798/h, eta 1 min
+INFO:root:1250/18230 hours (1250 without data), 1423490/h, eta 1 min
+INFO:root:1300/18230 hours (1300 without data), 1426782/h, eta 1 min
+INFO:root:1350/18230 hours (1350 without data), 1424422/h, eta 1 min
+INFO:root:1400/18230 hours (1400 without data), 1423355/h, eta 1 min
+INFO:root:1450/18230 hours (1450 without data), 1419901/h, eta 1 min
+INFO:root:1500/18230 hours (1500 without data), 1413051/h, eta 1 min
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+INFO:root:1550/18230 hours (1508 without data), 24355/h, eta 41 min
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+WARNING:root:2014-08-08 17:00:00: KeyError('href')
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: All-NaN slice encountered
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+/workspace/tornet-repo/src/tornet/env/hrrr.py:135: RuntimeWarning: Mean of empty slice
+  mx[i], mn[i] = np.nanmax(box), np.nanmean(box)
+INFO:root:1600/18230 hours (1513 without data), 14002/h, eta 71 min
+INFO:root:1650/18230 hours (1514 without data), 10228/h, eta 97 min
+INFO:root:1700/18230 hours (1515 without data), 7705/h, eta 129 min
+INFO:root:1750/18230 hours (1515 without data), 6426/h, eta 154 min
+INFO:root:1800/18230 hours (1516 without data), 5977/h, eta 165 min
+INFO:root:1850/18230 hours (1516 without data), 5908/h, eta 166 min
+INFO:root:1900/18230 hours (1517 without data), 5829/h, eta 168 min
+INFO:root:1950/18230 hours (1517 without data), 5564/h, eta 176 min
+INFO:root:2000/18230 hours (1518 without data), 5310/h, eta 183 min
+INFO:root:2050/18230 hours (1519 without data), 4910/h, eta 198 min
+INFO:root:2100/18230 hours (1520 without data), 4235/h, eta 229 min
+INFO:root:2150/18230 hours (1520 without data), 4174/h, eta 231 min
+INFO:root:2200/18230 hours (1522 without data), 4219/h, eta 228 min
+WARNING:root:2015-03-19 03:00:00: KeyError('href')
+WARNING:root:2015-03-26 00:00:00: KeyError('href')
+INFO:root:2250/18230 hours (1526 without data), 4258/h, eta 225 min
+INFO:root:2300/18230 hours (1526 without data), 4304/h, eta 222 min
+INFO:root:2350/18230 hours (1527 without data), 4347/h, eta 219 min
+INFO:root:2400/18230 hours (1528 without data), 4386/h, eta 217 min
+INFO:root:2450/18230 hours (1529 without data), 4422/h, eta 214 min
+INFO:root:2500/18230 hours (1530 without data), 4438/h, eta 213 min
+INFO:root:2550/18230 hours (1530 without data), 4439/h, eta 212 min
+INFO:root:2600/18230 hours (1531 without data), 4431/h, eta 212 min
+INFO:root:2650/18230 hours (1532 without data), 4440/h, eta 211 min
+WARNING:root:2015-05-15 02:00:00: KeyError('href')
+INFO:root:2700/18230 hours (1535 without data), 4461/h, eta 209 min
+INFO:root:2750/18230 hours (1536 without data), 4498/h, eta 207 min
+WARNING:root:2015-05-26 23:00:00: KeyError('href')
+INFO:root:2800/18230 hours (1537 without data), 4528/h, eta 204 min
+INFO:root:2850/18230 hours (1537 without data), 4561/h, eta 202 min
+INFO:root:2900/18230 hours (1537 without data), 4581/h, eta 201 min
+WARNING:root:2015-06-09 18:00:00: KeyError('href')
+INFO:root:2950/18230 hours (1541 without data), 4615/h, eta 199 min
+WARNING:root:2015-06-13 20:00:00: KeyError('href')
+INFO:root:3000/18230 hours (1542 without data), 4651/h, eta 196 min
+WARNING:root:2015-06-19 18:00:00: KeyError('href')
+WARNING:root:2015-06-19 19:00:00: KeyError('href')
+WARNING:root:2015-06-19 20:00:00: KeyError('href')
+WARNING:root:2015-06-19 21:00:00: KeyError('href')
+INFO:root:3050/18230 hours (1546 without data), 4683/h, eta 194 min
+WARNING:root:2015-06-19 22:00:00: KeyError('href')
+WARNING:root:2015-06-19 23:00:00: KeyError('href')
+WARNING:root:2015-06-20 03:00:00: KeyError('href')
+WARNING:root:2015-06-20 00:00:00: KeyError('href')
+WARNING:root:2015-06-20 05:00:00: KeyError('href')
+WARNING:root:2015-06-20 04:00:00: KeyError('href')
+WARNING:root:2015-06-20 08:00:00: KeyError('href')
+WARNING:root:2015-06-20 07:00:00: KeyError('href')
+WARNING:root:2015-06-20 06:00:00: KeyError('href')
+WARNING:root:2015-06-20 09:00:00: KeyError('href')
+WARNING:root:2015-06-20 18:00:00: KeyError('href')
+WARNING:root:2015-06-20 10:00:00: KeyError('href')
+WARNING:root:2015-06-20 20:00:00: KeyError('href')
+WARNING:root:2015-06-20 19:00:00: KeyError('href')
+WARNING:root:2015-06-20 21:00:00: KeyError('href')
+WARNING:root:2015-06-20 22:00:00: KeyError('href')
+WARNING:root:2015-06-21 00:00:00: KeyError('href')
+WARNING:root:2015-06-20 23:00:00: KeyError('href')
+WARNING:root:2015-06-21 01:00:00: KeyError('href')
+WARNING:root:2015-06-21 02:00:00: KeyError('href')
+INFO:root:3100/18230 hours (1567 without data), 4731/h, eta 192 min
+INFO:root:3150/18230 hours (1568 without data), 4750/h, eta 190 min
+INFO:root:3200/18230 hours (1568 without data), 4768/h, eta 189 min
+INFO:root:3250/18230 hours (1571 without data), 4763/h, eta 189 min
+WARNING:root:2015-07-02 12:00:00: KeyError('href')
+WARNING:root:2015-07-03 16:00:00: KeyError('href')
+INFO:root:3300/18230 hours (1573 without data), 4733/h, eta 189 min
+INFO:root:3350/18230 hours (1575 without data), 4589/h, eta 195 min
+INFO:root:3400/18230 hours (1576 without data), 4586/h, eta 194 min
+INFO:root:3450/18230 hours (1576 without data), 4615/h, eta 192 min
+INFO:root:3500/18230 hours (1577 without data), 4640/h, eta 190 min
+INFO:root:3550/18230 hours (1577 without data), 4632/h, eta 190 min
+INFO:root:3600/18230 hours (1578 without data), 4530/h, eta 194 min
+WARNING:root:2015-08-02 06:00:00: KeyError('href')
+INFO:root:3650/18230 hours (1582 without data), 4517/h, eta 194 min
+INFO:root:3700/18230 hours (1585 without data), 4484/h, eta 194 min
+INFO:root:3750/18230 hours (1585 without data), 4490/h, eta 193 min
+WARNING:root:2015-08-17 03:00:00: KeyError('href')
+INFO:root:3800/18230 hours (1589 without data), 4450/h, eta 195 min
+INFO:root:3850/18230 hours (1592 without data), 4388/h, eta 197 min
+INFO:root:3900/18230 hours (1592 without data), 4158/h, eta 207 min
+WARNING:root:2015-09-12 18:00:00: KeyError('href')
+INFO:root:3950/18230 hours (1597 without data), 4058/h, eta 211 min
+WARNING:root:2015-09-18 15:00:00: KeyError('href')
+INFO:root:4000/18230 hours (1599 without data), 3986/h, eta 214 min
+INFO:root:4050/18230 hours (1601 without data), 3958/h, eta 215 min
+INFO:root:4100/18230 hours (1602 without data), 3958/h, eta 214 min
+INFO:root:4150/18230 hours (1603 without data), 3959/h, eta 213 min
+INFO:root:4200/18230 hours (1604 without data), 3965/h, eta 212 min
+INFO:root:4250/18230 hours (1605 without data), 3988/h, eta 210 min
+WARNING:root:2015-12-24 21:00:00: KeyError('href')
+INFO:root:4300/18230 hours (1607 without data), 3987/h, eta 210 min
+WARNING:root:2015-12-29 01:00:00: KeyError('href')
+INFO:root:4350/18230 hours (1609 without data), 3972/h, eta 210 min
+WARNING:root:2016-01-21 14:00:00: KeyError('href')
+WARNING:root:2016-01-21 20:00:00: KeyError('href')
+WARNING:root:2016-01-27 18:00:00: KeyError('href')
+WARNING:root:2016-01-31 22:00:00: KeyError('href')
+INFO:root:4400/18230 hours (1616 without data), 3990/h, eta 208 min
+WARNING:root:2016-02-16 08:00:00: KeyError('href')
+INFO:root:4450/18230 hours (1617 without data), 3986/h, eta 207 min
+INFO:root:4500/18230 hours (1619 without data), 3998/h, eta 206 min
+WARNING:root:2016-03-16 05:00:00: KeyError('href')
+WARNING:root:2016-03-16 04:00:00: KeyError('href')
+WARNING:root:2016-03-17 18:00:00: KeyError('href')
+WARNING:root:2016-03-18 14:00:00: KeyError('href')
+WARNING:root:2016-03-18 15:00:00: KeyError('href')
+WARNING:root:2016-03-18 16:00:00: KeyError('href')
+WARNING:root:2016-03-18 17:00:00: KeyError('href')
+WARNING:root:2016-03-18 18:00:00: KeyError('href')
+WARNING:root:2016-03-18 20:00:00: KeyError('href')
+WARNING:root:2016-03-18 22:00:00: KeyError('href')
+WARNING:root:2016-03-19 00:00:00: KeyError('href')
+WARNING:root:2016-03-19 01:00:00: KeyError('href')
+INFO:root:4550/18230 hours (1632 without data), 4021/h, eta 204 min
+WARNING:root:2016-03-18 23:00:00: KeyError('href')
+WARNING:root:2016-03-19 03:00:00: KeyError('href')
+WARNING:root:2016-03-19 02:00:00: KeyError('href')
+WARNING:root:2016-03-18 19:00:00: KeyError('href')
+WARNING:root:2016-03-19 05:00:00: KeyError('href')
+WARNING:root:2016-03-19 07:00:00: KeyError('href')
+WARNING:root:2016-03-19 06:00:00: KeyError('href')
+WARNING:root:2016-03-19 04:00:00: KeyError('href')
+WARNING:root:2016-03-24 08:00:00: KeyError('href')
+WARNING:root:2016-03-24 18:00:00: KeyError('href')
+WARNING:root:2016-03-24 19:00:00: KeyError('href')
+WARNING:root:2016-03-26 22:00:00: KeyError('href')
+WARNING:root:2016-03-30 16:00:00: KeyError('href')
+INFO:root:4600/18230 hours (1645 without data), 4045/h, eta 202 min
+WARNING:root:2016-03-31 04:00:00: KeyError('href')
+INFO:root:4650/18230 hours (1648 without data), 4062/h, eta 201 min
+WARNING:root:2016-04-13 02:00:00: KeyError('href')
+WARNING:root:2016-04-17 21:00:00: KeyError('href')
+INFO:root:4700/18230 hours (1651 without data), 4084/h, eta 199 min
+WARNING:root:2016-04-26 17:00:00: KeyError('href')
+INFO:root:4750/18230 hours (1652 without data), 4104/h, eta 197 min
+WARNING:root:2016-04-30 07:00:00: KeyError('href')
+INFO:root:4800/18230 hours (1655 without data), 4126/h, eta 195 min
+WARNING:root:2016-05-02 01:00:00: KeyError('href')
+WARNING:root:2016-05-02 08:00:00: KeyError('href')
+WARNING:root:2016-05-02 03:00:00: KeyError('href')
+WARNING:root:2016-05-02 06:00:00: KeyError('href')
+WARNING:root:2016-05-02 22:00:00: KeyError('href')
+WARNING:root:2016-05-05 02:00:00: KeyError('href')
+WARNING:root:2016-05-07 21:00:00: KeyError('href')
+INFO:root:4850/18230 hours (1662 without data), 4151/h, eta 193 min
+WARNING:root:2016-05-10 01:00:00: KeyError('href')
+INFO:root:4900/18230 hours (1663 without data), 4172/h, eta 192 min
+WARNING:root:2016-05-17 02:00:00: KeyError('href')
+INFO:root:4950/18230 hours (1667 without data), 4191/h, eta 190 min
+WARNING:root:2016-05-22 01:00:00: KeyError('href')
+WARNING:root:2016-05-22 03:00:00: KeyError('href')
+INFO:root:5000/18230 hours (1669 without data), 4209/h, eta 189 min
+WARNING:root:2016-05-26 14:00:00: KeyError('href')
+WARNING:root:2016-05-27 03:00:00: KeyError('href')
+WARNING:root:2016-05-28 23:00:00: KeyError('href')
+INFO:root:5050/18230 hours (1673 without data), 4232/h, eta 187 min
+WARNING:root:2016-05-31 02:00:00: KeyError('href')
+WARNING:root:2016-05-31 00:00:00: KeyError('href')
+WARNING:root:2016-05-30 20:00:00: KeyError('href')
+WARNING:root:2016-05-31 01:00:00: KeyError('href')
+WARNING:root:2016-05-31 20:00:00: KeyError('href')
+INFO:root:5100/18230 hours (1678 without data), 4251/h, eta 185 min
+WARNING:root:2016-06-07 19:00:00: KeyError('href')
+INFO:root:5150/18230 hours (1680 without data), 4269/h, eta 184 min
+WARNING:root:2016-06-13 20:00:00: KeyError('href')
+WARNING:root:2016-06-15 20:00:00: KeyError('href')
+WARNING:root:2016-06-15 21:00:00: KeyError('href')
+WARNING:root:2016-06-15 19:00:00: KeyError('href')
+WARNING:root:2016-06-15 17:00:00: KeyError('href')
+WARNING:root:2016-06-15 22:00:00: KeyError('href')
+WARNING:root:2016-06-15 18:00:00: KeyError('href')
+INFO:root:5200/18230 hours (1689 without data), 4290/h, eta 182 min
+WARNING:root:2016-06-15 23:00:00: KeyError('href')
+WARNING:root:2016-06-16 02:00:00: KeyError('href')
+WARNING:root:2016-06-16 00:00:00: KeyError('href')
+WARNING:root:2016-06-16 01:00:00: KeyError('href')
+WARNING:root:2016-06-16 06:00:00: KeyError('href')
+WARNING:root:2016-06-16 07:00:00: KeyError('href')
+WARNING:root:2016-06-16 08:00:00: KeyError('href')
+WARNING:root:2016-06-16 13:00:00: KeyError('href')
+WARNING:root:2016-06-16 14:00:00: KeyError('href')
+WARNING:root:2016-06-16 16:00:00: KeyError('href')
+WARNING:root:2016-06-16 23:00:00: KeyError('href')
+INFO:root:5250/18230 hours (1700 without data), 4316/h, eta 180 min
+WARNING:root:2016-06-22 04:00:00: KeyError('href')
+INFO:root:5300/18230 hours (1702 without data), 4338/h, eta 179 min
+WARNING:root:2016-06-24 22:00:00: KeyError('href')
+WARNING:root:2016-06-25 04:00:00: KeyError('href')
+WARNING:root:2016-06-26 09:00:00: KeyError('href')
+INFO:root:5350/18230 hours (1705 without data), 4356/h, eta 177 min
+WARNING:root:2016-07-04 01:00:00: KeyError('href')
+INFO:root:5400/18230 hours (1708 without data), 4374/h, eta 176 min
+INFO:root:5450/18230 hours (1708 without data), 4391/h, eta 175 min
+WARNING:root:2016-07-08 14:00:00: KeyError('href')
+WARNING:root:2016-07-08 16:00:00: KeyError('href')
+WARNING:root:2016-07-08 19:00:00: KeyError('href')
+WARNING:root:2016-07-10 14:00:00: KeyError('href')
+WARNING:root:2016-07-10 19:00:00: KeyError('href')
+INFO:root:5500/18230 hours (1714 without data), 4413/h, eta 173 min
+WARNING:root:2016-07-12 03:00:00: KeyError('href')
+WARNING:root:2016-07-12 09:00:00: KeyError('href')
+WARNING:root:2016-07-14 18:00:00: KeyError('href')
+INFO:root:5550/18230 hours (1717 without data), 4432/h, eta 172 min
+WARNING:root:2016-07-17 04:00:00: KeyError('href')
+WARNING:root:2016-07-18 21:00:00: KeyError('href')
+WARNING:root:2016-07-18 22:00:00: KeyError('href')
+INFO:root:5600/18230 hours (1722 without data), 4453/h, eta 170 min
+WARNING:root:2016-07-21 15:00:00: KeyError('href')
+INFO:root:5650/18230 hours (1724 without data), 4468/h, eta 169 min
+WARNING:root:2016-07-24 01:00:00: KeyError('href')
+WARNING:root:2016-07-24 03:00:00: KeyError('href')
+WARNING:root:2016-07-24 07:00:00: KeyError('href')
+INFO:root:5700/18230 hours (1729 without data), 4485/h, eta 168 min
+WARNING:root:2016-07-28 02:00:00: KeyError('href')
+WARNING:root:2016-07-28 18:00:00: KeyError('href')
+WARNING:root:2016-07-29 19:00:00: KeyError('href')
+WARNING:root:2016-07-31 22:00:00: KeyError('href')
+WARNING:root:2016-08-01 12:00:00: KeyError('href')
+WARNING:root:2016-08-02 21:00:00: KeyError('href')
+INFO:root:5750/18230 hours (1735 without data), 4506/h, eta 166 min
+WARNING:root:2016-08-03 04:00:00: KeyError('href')
+WARNING:root:2016-08-05 21:00:00: KeyError('href')
+WARNING:root:2016-08-06 21:00:00: KeyError('href')
+WARNING:root:2016-08-07 17:00:00: KeyError('href')
+WARNING:root:2016-08-07 21:00:00: KeyError('href')
+WARNING:root:2016-08-07 22:00:00: KeyError('href')
+WARNING:root:2016-08-08 04:00:00: KeyError('href')
+WARNING:root:2016-08-09 02:00:00: KeyError('href')
+WARNING:root:2016-08-09 04:00:00: KeyError('href')
+INFO:root:5800/18230 hours (1745 without data), 4526/h, eta 165 min
+WARNING:root:2016-08-09 03:00:00: KeyError('href')
+WARNING:root:2016-08-09 22:00:00: KeyError('href')
+WARNING:root:2016-08-09 23:00:00: KeyError('href')
+WARNING:root:2016-08-10 01:00:00: KeyError('href')
+WARNING:root:2016-08-10 04:00:00: KeyError('href')
+WARNING:root:2016-08-10 03:00:00: KeyError('href')
+WARNING:root:2016-08-10 02:00:00: KeyError('href')
+WARNING:root:2016-08-10 05:00:00: KeyError('href')
+WARNING:root:2016-08-10 06:00:00: KeyError('href')
+WARNING:root:2016-08-10 09:00:00: KeyError('href')
+WARNING:root:2016-08-10 07:00:00: KeyError('href')
+WARNING:root:2016-08-10 08:00:00: KeyError('href')
+WARNING:root:2016-08-10 10:00:00: KeyError('href')
+WARNING:root:2016-08-10 18:00:00: KeyError('href')
+WARNING:root:2016-08-11 22:00:00: KeyError('href')
+WARNING:root:2016-08-12 00:00:00: KeyError('href')
+WARNING:root:2016-08-12 22:00:00: KeyError('href')
+WARNING:root:2016-08-14 00:00:00: KeyError('href')
+WARNING:root:2016-08-14 03:00:00: KeyError('href')
+WARNING:root:2016-08-14 20:00:00: KeyError('href')
+INFO:root:5850/18230 hours (1765 without data), 4551/h, eta 163 min
+WARNING:root:2016-08-17 00:00:00: KeyError('href')
+WARNING:root:2016-08-16 23:00:00: KeyError('href')
+WARNING:root:2016-08-17 16:00:00: KeyError('href')
+WARNING:root:2016-08-18 14:00:00: KeyError('href')
+WARNING:root:2016-08-20 17:00:00: KeyError('href')
+WARNING:root:2016-08-20 18:00:00: KeyError('href')
+INFO:root:5900/18230 hours (1773 without data), 4573/h, eta 162 min
+WARNING:root:2016-08-20 01:00:00: KeyError('href')
+WARNING:root:2016-08-23 19:00:00: KeyError('href')
+WARNING:root:2016-08-23 20:00:00: KeyError('href')
+WARNING:root:2016-08-23 23:00:00: KeyError('href')
+WARNING:root:2016-08-24 01:00:00: KeyError('href')
+WARNING:root:2016-08-24 12:00:00: KeyError('href')
+WARNING:root:2016-08-24 19:00:00: KeyError('href')
+WARNING:root:2016-08-24 20:00:00: KeyError('href')
+WARNING:root:2016-08-24 23:00:00: KeyError('href')
+WARNING:root:2016-08-24 22:00:00: KeyError('href')
+WARNING:root:2016-08-25 05:00:00: KeyError('href')
+WARNING:root:2016-08-25 06:00:00: KeyError('href')
+WARNING:root:2016-08-25 08:00:00: KeyError('href')
+WARNING:root:2016-08-25 22:00:00: KeyError('href')
+WARNING:root:2016-08-25 21:00:00: KeyError('href')
+WARNING:root:2016-08-26 02:00:00: KeyError('href')
+WARNING:root:2016-08-26 00:00:00: KeyError('href')
+WARNING:root:2016-08-26 21:00:00: KeyError('href')
+WARNING:root:2016-08-28 17:00:00: KeyError('href')
+WARNING:root:2016-08-28 22:00:00: KeyError('href')
+WARNING:root:2016-08-28 23:00:00: KeyError('href')
+INFO:root:5950/18230 hours (1794 without data), 4598/h, eta 160 min
+WARNING:root:2016-08-29 00:00:00: KeyError('href')
+WARNING:root:2016-08-29 01:00:00: KeyError('href')
+WARNING:root:2016-08-29 23:00:00: KeyError('href')
+WARNING:root:2016-08-31 21:00:00: KeyError('href')
+WARNING:root:2016-09-01 18:00:00: KeyError('href')
+WARNING:root:2016-09-02 20:00:00: KeyError('href')
+WARNING:root:2016-09-03 01:00:00: KeyError('href')
+WARNING:root:2016-09-04 23:00:00: KeyError('href')
+WARNING:root:2016-09-04 22:00:00: KeyError('href')
+WARNING:root:2016-09-06 01:00:00: KeyError('href')
+WARNING:root:2016-09-06 22:00:00: KeyError('href')
+INFO:root:6000/18230 hours (1806 without data), 4619/h, eta 159 min
+WARNING:root:2016-09-06 23:00:00: KeyError('href')
+WARNING:root:2016-09-08 02:00:00: KeyError('href')
+WARNING:root:2016-09-08 01:00:00: KeyError('href')
+WARNING:root:2016-09-10 02:00:00: KeyError('href')
+WARNING:root:2016-09-10 03:00:00: KeyError('href')
+WARNING:root:2016-09-12 23:00:00: KeyError('href')
+WARNING:root:2016-09-12 20:00:00: KeyError('href')
+WARNING:root:2016-09-15 22:00:00: KeyError('href')
+WARNING:root:2016-09-15 06:00:00: KeyError('href')
+WARNING:root:2016-09-15 07:00:00: KeyError('href')
+WARNING:root:2016-09-15 20:00:00: KeyError('href')
+INFO:root:6050/18230 hours (1818 without data), 4640/h, eta 157 min
+WARNING:root:2016-09-16 01:00:00: KeyError('href')
+WARNING:root:2016-09-17 10:00:00: KeyError('href')
+WARNING:root:2016-09-17 11:00:00: KeyError('href')
+WARNING:root:2016-09-18 01:00:00: KeyError('href')
+WARNING:root:2016-09-18 07:00:00: KeyError('href')
+WARNING:root:2016-09-19 22:00:00: KeyError('href')
+WARNING:root:2016-09-20 17:00:00: KeyError('href')
+WARNING:root:2016-09-19 21:00:00: KeyError('href')
+INFO:root:6100/18230 hours (1826 without data), 4662/h, eta 156 min
+WARNING:root:2016-09-23 22:00:00: KeyError('href')
+WARNING:root:2016-09-27 20:00:00: KeyError('href')
+INFO:root:6150/18230 hours (1828 without data), 4679/h, eta 155 min
+WARNING:root:2016-10-08 03:00:00: KeyError('href')
+WARNING:root:2016-10-12 22:00:00: KeyError('href')
+WARNING:root:2016-10-14 11:00:00: KeyError('href')
+WARNING:root:2016-10-19 19:00:00: KeyError('href')
+INFO:root:6200/18230 hours (1833 without data), 4699/h, eta 154 min
+WARNING:root:2016-11-05 03:00:00: KeyError('href')
+WARNING:root:2016-11-08 00:00:00: KeyError('href')
+WARNING:root:2016-11-28 22:00:00: KeyError('href')
+WARNING:root:2016-11-29 23:00:00: KeyError('href')
+WARNING:root:2016-11-29 20:00:00: KeyError('href')
+INFO:root:6250/18230 hours (1840 without data), 4718/h, eta 152 min
+WARNING:root:2016-12-12 17:00:00: KeyError('href')
+WARNING:root:2016-12-18 03:00:00: KeyError('href')
+WARNING:root:2016-12-25 15:00:00: KeyError('href')
+WARNING:root:2016-12-26 02:00:00: KeyError('href')
+INFO:root:6300/18230 hours (1844 without data), 4738/h, eta 151 min
+WARNING:root:2017-01-02 13:00:00: KeyError('href')
+WARNING:root:2017-01-02 14:00:00: KeyError('href')
+WARNING:root:2017-01-02 23:00:00: KeyError('href')
+WARNING:root:2017-01-03 05:00:00: KeyError('href')
+WARNING:root:2017-01-03 03:00:00: KeyError('href')
+WARNING:root:2017-01-03 07:00:00: KeyError('href')
+WARNING:root:2017-01-16 02:00:00: KeyError('href')
+INFO:root:6350/18230 hours (1852 without data), 4758/h, eta 150 min
+WARNING:root:2017-01-18 07:00:00: KeyError('href')
+WARNING:root:2017-01-21 06:00:00: KeyError('href')
+WARNING:root:2017-01-21 15:00:00: KeyError('href')
+INFO:root:6400/18230 hours (1857 without data), 4774/h, eta 149 min
+WARNING:root:2017-01-22 17:00:00: KeyError('href')
+INFO:root:6450/18230 hours (1858 without data), 4791/h, eta 148 min
+WARNING:root:2017-02-25 18:00:00: KeyError('href')
+INFO:root:6500/18230 hours (1860 without data), 4806/h, eta 146 min
+INFO:root:6550/18230 hours (1860 without data), 4823/h, eta 145 min
+INFO:root:6600/18230 hours (1861 without data), 4837/h, eta 144 min
+INFO:root:6650/18230 hours (1862 without data), 4853/h, eta 143 min
+INFO:root:6700/18230 hours (1863 without data), 4868/h, eta 142 min
+INFO:root:6750/18230 hours (1863 without data), 4883/h, eta 141 min
+INFO:root:6800/18230 hours (1863 without data), 4896/h, eta 140 min
+INFO:root:6850/18230 hours (1863 without data), 4879/h, eta 140 min
+INFO:root:6900/18230 hours (1863 without data), 4888/h, eta 139 min
+INFO:root:6950/18230 hours (1863 without data), 4897/h, eta 138 min
+WARNING:root:2017-05-13 01:00:00: KeyError('href')
+WARNING:root:2017-05-13 02:00:00: KeyError('href')
+WARNING:root:2017-05-12 19:00:00: KeyError('href')
+WARNING:root:2017-05-13 17:00:00: KeyError('href')
+WARNING:root:2017-05-12 21:00:00: KeyError('href')
+WARNING:root:2017-05-13 18:00:00: KeyError('href')
+WARNING:root:2017-05-13 19:00:00: KeyError('href')
+WARNING:root:2017-05-12 22:00:00: KeyError('href')
+WARNING:root:2017-05-15 13:00:00: KeyError('href')
+INFO:root:7000/18230 hours (1875 without data), 4916/h, eta 137 min
+WARNING:root:2017-05-18 00:00:00: KeyError('href')
+INFO:root:7050/18230 hours (1877 without data), 4272/h, eta 157 min
+INFO:root:7100/18230 hours (1878 without data), 4265/h, eta 157 min
+INFO:root:7150/18230 hours (1879 without data), 4279/h, eta 155 min
+INFO:root:7200/18230 hours (1879 without data), 4293/h, eta 154 min
+INFO:root:7250/18230 hours (1879 without data), 4308/h, eta 153 min
+INFO:root:7300/18230 hours (1880 without data), 4324/h, eta 152 min
+INFO:root:7350/18230 hours (1881 without data), 4338/h, eta 150 min
+WARNING:root:2017-06-25 00:00:00: KeyError('href')
+WARNING:root:2017-06-27 19:00:00: KeyError('href')
+WARNING:root:2017-06-27 20:00:00: KeyError('href')
+INFO:root:7400/18230 hours (1885 without data), 4353/h, eta 149 min
+WARNING:root:2017-06-27 21:00:00: KeyError('href')
+WARNING:root:2017-06-27 22:00:00: KeyError('href')
+WARNING:root:2017-06-27 23:00:00: KeyError('href')
+WARNING:root:2017-06-28 03:00:00: KeyError('href')
+WARNING:root:2017-06-28 00:00:00: KeyError('href')
+WARNING:root:2017-06-28 02:00:00: KeyError('href')
+WARNING:root:2017-06-28 06:00:00: KeyError('href')
+WARNING:root:2017-06-28 04:00:00: KeyError('href')
+WARNING:root:2017-06-28 05:00:00: KeyError('href')
+WARNING:root:2017-06-28 07:00:00: KeyError('href')
+WARNING:root:2017-06-28 17:00:00: KeyError('href')
+WARNING:root:2017-06-28 18:00:00: KeyError('href')
+WARNING:root:2017-06-28 16:00:00: KeyError('href')
+INFO:root:7450/18230 hours (1898 without data), 4371/h, eta 148 min
+WARNING:root:2017-07-03 23:00:00: KeyError('href')
+INFO:root:7500/18230 hours (1900 without data), 4386/h, eta 147 min
+INFO:root:7550/18230 hours (1902 without data), 4400/h, eta 146 min
+WARNING:root:2017-07-14 21:00:00: KeyError('href')
+INFO:root:7600/18230 hours (1903 without data), 4414/h, eta 144 min
+INFO:root:7650/18230 hours (1904 without data), 4428/h, eta 143 min
+INFO:root:7700/18230 hours (1904 without data), 4441/h, eta 142 min
+INFO:root:7750/18230 hours (1905 without data), 4454/h, eta 141 min
+WARNING:root:2017-08-02 00:00:00: KeyError('href')
+WARNING:root:2017-08-03 05:00:00: KeyError('href')
+INFO:root:7800/18230 hours (1908 without data), 4469/h, eta 140 min
+INFO:root:7850/18230 hours (1908 without data), 4484/h, eta 139 min
+INFO:root:7900/18230 hours (1909 without data), 4497/h, eta 138 min
+INFO:root:7950/18230 hours (1910 without data), 4510/h, eta 137 min
+INFO:root:8000/18230 hours (1911 without data), 4523/h, eta 136 min
+INFO:root:8050/18230 hours (1913 without data), 4535/h, eta 135 min
+WARNING:root:2017-09-22 11:00:00: KeyError('href')
+INFO:root:8100/18230 hours (1914 without data), 4549/h, eta 134 min
+INFO:root:8150/18230 hours (1914 without data), 4563/h, eta 133 min
+INFO:root:8200/18230 hours (1914 without data), 4577/h, eta 131 min
+INFO:root:8250/18230 hours (1915 without data), 4591/h, eta 130 min
+INFO:root:8300/18230 hours (1917 without data), 4604/h, eta 129 min
+WARNING:root:2018-03-28 16:00:00: KeyError('href')
+INFO:root:8350/18230 hours (1918 without data), 4617/h, eta 128 min
+WARNING:root:2018-04-04 04:00:00: KeyError('href')
+INFO:root:8400/18230 hours (1920 without data), 4632/h, eta 127 min
+INFO:root:8450/18230 hours (1921 without data), 4645/h, eta 126 min
+INFO:root:8500/18230 hours (1921 without data), 4658/h, eta 125 min
+INFO:root:8550/18230 hours (1921 without data), 4672/h, eta 124 min
+INFO:root:8600/18230 hours (1923 without data), 4686/h, eta 123 min
+INFO:root:8650/18230 hours (1925 without data), 4698/h, eta 122 min
+WARNING:root:2018-06-07 22:00:00: KeyError('href')
+WARNING:root:2018-06-08 05:00:00: KeyError('href')
+INFO:root:8700/18230 hours (1927 without data), 4711/h, eta 121 min
+INFO:root:8750/18230 hours (1927 without data), 4724/h, eta 120 min
+INFO:root:8800/18230 hours (1927 without data), 4737/h, eta 119 min
+INFO:root:8850/18230 hours (1928 without data), 4750/h, eta 118 min
+INFO:root:8900/18230 hours (1929 without data), 4763/h, eta 118 min
+INFO:root:8950/18230 hours (1929 without data), 4775/h, eta 117 min
+INFO:root:9000/18230 hours (1930 without data), 4787/h, eta 116 min
+INFO:root:9050/18230 hours (1932 without data), 4799/h, eta 115 min
+WARNING:root:2018-07-08 15:00:00: KeyError('href')
+WARNING:root:2018-07-11 19:00:00: KeyError('href')
+INFO:root:9100/18230 hours (1934 without data), 4812/h, eta 114 min
+INFO:root:9150/18230 hours (1935 without data), 4824/h, eta 113 min
+INFO:root:9200/18230 hours (1937 without data), 4836/h, eta 112 min
+WARNING:root:2018-07-24 00:00:00: KeyError('href')
+WARNING:root:2018-07-25 21:00:00: KeyError('href')
+INFO:root:9250/18230 hours (1939 without data), 4848/h, eta 111 min
+WARNING:root:2018-07-27 18:00:00: KeyError('href')
+WARNING:root:2018-07-27 17:00:00: KeyError('href')
+WARNING:root:2018-07-29 01:00:00: KeyError('href')
+WARNING:root:2018-07-31 04:00:00: KeyError('href')
+INFO:root:9300/18230 hours (1943 without data), 4861/h, eta 110 min
+WARNING:root:2018-07-31 19:00:00: KeyError('href')
+WARNING:root:2018-08-03 01:00:00: KeyError('href')
+INFO:root:9350/18230 hours (1947 without data), 4873/h, eta 109 min
+WARNING:root:2018-08-04 23:00:00: KeyError('href')
+WARNING:root:2018-08-07 21:00:00: KeyError('href')
+WARNING:root:2018-08-08 19:00:00: KeyError('href')
+WARNING:root:2018-08-08 21:00:00: KeyError('href')
+WARNING:root:2018-08-08 20:00:00: KeyError('href')
+INFO:root:9400/18230 hours (1953 without data), 4886/h, eta 108 min
+WARNING:root:2018-08-10 04:00:00: KeyError('href')
+WARNING:root:2018-08-12 22:00:00: KeyError('href')
+INFO:root:9450/18230 hours (1955 without data), 4898/h, eta 108 min
+INFO:root:9500/18230 hours (1956 without data), 4910/h, eta 107 min
+WARNING:root:2018-08-24 15:00:00: KeyError('href')
+WARNING:root:2018-08-26 22:00:00: KeyError('href')
+INFO:root:9550/18230 hours (1960 without data), 4922/h, eta 106 min
+WARNING:root:2018-08-30 01:00:00: KeyError('href')
+INFO:root:9600/18230 hours (1961 without data), 4934/h, eta 105 min
+WARNING:root:2018-09-04 21:00:00: KeyError('href')
+WARNING:root:2018-09-04 22:00:00: KeyError('href')
+INFO:root:9650/18230 hours (1964 without data), 4946/h, eta 104 min
+WARNING:root:2018-09-06 20:00:00: KeyError('href')
+WARNING:root:2018-09-08 21:00:00: KeyError('href')
+INFO:root:9700/18230 hours (1967 without data), 4958/h, eta 103 min
+INFO:root:9750/18230 hours (1967 without data), 4970/h, eta 102 min
+INFO:root:9800/18230 hours (1967 without data), 4980/h, eta 102 min
+INFO:root:9850/18230 hours (1967 without data), 4991/h, eta 101 min
+INFO:root:9900/18230 hours (1967 without data), 5003/h, eta 100 min
+INFO:root:9950/18230 hours (1967 without data), 4976/h, eta 100 min
+INFO:root:10000/18230 hours (1967 without data), 4986/h, eta 99 min
+INFO:root:10050/18230 hours (1967 without data), 4997/h, eta 98 min
+INFO:root:10100/18230 hours (1967 without data), 5005/h, eta 97 min
+INFO:root:10150/18230 hours (1967 without data), 5012/h, eta 97 min
+INFO:root:10200/18230 hours (1967 without data), 5023/h, eta 96 min
+INFO:root:10250/18230 hours (1967 without data), 5034/h, eta 95 min
+INFO:root:10300/18230 hours (1967 without data), 5045/h, eta 94 min
+INFO:root:10350/18230 hours (1967 without data), 5057/h, eta 93 min
+INFO:root:10400/18230 hours (1967 without data), 5067/h, eta 93 min
+INFO:root:10450/18230 hours (1967 without data), 5077/h, eta 92 min
+INFO:root:10500/18230 hours (1967 without data), 5089/h, eta 91 min
+INFO:root:10550/18230 hours (1967 without data), 5100/h, eta 90 min
+INFO:root:10600/18230 hours (1969 without data), 5110/h, eta 90 min
+INFO:root:10650/18230 hours (1969 without data), 5121/h, eta 89 min
+INFO:root:10700/18230 hours (1969 without data), 5131/h, eta 88 min
+INFO:root:10750/18230 hours (1969 without data), 5142/h, eta 87 min
+INFO:root:10800/18230 hours (1969 without data), 5152/h, eta 87 min
+INFO:root:10850/18230 hours (1969 without data), 5162/h, eta 86 min
+INFO:root:10900/18230 hours (1969 without data), 5172/h, eta 85 min
+INFO:root:10950/18230 hours (1969 without data), 5180/h, eta 84 min
+INFO:root:11000/18230 hours (1969 without data), 5191/h, eta 84 min
+INFO:root:11050/18230 hours (1969 without data), 5201/h, eta 83 min
+INFO:root:11100/18230 hours (1969 without data), 5211/h, eta 82 min
+INFO:root:11150/18230 hours (1969 without data), 5221/h, eta 81 min
+INFO:root:11200/18230 hours (1969 without data), 5230/h, eta 81 min
+INFO:root:11250/18230 hours (1969 without data), 5241/h, eta 80 min
+INFO:root:11300/18230 hours (1969 without data), 5250/h, eta 79 min
+INFO:root:11350/18230 hours (1969 without data), 5260/h, eta 78 min
+INFO:root:11400/18230 hours (1969 without data), 5270/h, eta 78 min
+INFO:root:11450/18230 hours (1969 without data), 5279/h, eta 77 min
+INFO:root:11500/18230 hours (1969 without data), 5288/h, eta 76 min
+INFO:root:11550/18230 hours (1969 without data), 5298/h, eta 76 min
+INFO:root:11600/18230 hours (1969 without data), 5308/h, eta 75 min
+INFO:root:11650/18230 hours (1969 without data), 5318/h, eta 74 min
+INFO:root:11700/18230 hours (1969 without data), 5327/h, eta 74 min
+INFO:root:11750/18230 hours (1969 without data), 5336/h, eta 73 min
+INFO:root:11800/18230 hours (1969 without data), 5346/h, eta 72 min
+INFO:root:11850/18230 hours (1969 without data), 5355/h, eta 71 min
+INFO:root:11900/18230 hours (1969 without data), 5365/h, eta 71 min
+INFO:root:11950/18230 hours (1969 without data), 5374/h, eta 70 min
+INFO:root:12000/18230 hours (1969 without data), 5384/h, eta 69 min
+INFO:root:12050/18230 hours (1969 without data), 5392/h, eta 69 min
+INFO:root:12100/18230 hours (1969 without data), 5402/h, eta 68 min
+INFO:root:12150/18230 hours (1969 without data), 5411/h, eta 67 min
+INFO:root:12200/18230 hours (1969 without data), 5420/h, eta 67 min
+INFO:root:12250/18230 hours (1969 without data), 5429/h, eta 66 min
+INFO:root:12300/18230 hours (1969 without data), 5439/h, eta 65 min
+INFO:root:12350/18230 hours (1969 without data), 5447/h, eta 65 min
+INFO:root:12400/18230 hours (1969 without data), 5453/h, eta 64 min
+INFO:root:12450/18230 hours (1969 without data), 5462/h, eta 63 min
+INFO:root:12500/18230 hours (1969 without data), 5471/h, eta 63 min
+INFO:root:12550/18230 hours (1969 without data), 5479/h, eta 62 min
+INFO:root:12600/18230 hours (1969 without data), 5488/h, eta 62 min
+INFO:root:12650/18230 hours (1969 without data), 5497/h, eta 61 min
+INFO:root:12700/18230 hours (1969 without data), 5505/h, eta 60 min
+INFO:root:12750/18230 hours (1969 without data), 5514/h, eta 60 min
+INFO:root:12800/18230 hours (1969 without data), 5522/h, eta 59 min
+INFO:root:12850/18230 hours (1969 without data), 5531/h, eta 58 min
+INFO:root:12900/18230 hours (1969 without data), 5540/h, eta 58 min
+INFO:root:12950/18230 hours (1969 without data), 5548/h, eta 57 min
+INFO:root:13000/18230 hours (1969 without data), 5556/h, eta 56 min
+INFO:root:13050/18230 hours (1969 without data), 5564/h, eta 56 min
+INFO:root:13100/18230 hours (1969 without data), 5573/h, eta 55 min
+INFO:root:13150/18230 hours (1969 without data), 5581/h, eta 55 min
+INFO:root:13200/18230 hours (1969 without data), 5589/h, eta 54 min
+INFO:root:13250/18230 hours (1969 without data), 5597/h, eta 53 min
+INFO:root:13300/18230 hours (1969 without data), 5604/h, eta 53 min
+INFO:root:13350/18230 hours (1969 without data), 5613/h, eta 52 min
+INFO:root:13400/18230 hours (1969 without data), 5621/h, eta 52 min
+INFO:root:13450/18230 hours (1969 without data), 5628/h, eta 51 min
+INFO:root:13500/18230 hours (1969 without data), 5635/h, eta 50 min
+INFO:root:13550/18230 hours (1969 without data), 5643/h, eta 50 min
+INFO:root:13600/18230 hours (1969 without data), 5651/h, eta 49 min
+INFO:root:13650/18230 hours (1969 without data), 5658/h, eta 49 min
+INFO:root:13700/18230 hours (1969 without data), 5667/h, eta 48 min
+INFO:root:13750/18230 hours (1969 without data), 5674/h, eta 47 min
+INFO:root:13800/18230 hours (1969 without data), 5681/h, eta 47 min
+INFO:root:13850/18230 hours (1969 without data), 5689/h, eta 46 min
+INFO:root:13900/18230 hours (1969 without data), 5697/h, eta 46 min
+INFO:root:13950/18230 hours (1969 without data), 5704/h, eta 45 min
+INFO:root:14000/18230 hours (1969 without data), 5711/h, eta 44 min
+INFO:root:14050/18230 hours (1969 without data), 5718/h, eta 44 min
+INFO:root:14100/18230 hours (1969 without data), 5726/h, eta 43 min
+INFO:root:14150/18230 hours (1969 without data), 5733/h, eta 43 min
+INFO:root:14200/18230 hours (1969 without data), 5741/h, eta 42 min
+INFO:root:14250/18230 hours (1969 without data), 5745/h, eta 42 min
+INFO:root:14300/18230 hours (1969 without data), 5749/h, eta 41 min
+INFO:root:14350/18230 hours (1969 without data), 5755/h, eta 40 min
+INFO:root:14400/18230 hours (1969 without data), 5760/h, eta 40 min
+INFO:root:14450/18230 hours (1969 without data), 5768/h, eta 39 min
+INFO:root:14500/18230 hours (1969 without data), 5774/h, eta 39 min
+INFO:root:14550/18230 hours (1969 without data), 5781/h, eta 38 min
+INFO:root:14600/18230 hours (1969 without data), 5787/h, eta 38 min
+INFO:root:14650/18230 hours (1969 without data), 5794/h, eta 37 min
+INFO:root:14700/18230 hours (1969 without data), 5801/h, eta 37 min
+INFO:root:14750/18230 hours (1969 without data), 5806/h, eta 36 min
+INFO:root:14800/18230 hours (1969 without data), 5813/h, eta 35 min
+INFO:root:14850/18230 hours (1969 without data), 5818/h, eta 35 min
+INFO:root:14900/18230 hours (1969 without data), 5825/h, eta 34 min
+INFO:root:14950/18230 hours (1969 without data), 5831/h, eta 34 min
+INFO:root:15000/18230 hours (1969 without data), 5838/h, eta 33 min
+INFO:root:15050/18230 hours (1969 without data), 5844/h, eta 33 min
+INFO:root:15100/18230 hours (1969 without data), 5850/h, eta 32 min
+INFO:root:15150/18230 hours (1969 without data), 5855/h, eta 32 min
+INFO:root:15200/18230 hours (1969 without data), 5862/h, eta 31 min
+INFO:root:15250/18230 hours (1969 without data), 5867/h, eta 30 min
+INFO:root:15300/18230 hours (1969 without data), 5873/h, eta 30 min
+INFO:root:15350/18230 hours (1969 without data), 5877/h, eta 29 min
+INFO:root:15400/18230 hours (1969 without data), 5884/h, eta 29 min
+INFO:root:15450/18230 hours (1969 without data), 5889/h, eta 28 min
+INFO:root:15500/18230 hours (1969 without data), 5895/h, eta 28 min
+INFO:root:15550/18230 hours (1969 without data), 5899/h, eta 27 min
+INFO:root:15600/18230 hours (1969 without data), 5905/h, eta 27 min
+INFO:root:15650/18230 hours (1969 without data), 5910/h, eta 26 min
+INFO:root:15700/18230 hours (1969 without data), 5916/h, eta 26 min
+INFO:root:15750/18230 hours (1969 without data), 5922/h, eta 25 min
+INFO:root:15800/18230 hours (1969 without data), 5927/h, eta 25 min
+INFO:root:15850/18230 hours (1969 without data), 5933/h, eta 24 min
+INFO:root:15900/18230 hours (1969 without data), 5939/h, eta 24 min
+INFO:root:15950/18230 hours (1969 without data), 5945/h, eta 23 min
+INFO:root:16000/18230 hours (1969 without data), 5951/h, eta 22 min
+INFO:root:16050/18230 hours (1969 without data), 5957/h, eta 22 min
+INFO:root:16100/18230 hours (1969 without data), 5963/h, eta 21 min
+INFO:root:16150/18230 hours (1969 without data), 5969/h, eta 21 min
+INFO:root:16200/18230 hours (1969 without data), 5975/h, eta 20 min
+INFO:root:16250/18230 hours (1969 without data), 5981/h, eta 20 min
+INFO:root:16300/18230 hours (1969 without data), 5987/h, eta 19 min
+INFO:root:16350/18230 hours (1969 without data), 5993/h, eta 19 min
+INFO:root:16400/18230 hours (1969 without data), 5999/h, eta 18 min
+INFO:root:16450/18230 hours (1969 without data), 6004/h, eta 18 min
+INFO:root:16500/18230 hours (1969 without data), 6011/h, eta 17 min
+INFO:root:16550/18230 hours (1969 without data), 6016/h, eta 17 min
+INFO:root:16600/18230 hours (1969 without data), 6022/h, eta 16 min
+INFO:root:16650/18230 hours (1969 without data), 6027/h, eta 16 min
+INFO:root:16700/18230 hours (1969 without data), 6032/h, eta 15 min
+INFO:root:16750/18230 hours (1969 without data), 6038/h, eta 15 min
+INFO:root:16800/18230 hours (1969 without data), 6043/h, eta 14 min
+INFO:root:16850/18230 hours (1969 without data), 6048/h, eta 14 min
+INFO:root:16900/18230 hours (1969 without data), 6053/h, eta 13 min
+INFO:root:16950/18230 hours (1969 without data), 6058/h, eta 13 min
+INFO:root:17000/18230 hours (1969 without data), 6064/h, eta 12 min
+INFO:root:17050/18230 hours (1969 without data), 6069/h, eta 12 min
+INFO:root:17100/18230 hours (1969 without data), 6073/h, eta 11 min
+INFO:root:17150/18230 hours (1969 without data), 6079/h, eta 11 min
+INFO:root:17200/18230 hours (1969 without data), 6084/h, eta 10 min
+INFO:root:17250/18230 hours (1969 without data), 6089/h, eta 10 min
+INFO:root:17300/18230 hours (1969 without data), 6094/h, eta 9 min
+INFO:root:17350/18230 hours (1969 without data), 6098/h, eta 9 min
+INFO:root:17400/18230 hours (1969 without data), 6104/h, eta 8 min
+INFO:root:17450/18230 hours (1969 without data), 6109/h, eta 8 min
+INFO:root:17500/18230 hours (1969 without data), 6114/h, eta 7 min
+INFO:root:17550/18230 hours (1969 without data), 6119/h, eta 7 min
+INFO:root:17600/18230 hours (1969 without data), 6123/h, eta 6 min
+INFO:root:17650/18230 hours (1969 without data), 6128/h, eta 6 min
+INFO:root:17700/18230 hours (1969 without data), 6133/h, eta 5 min
+INFO:root:17750/18230 hours (1969 without data), 6137/h, eta 5 min
+INFO:root:17800/18230 hours (1969 without data), 6141/h, eta 4 min
+INFO:root:17850/18230 hours (1969 without data), 6146/h, eta 4 min
+INFO:root:17900/18230 hours (1969 without data), 6151/h, eta 3 min
+INFO:root:17950/18230 hours (1969 without data), 6156/h, eta 3 min
+INFO:root:18000/18230 hours (1969 without data), 6160/h, eta 2 min
+INFO:root:18050/18230 hours (1969 without data), 6165/h, eta 2 min
+INFO:root:18100/18230 hours (1969 without data), 6170/h, eta 1 min
+INFO:root:18150/18230 hours (1969 without data), 6176/h, eta 1 min
+INFO:root:18200/18230 hours (1969 without data), 6181/h, eta 0 min
+INFO:root:18230/18230 hours (1969 without data), 6182/h, eta 0 min

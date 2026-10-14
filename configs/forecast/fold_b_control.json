@@ -1,5 +1,5 @@
 {
-  "_note": "Forecaster A, spatially weighted L1: 1 + 2 x the frozen detector's heat map on the real target scan.",
+  "_note": "Fold B control: TorNet encoder, bottleneck A, plain L1 on VEL + DBZ, cross-entropy on the head. The floor for the loss comparison.",
   "train_years": [
     2013,
     2015
@@ -16,7 +16,11 @@
     "VEL",
     "DBZ"
   ],
-  "encoder": "tornet",
+  "focus_products": [
+    "VEL",
+    "DBZ"
+  ],
+  "anchor_weight": 0.1,
   "encoder_weights": "pretrained",
   "bottleneck": "cnn",
   "epochs": 6,
@@ -24,7 +28,7 @@
   "learning_rate": 0.0001,
   "encoder_lr_scale": 0.1,
   "workers": 8,
-  "exp_dir": "experiments",
-  "heatmap_weight": 2.0,
-  "exp_name": "fc_a_heatmap_fold_b"
+  "heatmap_weight": 0.0,
+  "detector_weight": 0.0,
+  "exp_name": "fc_a_control_fold_b"
 }

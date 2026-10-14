@@ -1,0 +1,34 @@
+{
+  "_note": "Held until a fold_b_detector run clears the persistence floor. Bottleneck B (transformer over the 8x15 cells) with the same losses as fold_b_detector, so the bottleneck is the only variable.",
+  "train_years": [
+    2013,
+    2015
+  ],
+  "val_years": [
+    2014
+  ],
+  "test_years": [
+    2014
+  ],
+  "n_in": 2,
+  "horizons": 2,
+  "target_products": [
+    "VEL",
+    "DBZ"
+  ],
+  "focus_products": [
+    "VEL",
+    "DBZ"
+  ],
+  "anchor_weight": 0.1,
+  "encoder_weights": "pretrained",
+  "bottleneck": "transformer",
+  "epochs": 6,
+  "batch_size": 16,
+  "learning_rate": 0.0001,
+  "encoder_lr_scale": 0.1,
+  "workers": 8,
+  "heatmap_weight": 2.0,
+  "detector_weight": 0.5,
+  "exp_name": "fc_b_transformer_fold_b"
+}

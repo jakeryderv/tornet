@@ -93,6 +93,25 @@ classification head and to tooling around cached features:
   authors' sample weights, early stopping on validation AUC, and writes the usual run directory
   plus gain-based feature importance by group. `configs/meta/`. HRRR exists from 2014-07-30, so
   earlier samples carry an availability flag and NaN fields; LightGBM handles the gaps natively.
+- The TorNet CNN as PyTorch (`tornet.models.torch_backbone`): the backbone as an encoder that
+  returns the feature pyramid in the Segmentation Models PyTorch convention, the authors' max-pool
+  head, and weight transfer from the published Keras model (logits match to 0.002 on real files).
+  `tornet.data.forecast_torch` is the matching dataset: the oldest `n_in` scans in, the next
+  scans out, everything already in the detector's normalised, background-filled representation.
+- Radar forecaster (`tornet-forecast`, one script, `src/tornet/scripts/forecast_smp.py`): the
+  fine-tuned TorNet encoder on each input scan, features stacked across scans, an identity or
+  transformer bottleneck, an SMP U-Net decoder that forecasts radar products at each horizon
+  (`target_products`: VEL and DBZ, or all twelve channels), and the authors' per-cell-then-max
+  classification head on the bottleneck for a direct tornado logit per horizon. One total loss:
+  L1 on the forecast with weight 1 on the `focus_products` and `anchor_weight` on any other
+  forecast product, optionally weighted by the frozen published detector's heat map on the real
+  future scan; cross-entropy on the head; optionally the frozen detector's cross-entropy on the
+  forecast chip (the detector's weights never move, gradients pass through it). Evaluation scores
+  the head and the frozen detector on persistence, forecast and truth per horizon with the
+  per-frame label pattern, so pre-onset cases can be scored alone; MAE per product. The
+  configuration is checked up front (forecasting products outside the focus requires the detector
+  loss, since the anchor alone would never teach them). `configs/forecast/`;
+  `scripts/runpod/forecast_runs.sh` runs a list of configs on a pod and stops it.
 
 Known paper/code discrepancy, not altered: the paper describes 2, 3, 3, 3 convolutions per block,
 while the code and the pretrained weights have 2, 2, 3, 3. See `docs/project.md` section 3.
@@ -130,6 +149,11 @@ All of this is in git history (last present at commit `34754a8`).
   `VisualizeSamples` remain, trimmed of the removed loaders and of `sys.path` hacks.
 - `models/README.md` (folded into the README) and the `tensorflow` dependency extra.
 - torchvision, torchmetrics and lightning from the `torch` extra; only the Lightning port used them.
+- The Keras U-Net forecaster (`tornet.data.forecast`, `tornet.models.forecaster`,
+  `tornet-train-forecaster`, `tornet-score-forecast`; last present at commit `7c026ec`), superseded
+  by `tornet-forecast`. With it went the forecaster's ImageNet-encoder option and SMP
+  pool-then-linear head: TorNet is the only encoder and the authors' head the only
+  classification head.
 
 ## Commands
 
@@ -148,8 +172,7 @@ The two scripts under `scripts/tornado_detection/` are now console commands in `
 - `tornet-pool-features`, `tornet-radar-metrics`, `tornet-env-fetch` and `tornet-meta-model`
   (new): the meta-model pipeline, see Modeling above. `scripts/runpod/cache_round2.sh` runs all of
   it unattended on a pod and stops the pod when done.
-- `tornet-train-forecaster` and `tornet-score-forecast` (new): the Keras radar forecaster, kept
-  as a reference. `tornet-forecast` (new): the SMP multi-task forecaster, see Modeling above.
+- `tornet-forecast` (new): the multi-task radar forecaster, see Modeling above.
 
 Both original commands default `KERAS_BACKEND` to `torch` when it is unset, and read `TORNET_ROOT`
 at run time rather than at import.

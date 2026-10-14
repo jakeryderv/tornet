@@ -94,34 +94,53 @@ def test_pattern_flags():
 
 
 @pytest.mark.parametrize(
-    "encoder,bottleneck,cls_head",
-    [("tornet", "cnn", "tornet"), ("tornet", "transformer", "tornet"), ("resnet18", "cnn", "smp")],
+    "bottleneck,target_products",
+    [("cnn", ["VEL", "DBZ"]), ("transformer", ["VEL", "DBZ"]), ("cnn", ALL_VARIABLES)],
 )
-def test_forecastnet_shapes(encoder, bottleneck, cls_head):
+def test_forecastnet_shapes(bottleneck, target_products):
     cfg = {
         **forecast_smp.DEFAULT_CONFIG,
         "n_in": N_IN,
         "horizons": HORIZONS,
-        "encoder": encoder,
         "encoder_weights": None,
         "start_filters": 4,
         "bottleneck": bottleneck,
-        "cls_head": cls_head,
+        "target_products": target_products,
+        "detector_weight": 0.5,
         "transformer": {"depth": 1, "heads": 2, "dropout": 0.0},
         "decoder_channels": [8, 8, 8, 8],
     }
+    forecast_smp.check_config(cfg)
+    n_ch = 2 * len(target_products)
     model = forecast_smp.ForecastNet(cfg, grid=(-(-AZ // 16), -(-RNG // 16)))
     x = torch.randn(2, N_IN, 14, AZ, RNG)
     coords = torch.randn(2, 2, AZ, RNG)
     out = model(x, coords)
-    assert out["fields"].shape == (2, HORIZONS, 4, AZ, RNG) and out["logits"].shape == (2, HORIZONS)
-    if cls_head == "tornet":  # the likelihood map, and the logit is its maximum
-        assert out["cls_map"].shape == (2, HORIZONS, -(-AZ // 16), -(-RNG // 16))
-        assert torch.allclose(out["cls_map"].amax(dim=(2, 3)), out["logits"])
-    else:
-        assert "cls_map" not in out
+    assert out["fields"].shape == (2, HORIZONS, n_ch, AZ, RNG)
+    assert out["logits"].shape == (2, HORIZONS)
+    # the likelihood map, and the logit is its maximum
+    assert out["cls_map"].shape == (2, HORIZONS, -(-AZ // 16), -(-RNG // 16))
+    assert torch.allclose(out["cls_map"].amax(dim=(2, 3)), out["logits"])
+    # the forecast chip: drawn products in, everything else persisted from the last scan
     chip = forecast_smp.full_chip(out["fields"][:, 0], x[:, -1], model.target_channels)
     assert chip.shape == (2, 14, AZ, RNG) and torch.equal(chip[:, 12:], x[:, -1, 12:])
+    assert torch.equal(chip[:, model.target_channels], out["fields"][:, 0])
+    persisted = [i for i in range(12) if i not in model.target_channels]
+    assert len(persisted) == 12 - n_ch and torch.equal(chip[:, persisted], x[:, -1, persisted])
+    # L1 weights: 1 on the focus products (two sweeps each), the anchor elsewhere
+    w = forecast_smp.channel_weights(cfg)
+    assert len(w) == n_ch and w.count(1.0) == 4 and all(v == 0.1 for v in w if v != 1.0)
+
+
+def test_check_config_rejects_untaught_products():
+    cfg = {**forecast_smp.DEFAULT_CONFIG, "target_products": ALL_VARIABLES}
+    with pytest.raises(ValueError, match="detector_weight"):
+        forecast_smp.check_config(cfg)  # 12 channels with no detector loss: 8 would get no gradient
+    forecast_smp.check_config({**cfg, "detector_weight": 0.5})
+    with pytest.raises(ValueError, match="subset"):
+        forecast_smp.check_config({**forecast_smp.DEFAULT_CONFIG, "focus_products": ["KDP"]})
+    with pytest.raises(ValueError, match="unknown"):
+        forecast_smp.check_config({**forecast_smp.DEFAULT_CONFIG, "target_products": ["VEL", "X"]})
 
 
 def test_script_end_to_end(tornet_root, keras_detector, tmp_path, monkeypatch):
@@ -139,6 +158,7 @@ def test_script_end_to_end(tornet_root, keras_detector, tmp_path, monkeypatch):
         "detector": str(det_path),
         "start_filters": 4,
         "decoder_channels": [8, 8, 8, 8],
+        "target_products": ALL_VARIABLES,  # the 12-channel variant: focus + anchored products
         "heatmap_weight": 0.5,
         "detector_weight": 0.5,
         "epochs": 1,
@@ -155,6 +175,10 @@ def test_script_end_to_end(tornet_root, keras_detector, tmp_path, monkeypatch):
     scores = os.path.join(r["expdir"], "forecast_scores")
     summary = json.loads(open(os.path.join(scores, "summary.json")).read())
     assert len(summary["horizons"]) == HORIZONS and summary["horizons"][0]["n"] == 1
+    h0 = summary["horizons"][0]
+    assert set(h0["mae_by_product"]["forecast"]) == set(ALL_VARIABLES)
+    focus = [h0["mae_by_product"]["forecast"][p] for p in ("VEL", "DBZ")]
+    assert np.isclose(h0["mae_forecast"], np.mean(focus))  # headline MAE is over the focus
     for w in ("head", "persistence", "forecast", "truth"):
         df = pd.read_csv(os.path.join(scores, f"predictions_{w}_h0.csv"))
         assert {
@@ -187,6 +211,7 @@ def test_script_end_to_end(tornet_root, keras_detector, tmp_path, monkeypatch):
                 **cfg,
                 "epochs": 1,
                 "transformer": {"depth": 1},
+                "target_products": ["VEL", "DBZ"],
                 "exp_name": "fc_cli",
                 "test_years": [],
             }

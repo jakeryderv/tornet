@@ -569,7 +569,7 @@ Decision: the early-prediction meta model is the main line. The forecaster (Step
 remains worth running because it is the only path that changes the frozen features, and a
 better encoder feeds this same table; a pod probe of it started the same night.
 
-### Step 2 design: forecast the radar, predict and detect on the forecast (agreed 2026-10-13; built, not yet run)
+### Step 2 design: forecast the radar, predict and detect on the forecast (agreed 2026-10-13; built; probed and trimmed 2026-10-14)
 
 Decided after Experiment 7 was launched; runs only after its results are in and the user says go.
 
@@ -649,11 +649,11 @@ on the detector's 8 x 15 heat map per horizon.
   result makes the actual ratios matter). Details of the weighting and the detector-loss
   weight are still under discussion.
 
-**Modeling, revised (agreed and built 2026-10-13; `tornet-forecast`, one script,
+**Modeling (agreed and built 2026-10-13, trimmed 2026-10-14; `tornet-forecast`, one script,
 `src/tornet/scripts/forecast_smp.py`).** Multi-task in PyTorch with Segmentation Models PyTorch
-(SMP): one U-Net that forecasts velocity and reflectivity at each horizon *and* predicts a
-tornado probability per horizon from its bottleneck, with the frozen TorNet detector kept as
-the external yardstick.
+(SMP): one network that forecasts radar products at each horizon *and* predicts a tornado
+probability per horizon from its bottleneck, with the frozen TorNet detector kept as the
+external yardstick.
 
 ```
 observed scans (n_in x 14 channels, polar)       all 12 products + range-folded in
@@ -665,38 +665,68 @@ encoder: the TorNet CNN ported to torch (tornet.models.torch_backbone), initiali
         |
 bottleneck: identity (A) or a small transformer over the 8x15 tokens (B)
         |
-SMP U-Net decoder (256/128/64/32) -> regression head: VEL + DBZ per horizon, 120x240
+SMP U-Net decoder (256/128/64/32) -> regression head: the target products per horizon, 120x240
 bottleneck features --------------> classification head: tornado logit per horizon
 ```
 
-*Classification head.* Default `cls_head: "tornet"`: the authors' design on the fine-tuned
-bottleneck, two 1x1 convolutions then one logit per cell per horizon and the max over cells, so
-the paper's spatial likelihood map comes with it (saved per horizon in `maps_h<k>.npz`
-together with the frozen detector's maps on persistence, forecast and truth). `"smp"` gives
-SMP's pool-then-linear head as the alternative; it decides from the strongest feature values
-rather than the strongest location and has no map.
+*Names, fixed.* Two copies of the published TorNet. The **fine-tuned encoder** is its backbone
+only, weights updated in training, shared by both heads. The **frozen detector** is the complete
+published model (backbone and max-pool head), weights never updated; it scores the floor (last
+observed scan), the ceiling (real future scan) and the forecast, and in the detector-loss configs
+it also sits inside the loss as a critic. Two routes to "tornado at +h": **direct**, the
+classification head's logit, no frozen detector involved; **indirect**, the forecast chip read
+by the frozen detector.
+
+*Classification head.* The authors' design on the fine-tuned bottleneck: two 1x1 convolutions,
+one logit per cell per horizon, max over cells, so the paper's spatial likelihood map comes with
+it (saved per horizon in `maps_h<k>.npz` together with the frozen detector's maps on
+persistence, forecast and truth). It reads 768 stacked channels, so its weights start fresh.
+(An SMP pool-then-linear alternative existed until 2026-10-14 and was removed unused.)
 
 *Why TorNet as the encoder, and only TorNet (decided 2026-10-14).* It is the only pretrained
 network trained on these storms, these channels and this polar geometry, and the project's
 thesis is reuse of it. An ImageNet encoder swap (ResNet34 via SMP) was considered and dropped:
 it would mix architecture, initialisation and capacity in one number, it answers a different
 project's question, and the probe pointed at the loss rather than capacity as the lever. The
-script still accepts any SMP encoder name, but no config uses one. If capacity ever becomes the
-question, a wider or deeper TorNet-style stack from the published weights is the cleaner test.
+option is gone from the script. If capacity ever becomes the question, a wider or deeper
+TorNet-style stack from the published weights is the cleaner test.
 
-*Channels.* All twelve products go in (the encoder was trained on them). Only VEL and DBZ are
-predicted; for anything that needs a full chip (the frozen detector), the other products and
-the range-folded channels are persisted from the last observed scan. The truth chip keeps its
+*Channels.* All twelve products go in (the encoder was trained on them). `target_products`
+sets what the decoder draws: VEL and DBZ (4 channels, the primary configs) or all six products
+(12 channels). Whatever is not drawn, and the range-folded flags, is persisted from the last
+observed scan when a full chip is assembled for the frozen detector. The truth chip keeps its
 own range-folded channels: they change between scans (mean absolute change 0.08 over 15 min)
 and move the detector's logit by up to 9, so persisting them onto the truth would corrupt the
 ceiling.
 
-*Losses.* L1 on VEL and DBZ in the detector's normalised space, per-product weights (both 1.0),
-optionally multiplied by `1 + heatmap_weight x` the frozen detector's min-max-normalised heat map
-on the real target scan (the "focus the regression where the detector would look" idea,
-`heatmap_weight` 2.0 in the configs); weighted cross-entropy on the per-horizon labels with the
-authors' sample weights; optionally the frozen detector's cross-entropy on the forecast chip
-(`detector_weight` 0.5).
+*Losses, one total.* Each term is attached to an output and updates the parts that produced
+it: the decoder only from the field terms, the classification head only from its cross-entropy,
+the shared encoder from everything.
+
+- L1 on the drawn products in the detector's normalised space, weight 1 on the
+  `focus_products` (VEL, DBZ) and `anchor_weight` (0.1) on any other drawn product, optionally
+  multiplied by `1 + heatmap_weight x` the frozen detector's min-max-normalised heat map on the
+  real target scan (`heatmap_weight` 2.0 in the configs).
+- Weighted cross-entropy on the classification head's per-horizon logits, the authors' sample
+  weights.
+- Optionally the frozen detector's cross-entropy on the forecast chip (`detector_weight` 0.5).
+  Gradients pass back through the frozen detector into the decoder and encoder; its weights do
+  not move. It can only reach the drawn channels, so with 4 drawn channels its whole message is
+  "move velocity and reflectivity so that I see a tornado".
+
+*The 12-channel variant and the anchor (agreed 2026-10-14).* Drawing all twelve channels lets
+the detector loss weight every channel by how much the published model actually uses it, per
+pixel and per case, instead of our hand-picked list. With the detector loss as the only teacher
+of the eight secondary channels nothing would hold them to reality, and the decoder could paint
+whatever texture makes the critic fire (an adversarial-example risk, scored as a gain). The 0.1
+anchor keeps them near real values while the gradient budget stays on velocity and reflectivity.
+The script refuses a config that draws products outside the focus without the detector loss,
+since the anchor alone would never teach them. The gaming check is per-product MAE
+(`mae_by_product` in `summary.json`): if the indirect AUC rises while the secondary products'
+MAE drifts above persistence, the critic is being fooled and the anchor needs to be heavier.
+Expected effect on the headline number is small (the persisted channels cost about 0.08 logit);
+the value is removing a choice of ours from the pipeline and letting the result say whether the
+velocity-and-reflectivity focus was right.
 
 *Port verification.* `TorNetDetector` (encoder + max-pool head) with weights copied from the
 published Keras model reproduces its logits to 0.002 on real 2014 test files and matches the
@@ -705,21 +735,23 @@ cached `results/predictions_pretrained_2013_2015.csv`.
 *Evaluation.* Test years, per horizon: the classification head's probability and the frozen
 detector on persistence / forecast / truth, written as tornet-score CSVs with the label pattern
 (e.g. `0011`) and `pre_onset` / `ongoing` flags; `summary.json` has AUC/AUCPR per view for all
-cases and for the pre-onset subset, MAE against truth for forecast and persistence, and paired
-bootstraps against persistence.
+cases and for the pre-onset subset, MAE against truth for forecast and persistence (headline over
+the focus products, and per product), and paired bootstraps against persistence.
 
-*Phases and configs (`configs/forecast/smp_*.json`, fold B, ~2 h each locally).*
+*Configs (`configs/forecast/`, fold B, ~2 h each locally, ~45 min on the pod).* Trimmed on
+2026-10-14 after the probe; see "Trim" below for what was dropped and why.
 
-| phase | run | what it answers |
+| config | varies | what it answers |
 |---|---|---|
-| 0 | port + verify (done) | the torch encoder is the published network |
-| 1 | channel ablation / gradient maps on the frozen detector (optional, 20 min) | which products carry the detector's skill |
-| 2 | A control; A + heat-map weighting; A + heat-map + detector loss | does forecasting beat persistence; does focusing the loss sharpen it |
-| 5 | B: transformer bottleneck | does attention at the bottleneck add anything |
-| 6 | full data on the pod for the winners (~$10 per run) | the real numbers |
+| `fold_b_control` | plain L1 on VEL + DBZ, cross-entropy on the head | the floor for the loss comparison |
+| `fold_b_detector` | + heat-map weighting + detector loss (the probe variant) | does the forecast clear the persistence floor at full fold B |
+| `fold_b_detector_12ch` | as above, all twelve channels drawn, 0.1 anchor | was the velocity-and-reflectivity focus right |
+| `fold_b_transformer` (held) | bottleneck B with the same losses as `fold_b_detector` | does attention at the bottleneck add anything; run only if A clears the floor |
+| `smoke_detector` | `fold_b_detector` on 6,000 files, 4 epochs | a fresh pod or laptop works before a long run |
 
-The Keras U-Net built earlier the same day (`tornet-train-forecaster`, `tornet-score-forecast`)
-stays as a reference implementation and is not on this path.
+`scripts/runpod/forecast_runs.sh [configs...]` runs them back to back on a pod (default: the
+three fold B configs) and stops the pod. The Keras U-Net built on 2026-10-13 was removed on
+2026-10-14 (last at commit `7c026ec`); `tornet-forecast` is the only forecaster.
 
 **Probe result (2026-10-14; capped fold B: 6,000 train files from 2013+2015, 2,000 val files
 from 2014, 4 epochs; scored on the full 2014 test partition, 2,546 samples, 220 pre-onset
@@ -749,6 +781,28 @@ Pixel MAE (VEL+DBZ, normalised units) vs persistence: control 0.387 / 0.492 vs 0
   target, which Experiments 4–7 showed the frozen features cannot do.
 - Mechanics all hold: loading, mixed precision, the frozen judge in the graph, maps saved,
   pre-onset scoping. Runs: `results/forecast_probe/`.
+- Reading the two routes side by side: the loss change repaired the one output that was broken
+  (the drawn forecast, whose blur is exactly what the frozen detector keys on) and that output
+  happens to be the indirect route's input; the direct head had nothing broken and only felt the
+  change through the shared encoder (+0.003 to +0.006). "Better" for the head means better than
+  the published TorNet on the latest real scan, never better than TorNet given the true future
+  scan, which stays 0.045 higher at +10 min.
+
+**Trim (decided 2026-10-14).** The probe settled enough to cut the run list from five to three
+and to remove code no longer on the table.
+
+- Dropped the heat-map-only run: it asks how much of the fix was the heat map versus the
+  detector term, a nice-to-know rather than a decision driver; an ablation remains possible if
+  the full run clears the floor.
+- Held the transformer bottleneck: the decisive question is whether any forecast clears the
+  persistence floor, and if the loss cannot get there a different bottleneck will not. Its config
+  now carries the same losses as `fold_b_detector`, so bottleneck is the only variable when it
+  does run (as written before the probe it had no detector loss and would have confounded B
+  against A).
+- Added the 12-channel anchored variant (above) as the one open design question.
+- Removed the Keras U-Net forecaster, the ImageNet encoder option and the SMP classification
+  head; replaced the two probe configs with `smoke_detector`. Evaluation (floor / forecast /
+  truth / head, pre-onset scoping, paired bootstraps, likelihood maps) is untouched.
 
 ### Training-signal ideas (agreed order: A then B)
 
@@ -860,6 +914,20 @@ uv run tornet-score experiments/<lead10_maxpool>/predictions.csv experiments/<le
 At full scale `scripts/runpod/cache_round2.sh` runs the same steps unattended (environment fetch
 in the background while the heads use the GPU) and stops the pod when done through `runpodctl`,
 which needs the laptop's `~/.runpod/config.toml` copied to the pod at launch.
+
+**Radar forecaster** (step 2; reads the raw files, no cache):
+
+```
+uv run tornet-forecast configs/forecast/smoke_detector.json      # ~15 min on the laptop, ~5 min on the pod
+uv run tornet-forecast configs/forecast/fold_b_detector.json     # ~2 h locally, ~45 min on the pod
+# on a pod (fresh pod, repo rsynced to /workspace/tornet-repo, runpodctl + config copied):
+cd /workspace/tornet-repo && UV_PROJECT_ENVIRONMENT=/root/venv setsid nohup \
+  bash scripts/runpod/forecast_runs.sh > /workspace/forecast_runs.log 2>&1 < /dev/null &
+```
+
+Runs land under `$EXP_DIR` (default `experiments/`); configs must not set `exp_dir`. Each run
+writes `forecast_scores/summary.json` (pre-onset WC AUC for persistence / forecast / truth /
+head per horizon, MAE per product, paired bootstraps) and the likelihood maps.
 
 A variant is a new `exp_name` prefix on the same configs. Subset scores sit below the paper's because
 of less training data and a higher tornado base rate (13% vs 6%); compare the hybrid against the

@@ -44,8 +44,6 @@ tornet-pool-features = "tornet.scripts.pool_features:main"
 tornet-radar-metrics = "tornet.scripts.radar_metrics:main"
 tornet-env-fetch = "tornet.scripts.env_fetch:main"
 tornet-meta-model = "tornet.scripts.meta_model:cli"
-tornet-train-forecaster = "tornet.scripts.train_forecaster:cli"
-tornet-score-forecast = "tornet.scripts.score_forecast:main"
 tornet-forecast = "tornet.scripts.forecast_smp:cli"
 
 [project.urls]

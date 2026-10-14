@@ -1,5 +1,5 @@
 {
-  "_note": "Forecaster A, heat-map weighting plus the frozen detector's loss on the forecast chip (weight 0.5).",
+  "_note": "Fold B channel-scope variant: as fold_b_detector but the decoder forecasts all twelve channels; L1 weight 1 on VEL + DBZ, 0.1 anchor on the other four products, the detector loss decides how they are used.",
   "train_years": [
     2013,
     2015
@@ -13,10 +13,18 @@
   "n_in": 2,
   "horizons": 2,
   "target_products": [
+    "DBZ",
+    "VEL",
+    "KDP",
+    "RHOHV",
+    "ZDR",
+    "WIDTH"
+  ],
+  "focus_products": [
     "VEL",
     "DBZ"
   ],
-  "encoder": "tornet",
+  "anchor_weight": 0.1,
   "encoder_weights": "pretrained",
   "bottleneck": "cnn",
   "epochs": 6,
@@ -24,8 +32,7 @@
   "learning_rate": 0.0001,
   "encoder_lr_scale": 0.1,
   "workers": 8,
-  "exp_dir": "experiments",
   "heatmap_weight": 2.0,
   "detector_weight": 0.5,
-  "exp_name": "fc_a_heatmap_detector_fold_b"
+  "exp_name": "fc_a_heatmap_detector_12ch_fold_b"
 }

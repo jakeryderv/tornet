@@ -1,4 +1,5 @@
 {
+  "_note": "Smoke test for a fresh pod or laptop: fold_b_detector on 6000 train files and 4 epochs (the probe recipe; ~5 min on an RTX PRO 6000, ~15 min on the laptop).",
   "train_years": [
     2013,
     2015
@@ -15,18 +16,20 @@
     "VEL",
     "DBZ"
   ],
-  "encoder": "tornet",
+  "focus_products": [
+    "VEL",
+    "DBZ"
+  ],
+  "anchor_weight": 0.1,
   "encoder_weights": "pretrained",
   "bottleneck": "cnn",
   "epochs": 4,
   "batch_size": 16,
   "learning_rate": 0.0001,
   "encoder_lr_scale": 0.1,
-  "workers": 12,
-  "exp_dir": "/workspace/experiments",
-  "exp_name": "fc_probe_a_heatmap_detector_fold_b",
-  "_note": "Pod probe on a capped fold B: 6000 train files (2013+2015), 2000 val files (2014), full 2014 test partition, 4 epochs. Heat-map weighting plus the detector loss.",
-  "max_files": 6000,
+  "workers": 8,
   "heatmap_weight": 2.0,
-  "detector_weight": 0.5
+  "detector_weight": 0.5,
+  "max_files": 6000,
+  "exp_name": "fc_smoke_detector_fold_b"
 }

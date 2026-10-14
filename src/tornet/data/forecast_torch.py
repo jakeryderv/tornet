@@ -1,8 +1,9 @@
 """PyTorch dataset for radar forecasting: the oldest `n_in` scans in, the next `horizons` out.
 
-Every tensor is channels-first and already in the detector's representation (normalised,
-background-filled; see tornet.data.forecast), so the torch TorNet encoder consumes `x` directly
-and a forecast can be handed to the torch detector without further processing.
+Every tensor is channels-first and already in the detector's representation (normalised as the
+detector normalises, empty gates filled with its background value; `normalize_fields`), so the
+torch TorNet encoder consumes `x` directly and a forecast can be handed to the torch detector
+without further processing.
 
 Per sample:
     x            (n_in, 14, A, R)       inputs: 12 radar channels + 2 range-folded channels
@@ -23,10 +24,10 @@ import torch
 from torch.utils.data import Dataset
 
 from tornet.data import preprocess as pp
-from tornet.data.constants import ALL_VARIABLES
-from tornet.data.forecast import normalize_fields
+from tornet.data.constants import ALL_VARIABLES, CHANNEL_MIN_MAX
 from tornet.data.loader import query_catalog, read_file
 
+BACKGROUND = -3.0  # the detector's FillNaNs value, in normalised units
 CATEGORY_CODES = {"TOR": 0, "NUL": 1, "WRN": 2}
 # channel index of each product's sweeps in the 12-channel layout
 CHANNEL_INDEX = {v: [2 * i, 2 * i + 1] for i, v in enumerate(ALL_VARIABLES)}
@@ -34,6 +35,33 @@ CHANNEL_INDEX = {v: [2 * i, 2 * i + 1] for i, v in enumerate(ALL_VARIABLES)}
 
 def channel_indices(products: list[str]) -> list[int]:
     return [i for p in products for i in CHANNEL_INDEX[p]]
+
+
+def channel_scale(name: str) -> tuple[float, float]:
+    """(offset, scale) such that normalised = (raw - offset) / scale, as the detector does."""
+    lo, hi = CHANNEL_MIN_MAX[name]
+    return (lo + hi) / 2, (hi - lo) / 2
+
+
+def normalize_fields(frames: dict[str, np.ndarray], background: float = BACKGROUND) -> np.ndarray:
+    """{variable: (..., azimuth, range, tilt)} -> (..., azimuth, range, 2 * len(ALL_VARIABLES))
+    normalised and NaN-filled, channel order as the detector's concatenation."""
+    out = []
+    for v in ALL_VARIABLES:
+        offset, scale = channel_scale(v)
+        x = (frames[v].astype(np.float32) - offset) / scale
+        out.append(np.where(np.isnan(x), background, x))
+    return np.concatenate(out, axis=-1)
+
+
+def denormalize_fields(fields: np.ndarray) -> dict[str, np.ndarray]:
+    """Inverse of `normalize_fields` without re-introducing NaNs, for viewing forecasts in
+    physical units; background gates stay at the fill value's physical equivalent."""
+    out, n = {}, fields.shape[-1] // len(ALL_VARIABLES)
+    for i, v in enumerate(ALL_VARIABLES):
+        offset, scale = channel_scale(v)
+        out[v] = fields[..., i * n : (i + 1) * n] * scale + offset
+    return out
 
 
 def sample_weight(category: str, ef_number: int, w: dict) -> float:

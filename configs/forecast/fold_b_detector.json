@@ -1,5 +1,5 @@
 {
-  "_note": "Forecaster B: transformer bottleneck over the 8x15 tokens on the TorNet encoder, heat-map weighting.",
+  "_note": "Fold B primary: heat-map weighted L1 on VEL + DBZ plus the frozen detector's loss on the forecast chip (0.5). Same recipe as the probe variant.",
   "train_years": [
     2013,
     2015
@@ -16,15 +16,19 @@
     "VEL",
     "DBZ"
   ],
-  "encoder": "tornet",
+  "focus_products": [
+    "VEL",
+    "DBZ"
+  ],
+  "anchor_weight": 0.1,
   "encoder_weights": "pretrained",
-  "bottleneck": "transformer",
+  "bottleneck": "cnn",
   "epochs": 6,
   "batch_size": 16,
   "learning_rate": 0.0001,
   "encoder_lr_scale": 0.1,
   "workers": 8,
-  "exp_dir": "experiments",
   "heatmap_weight": 2.0,
-  "exp_name": "fc_b_transformer_fold_b"
+  "detector_weight": 0.5,
+  "exp_name": "fc_a_heatmap_detector_fold_b"
 }

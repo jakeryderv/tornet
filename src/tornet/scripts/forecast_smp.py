@@ -4,31 +4,40 @@ evaluation, CLI.
 
     observed scans (n_in x 14 channels, polar)        all channels in
             |
-    encoder: the pretrained TorNet CNN ported to torch (or any SMP encoder, e.g. an ImageNet
-             ResNet34, for the encoder-swap experiment), run per scan, features concatenated
-             across scans at every scale
+    encoder: the pretrained TorNet CNN ported to torch, initialised from the published weights
+             and fine-tuned; run per scan, features concatenated across scans at every scale
             |
     bottleneck: identity (CNN) or a small transformer over the 8x15 tokens
             |
-    SMP U-Net decoder ---------------------------> regression head: VEL + DBZ at each horizon
-    bottleneck features ------------------------> classification head: tornado logit per horizon
-                                                  (default: the authors' per-cell-logits-then-max
-                                                   head, so a likelihood map comes with it)
+    SMP U-Net decoder ---------------------------> regression head: the target products at
+                                                   each horizon (VEL + DBZ, or all twelve channels)
+    bottleneck features ------------------------> classification head: the authors' per-cell
+                                                  logits then max, one logit per horizon, so a
+                                                  likelihood map comes with it
 
-Losses: weighted L1 on the predicted products in the detector's normalised space (optionally
-weighted spatially by the frozen detector's heat map on the real target scan), weighted
-cross-entropy on the per-horizon labels, and optionally the frozen detector's cross-entropy on
-the forecast chip (forecast products plus the other products and the range-folded channels
-persisted from the last scan; the truth chip keeps its own range-folded channels, which do
-change between scans and move the detector's logit).
+Two routes to "tornado at +h": the classification head (direct; no frozen detector involved)
+and the frozen published detector reading the forecast chip (indirect). The frozen detector is
+the complete published model, weights never updated; it also scores the floor (last observed
+scan) and the ceiling (real future scan).
+
+Losses, one total: L1 on the target products in the detector's normalised space, weight 1 on
+the focus products (VEL, DBZ) and `anchor_weight` on any other target product (so when all
+twelve channels are forecast the secondary ones stay near real values while the detector loss
+decides how to use them), optionally multiplied by the frozen detector's heat map on the real
+target scan; weighted cross-entropy on the classification head's per-horizon logits; optionally
+the frozen detector's cross-entropy on the forecast chip (target products drawn, the remaining
+products and the range-folded channels persisted from the last scan; gradients pass through the
+frozen detector into the decoder and encoder, its weights do not move). Each term updates the
+parts that produced its output: the decoder only from the field terms, the classification head
+only from its cross-entropy, the shared encoder from all of them.
 
 Evaluation (test years), per horizon: the classification head's probability, and the frozen
 TorNet detector on persistence / forecast / truth, written as tornet-score CSVs with the per-frame
 label pattern so the pre-onset subset (no input frame tornadic, last target frame tornadic) can
 be scored on its own; summary.json holds AUC/AUCPR per view for all and pre-onset cases, MAE
-against truth for forecast and persistence, and paired bootstraps against persistence;
-maps_h<k>.npz holds the 8x15 likelihood maps of the head and of the frozen detector on
-persistence, forecast and truth.
+against truth for forecast and persistence (headline over the focus products, and per product),
+and paired bootstraps against persistence; maps_h<k>.npz holds the 8x15 likelihood maps of the
+head and of the frozen detector on persistence, forecast and truth.
 
 Usage: tornet-forecast <config.json>
 """
@@ -53,6 +62,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 
+from tornet.data.constants import ALL_VARIABLES
 from tornet.data.forecast_torch import ForecastDataset, channel_indices, collate
 from tornet.models.torch_backbone import (
     TorNetEncoder,
@@ -75,21 +85,21 @@ DEFAULT_CONFIG = {
     "test_years": [2014],
     "n_in": 2,
     "horizons": 2,
-    "target_products": ["VEL", "DBZ"],  # predicted; the rest are persisted for the detector
+    # products the decoder forecasts; the rest are persisted from the last scan for the detector.
+    # ["VEL", "DBZ"] (4 channels) or all six products (12 channels, needs detector_weight > 0:
+    # the non-focus products are otherwise only anchored, never taught)
+    "target_products": ["VEL", "DBZ"],
+    "focus_products": ["VEL", "DBZ"],  # L1 weight 1 and the headline MAE
+    "anchor_weight": 0.1,  # L1 weight on target products outside the focus
     # model
-    "encoder": "tornet",  # "tornet" (the pretrained TorNet CNN) or an SMP encoder name
-    "encoder_weights": "pretrained",  # tornet: "pretrained" | .keras path | null; SMP: "imagenet" | null
+    "encoder_weights": "pretrained",  # the published TorNet weights, a .keras path, or null
     "encoder_trainable": True,
     "start_filters": 48,
     "bottleneck": "cnn",  # "cnn" (identity) or "transformer"
     "transformer": {"depth": 2, "heads": 8, "dropout": 0.1},
     "decoder_channels": [256, 128, 64, 32],
-    "cls_head": "tornet",  # "tornet": per-cell logits then max (the authors' head, gives a
-    #                        likelihood map); "smp": SMP's pool-then-linear head
-    "cls_dropout": 0.2,  # SMP head only
     # losses
     "field_weight": 1.0,
-    "product_weights": {"VEL": 1.0, "DBZ": 1.0},
     "heatmap_weight": 0.0,  # spatial weight = 1 + heatmap_weight * detector heat map on truth
     "cls_weight": 1.0,
     "detector_weight": 0.0,  # frozen detector's loss on the forecast chip
@@ -183,28 +193,18 @@ class TransformerBottleneck(nn.Module):
 
 
 class ForecastNet(nn.Module):
-    """Encoder per scan -> features concatenated across scans -> bottleneck -> SMP U-Net decoder
-    -> regression head; bottleneck -> classification head."""
+    """TorNet encoder per scan -> features concatenated across scans -> bottleneck -> SMP U-Net
+    decoder -> regression head; bottleneck -> the authors' classification head."""
 
     def __init__(self, cfg, grid: tuple[int, int] = (8, 15)):
         super().__init__()
-        from segmentation_models_pytorch.base import ClassificationHead, SegmentationHead
+        from segmentation_models_pytorch.base import SegmentationHead
         from segmentation_models_pytorch.decoders.unet.decoder import UnetDecoder
-        from segmentation_models_pytorch.encoders import get_encoder
 
         self.n_in, self.horizons = int(cfg["n_in"]), int(cfg["horizons"])
         self.target_channels = channel_indices(cfg["target_products"])
-        if cfg["encoder"] == "tornet":
-            self.encoder = TorNetEncoder(start_filters=int(cfg["start_filters"]))
-            self.tornet_encoder = True
-            channels = self.encoder.out_channels
-        else:
-            self.encoder = get_encoder(
-                cfg["encoder"], in_channels=14, depth=4, weights=cfg.get("encoder_weights") or None
-            )
-            self.tornet_encoder = False
-            channels = list(self.encoder.out_channels)
-        enc_channels = [c * self.n_in for c in channels]
+        self.encoder = TorNetEncoder(start_filters=int(cfg["start_filters"]))
+        enc_channels = [c * self.n_in for c in self.encoder.out_channels]
         if cfg["bottleneck"] == "transformer":
             t = cfg["transformer"]
             self.bottleneck = TransformerBottleneck(
@@ -217,20 +217,12 @@ class ForecastNet(nn.Module):
         self.regression = SegmentationHead(
             dec[-1], self.horizons * len(self.target_channels), kernel_size=3
         )
-        if cfg.get("cls_head", "tornet") == "tornet":
-            self.classification = TorNetHead(enc_channels[-1], out_channels=self.horizons)
-        else:
-            self.classification = ClassificationHead(
-                enc_channels[-1], self.horizons, pooling="max", dropout=float(cfg["cls_dropout"])
-            )
+        self.classification = TorNetHead(enc_channels[-1], out_channels=self.horizons)
 
     def encode(self, x: torch.Tensor, coords: torch.Tensor) -> list[torch.Tensor]:
         b, n = x.shape[:2]
         flat = x.flatten(0, 1)  # (B * n_in, 14, A, R)
-        if self.tornet_encoder:
-            feats = self.encoder(flat, coords.repeat_interleave(n, dim=0))
-        else:
-            feats = self.encoder(flat)
+        feats = self.encoder(flat, coords.repeat_interleave(n, dim=0))
         # (B * n_in, C, h, w) -> (B, n_in * C, h, w): scans side by side in the channel axis
         return [f.reshape(b, n * f.shape[1], *f.shape[2:]) for f in feats]
 
@@ -239,19 +231,17 @@ class ForecastNet(nn.Module):
         feats[-1] = self.bottleneck(feats[-1])
         fields = self.regression(self.decoder(feats))
         b, _, a, r = fields.shape
-        out = {"fields": fields.reshape(b, self.horizons, len(self.target_channels), a, r)}
-        if isinstance(self.classification, TorNetHead):
-            cls_map = self.classification.heat(feats[-1])  # (B, horizons, 8, 15) likelihood map
-            out["cls_map"] = cls_map
-            out["logits"] = cls_map.amax(dim=(2, 3))
-        else:
-            out["logits"] = self.classification(feats[-1])
-        return out
+        cls_map = self.classification.heat(feats[-1])  # (B, horizons, 8, 15) likelihood map
+        return {
+            "fields": fields.reshape(b, self.horizons, len(self.target_channels), a, r),
+            "cls_map": cls_map,
+            "logits": cls_map.amax(dim=(2, 3)),
+        }
 
 
 def build_model(cfg) -> ForecastNet:
     model = ForecastNet(cfg)
-    if cfg["encoder"] == "tornet" and cfg.get("encoder_weights"):
+    if cfg.get("encoder_weights"):
         import keras
 
         from tornet.scripts.train_keras import resolve_init_from
@@ -279,14 +269,37 @@ def full_chip(
     return chip
 
 
+def channel_weights(cfg) -> list[float]:
+    """L1 weight per target channel: 1 on the focus products, `anchor_weight` on the rest."""
+    focus = set(cfg["focus_products"])
+    return [
+        1.0 if p in focus else float(cfg["anchor_weight"])
+        for p in cfg["target_products"]
+        for _ in (0, 1)
+    ]
+
+
+def check_config(cfg) -> None:
+    unknown = set(cfg["target_products"]) - set(ALL_VARIABLES)
+    if unknown:
+        raise ValueError(f"unknown target products {sorted(unknown)}")
+    if not set(cfg["focus_products"]) <= set(cfg["target_products"]):
+        raise ValueError("focus_products must be a subset of target_products")
+    if (
+        set(cfg["target_products"]) != set(cfg["focus_products"])
+        and float(cfg["detector_weight"]) <= 0
+    ):
+        raise ValueError(
+            "forecasting products outside the focus needs detector_weight > 0: the anchor keeps "
+            "them near real values, only the detector loss teaches them"
+        )
+
+
 class Losses:
     def __init__(self, cfg, model: ForecastNet, device):
         self.cfg = cfg
         self.target_channels = model.target_channels
-        w = []
-        for p in cfg["target_products"]:
-            w += [float(cfg["product_weights"].get(p, 1.0))] * 2
-        self.channel_w = torch.tensor(w, device=device).view(1, 1, -1, 1, 1)
+        self.channel_w = torch.tensor(channel_weights(cfg), device=device).view(1, 1, -1, 1, 1)
         self.detector = None
         if float(cfg["heatmap_weight"]) > 0 or float(cfg["detector_weight"]) > 0:
             self.detector = pretrained_detector(cfg["detector"], device)
@@ -464,6 +477,7 @@ def evaluate(cfg, model, device, expdir, years):
     tc = model.target_channels
     horizons = int(cfg["horizons"])
     rows = {w: [[] for _ in range(horizons)] for w in ("head", "persistence", "forecast", "truth")}
+    # per-channel absolute error per sample, (N, len(tc)), for forecast and persistence
     mae = {"forecast": [[] for _ in range(horizons)], "persistence": [[] for _ in range(horizons)]}
     maps = {w: [[] for _ in range(horizons)] for w in ("head", "persistence", "forecast", "truth")}
     map_files = []
@@ -494,10 +508,10 @@ def evaluate(cfg, model, device, expdir, years):
             if head_map is not None:
                 maps["head"][h].append(head_map[:, h].astype(np.float16))
             mae["forecast"][h].append(
-                (fields[:, h] - future[:, h, tc]).abs().mean(dim=(1, 2, 3)).cpu().numpy()
+                (fields[:, h] - future[:, h, tc]).abs().mean(dim=(2, 3)).cpu().numpy()
             )
             mae["persistence"][h].append(
-                (last[:, tc] - future[:, h, tc]).abs().mean(dim=(1, 2, 3)).cpu().numpy()
+                (last[:, tc] - future[:, h, tc]).abs().mean(dim=(2, 3)).cpu().numpy()
             )
             for j, meta in enumerate(batch["meta"]):
                 base = {
@@ -522,10 +536,22 @@ def evaluate(cfg, model, device, expdir, years):
         "years": list(years),
         "n_in": int(cfg["n_in"]),
         "target_products": cfg["target_products"],
+        "focus_products": cfg["focus_products"],
         "horizons": [],
     }
+    focus = [  # channel slots of the focus products (two sweeps each)
+        2 * i + k
+        for i, p in enumerate(cfg["target_products"])
+        if p in cfg["focus_products"]
+        for k in (0, 1)
+    ]
     for h in range(horizons):
         preds = {}
+        err = {w: np.concatenate(v[h]).mean(axis=0) for w, v in mae.items()}  # (len(tc),)
+        by_product = {
+            w: {p: float(e[2 * i : 2 * i + 2].mean()) for i, p in enumerate(cfg["target_products"])}
+            for w, e in err.items()
+        }
         for w in rows:
             df = pd.DataFrame(rows[w][h])
             df["year"] = pd.to_datetime(df["time"], unit="s").dt.year
@@ -539,8 +565,9 @@ def evaluate(cfg, model, device, expdir, years):
             "positives": int(preds["head"]["label"].sum()),
             "pre_onset_cases": int(preds["head"]["pre_onset"].sum()),
             "ongoing_cases": int(preds["head"]["ongoing"].sum()),
-            "mae_forecast": float(np.concatenate(mae["forecast"][h]).mean()),
-            "mae_persistence": float(np.concatenate(mae["persistence"][h]).mean()),
+            "mae_forecast": float(err["forecast"][focus].mean()),  # over the focus products
+            "mae_persistence": float(err["persistence"][focus].mean()),
+            "mae_by_product": by_product,
             "all": {w: views_for(df, n_boot, seed) for w, df in preds.items()},
             "pre_onset": {w: views_for(df, n_boot, seed) for w, df in scoped.items()},
             "pre_onset_paired_vs_persistence": {
@@ -573,6 +600,7 @@ def evaluate(cfg, model, device, expdir, years):
 
 
 def main(cfg):
+    check_config(cfg)
     torch.manual_seed(int(cfg["seed"]))
     np.random.seed(int(cfg["seed"]))
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -583,7 +611,8 @@ def main(cfg):
     n_params = sum(p.numel() for p in model.parameters())
     n_train = sum(p.numel() for p in model.parameters() if p.requires_grad)
     logging.info(
-        f"{cfg['encoder']} encoder, {cfg['bottleneck']} bottleneck: {n_params:,} params, {n_train:,} trainable"
+        f"TorNet encoder, {cfg['bottleneck']} bottleneck, {len(model.target_channels)} forecast "
+        f"channels: {n_params:,} params, {n_train:,} trainable"
     )
     with open(os.path.join(expdir, "params.json"), "w") as f:
         json.dump({"config": cfg, "params": n_params, "trainable": n_train}, f, indent=2)
@@ -592,8 +621,8 @@ def main(cfg):
     summary = evaluate(cfg, model, device, expdir, cfg["test_years"]) if cfg["test_years"] else None
     results = {
         "exp_name": cfg["exp_name"],
-        "encoder": cfg["encoder"],
         "bottleneck": cfg["bottleneck"],
+        "target_products": cfg["target_products"],
         "params": n_params,
         "trainable": n_train,
         "epochs_run": len(history),
@@ -627,7 +656,7 @@ def cli():
     if len(sys.argv) > 1:
         with open(sys.argv[1]) as f:
             loaded = json.load(f)
-        for k in ("transformer", "product_weights", "sample_weights"):
+        for k in ("transformer", "sample_weights"):
             if k in loaded:
                 loaded[k] = {**cfg[k], **loaded[k]}
         cfg.update(loaded)

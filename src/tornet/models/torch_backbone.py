@@ -10,7 +10,7 @@ which `load_keras_weights` verifies.
 
 Inputs are channels-first: the 12 normalised, background-filled radar channels plus the two
 range-folded channels (14), and the 2 coordinate channels, exactly the tensors the Keras model
-builds internally before its first convolution (see tornet.data.forecast.normalize_fields).
+builds internally before its first convolution (tornet.data.forecast_torch.normalize_fields).
 """
 
 from __future__ import annotations

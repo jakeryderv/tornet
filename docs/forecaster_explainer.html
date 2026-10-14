@@ -1,0 +1,408 @@
+<title>TorNet Forecaster Map</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=Source+Sans+3:wght@400;600&family=Source+Code+Pro:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; the architecture is a clickable SVG with a detail panel beneath it. Radar-console neutrals; amber = trained from TorNet, teal = frozen TorNet, violet = new, red = loss / gradient. */
+:root{
+  --bg:#f6f5f1; --fg:#1d2126; --muted:#5d6670; --line:#d6d9d3; --panel:#ffffff; --panel2:#eeede8;
+  --train:#c2641a; --train-soft:#f7e4d4; --frozen:#1a7f86; --frozen-soft:#d6eef0; --new:#6b5bb5; --new-soft:#e7e3f5;
+  --tor:#b3261e; --tor-soft:#f6dcd9; --hi:#1d2126;
+  --display:"Source Serif 4",Georgia,serif; --body:"Source Sans 3",system-ui,sans-serif; --mono:"Source Code Pro",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141719; --fg:#e7e9e6; --muted:#9aa3ab; --line:#2d3337; --panel:#1c2124; --panel2:#232a2e;
+  --train:#e8955a; --train-soft:#3a2615; --frozen:#4fb8bf; --frozen-soft:#133335; --new:#a899e8; --new-soft:#26213d;
+  --tor:#ef7268; --tor-soft:#3b1b19; --hi:#e7e9e6; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141719; --fg:#e7e9e6; --muted:#9aa3ab; --line:#2d3337; --panel:#1c2124; --panel2:#232a2e;
+  --train:#e8955a; --train-soft:#3a2615; --frozen:#4fb8bf; --frozen-soft:#133335; --new:#a899e8; --new-soft:#26213d;
+  --tor:#ef7268; --tor-soft:#3b1b19; --hi:#e7e9e6; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:17px;line-height:1.55;margin:0}
+.wrap{max-width:900px;margin:0 auto;padding-block:36px 80px;padding-inline:20px}
+h1{font-family:var(--display);font-weight:600;font-size:2.1rem;line-height:1.1;margin:0 0 .4rem;text-wrap:balance}
+h2{font-family:var(--display);font-weight:600;font-size:1.4rem;margin:3rem 0 .6rem;text-wrap:balance}
+p{max-width:68ch;margin:.6rem 0}
+.lede{color:var(--muted);font-size:1.08rem;max-width:64ch}
+.eyebrow{font-family:var(--mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.key{display:flex;flex-wrap:wrap;gap:8px 18px;margin:1rem 0 0;font-size:.93rem}
+.key span{display:inline-flex;align-items:center;gap:8px}
+.sw{width:14px;height:14px;border-radius:3px;display:inline-block;border:1px solid var(--line)}
+.sw.train{background:var(--train-soft);border-color:var(--train)} .sw.frozen{background:var(--frozen-soft);border-color:var(--frozen)} .sw.new{background:var(--new-soft);border-color:var(--new)}
+.band{margin:1rem 0;padding:16px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+.band svg{display:block;width:100%;height:auto;max-width:100%}
+.controls{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;margin:0 0 12px;font-size:.93rem}
+.ctl{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ctl .lab{font-family:var(--mono);font-size:.76rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;flex-wrap:wrap}
+.seg button{font:inherit;font-size:.9rem;padding:5px 11px;border:0;background:var(--panel);color:var(--fg);cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.seg button:focus-visible{outline:2px solid var(--frozen);outline-offset:-2px}
+.chk{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.detail{margin-top:12px;border-top:1px solid var(--line);padding-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:6px 22px;font-size:.95rem}
+@media (max-width:640px){.detail{grid-template-columns:1fr}}
+.detail h3{grid-column:1/-1;margin:0 0 2px;font-size:1.08rem;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.detail dl{margin:0;min-width:0}
+.detail dt{font-family:var(--mono);font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+.detail dd{margin:0}
+.detail .note{grid-column:1/-1;color:var(--muted);margin:4px 0 0;max-width:none}
+.tag{display:inline-block;font-family:var(--mono);font-size:.74rem;padding:2px 7px;border-radius:4px;border:1px solid}
+.tag.train{color:var(--train);border-color:var(--train);background:var(--train-soft)}
+.tag.frozen{color:var(--frozen);border-color:var(--frozen);background:var(--frozen-soft)}
+.tag.new{color:var(--new);border-color:var(--new);background:var(--new-soft)}
+.tag.data{color:var(--muted);border-color:var(--line);background:var(--panel2)}
+.hint{font-size:.9rem;color:var(--muted);margin:.3rem 0 .6rem}
+.trace{margin:10px 0 0;padding:10px 12px;border-left:3px solid var(--tor);background:var(--tor-soft);border-radius:0 6px 6px 0;font-size:.95rem;max-width:none}
+.trace b{color:var(--tor)}
+/* names grid */
+.names{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:1rem 0}
+.name{border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--panel);min-width:0;font-size:.95rem}
+.name h3{margin:0 0 6px;font-size:1.02rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.name p{margin:0;color:var(--muted);font-size:.93rem}
+/* diagram */
+.diag text{font-family:var(--body);font-size:13px;fill:var(--fg);pointer-events:none}
+.diag .m{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+.diag .lbl{font-weight:600}
+.diag .node rect{fill:var(--panel);stroke:var(--line);stroke-width:1.3;cursor:pointer;transition:stroke-width .12s}
+.diag .node.train rect{fill:var(--train-soft);stroke:var(--train)}
+.diag .node.frozen rect{fill:var(--frozen-soft);stroke:var(--frozen)}
+.diag .node.new rect{fill:var(--new-soft);stroke:var(--new)}
+.diag .node.data rect{fill:var(--panel2)}
+.diag .node:hover rect{stroke-width:2.2}
+.diag .node.sel rect{stroke:var(--hi);stroke-width:2.6}
+.diag .node.dim{opacity:.22}
+.diag .node.step{filter:drop-shadow(0 0 4px var(--hi))}
+.diag .node.upd rect{stroke:var(--tor);stroke-width:3;stroke-dasharray:7 4}
+.diag .node.pass rect{stroke:var(--tor);stroke-width:2.2;stroke-dasharray:2 4}
+.diag .edge{stroke:var(--muted);stroke-width:1.4;fill:none}
+.diag .edge.dim{opacity:.18}
+.diag .edge.hot{stroke:var(--hi);stroke-width:2.6}
+.diag .loss{stroke:var(--tor);stroke-width:1.4;stroke-dasharray:5 4;fill:none}
+.diag .losslbl{fill:var(--tor);font-family:var(--mono);font-size:11px;font-weight:600}
+.diag .hidden{display:none}
+.diag .grad{stroke:var(--tor);stroke-width:2.4;fill:none;stroke-dasharray:6 5}
+/* steps */
+.steps{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.steps button{font:inherit;font-size:.9rem;padding:6px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer}
+.steps button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.stepText{min-height:3.2em;font-size:1rem;max-width:none}
+/* label explorer */
+.frames{display:grid;grid-template-columns:auto repeat(4,minmax(46px,1fr)) minmax(130px,auto);gap:6px 8px;align-items:center;font-family:var(--mono);font-size:.9rem;max-width:620px}
+.frames .h{color:var(--muted);font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;font-family:var(--mono)}
+.cell{border:1px solid var(--line);border-radius:4px;text-align:center;padding:6px 0;background:var(--panel)}
+.cell.t{background:var(--tor-soft);border-color:var(--tor);color:var(--tor);font-weight:600}
+.cell.in{outline:2px dashed var(--train);outline-offset:-3px}
+.frames .n{color:var(--muted);font-family:var(--body);font-size:.9rem}
+.frames .n b{color:var(--fg)}
+.frames .n.pre b{color:var(--frozen)}
+table{border-collapse:collapse;width:100%;font-size:.95rem;margin:.6rem 0;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--mono);font-size:.76rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+td.mono,code{font-family:var(--mono);font-size:.9em}
+td.num,th.num{text-align:right}
+.tbl{overflow-x:auto}
+.pill{display:inline-block;font-family:var(--mono);font-size:.74rem;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.pill.done{color:var(--frozen);border-color:var(--frozen)} .pill.next{color:var(--train);border-color:var(--train)}
+/* floor-ceiling bar */
+.bar{position:relative;height:118px;margin:10px 0 6px}
+.bar .axis{position:absolute;left:0;right:0;top:59px;border-top:1px solid var(--line)}
+.bar .tick{position:absolute;transform:translateX(-50%);text-align:center;font-family:var(--mono);font-size:.78rem;line-height:1.25;white-space:nowrap;transition:left .25s}
+.bar .tick i{display:block;width:2px;height:14px;margin:0 auto;background:currentColor}
+.bar .tick.below{top:59px} .bar .tick.below i{margin-bottom:4px}
+.bar .tick.above{bottom:59px} .bar .tick.above i{margin-top:4px}
+.bar .tick.floor,.bar .tick.ceil{color:var(--frozen)}
+.bar .tick.ind{color:var(--new)}
+.bar .tick.dir{color:var(--train)}
+.bar .tick b{display:block;font-size:.95rem}
+@media (max-width:560px){.bar .tick{font-size:.66rem}.bar .tick b{font-size:.82rem}}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<div class="eyebrow">TorNet · Step 2 · interactive map · as of 2026-10-14</div>
+<h1>Forecast the radar, then predict and detect on the forecast</h1>
+<p class="lede">In one line: TorNet retrained to look ahead, with a drawing task to keep it honest. Click any box in the diagram to see what it is, where it comes from, and whether it learns. Use <b>trace</b> to follow a route or a loss term.</p>
+<div class="key">
+  <span><i class="sw train"></i> trained here, starts from TorNet weights</span>
+  <span><i class="sw frozen"></i> frozen TorNet, never changes</span>
+  <span><i class="sw new"></i> new, random start</span>
+  <span><i class="sw"></i> data</span>
+</div>
+
+<h2>0. The four names</h2>
+<div class="names">
+  <div class="name"><h3>Fine-tuned encoder <span class="tag train">train</span></h3><p>TorNet’s backbone only, copy 1. Weights start from the published model and move in training. Shared by both heads.</p></div>
+  <div class="name"><h3>Frozen detector <span class="tag frozen">frozen</span></h3><p>The complete published TorNet, copy 2, backbone plus max-pool head. Weights never move. Scores the floor, the ceiling and the forecast; in some configs it also sits inside the loss as a critic.</p></div>
+  <div class="name"><h3>Direct route <span class="tag new">head</span></h3><p>The classification head’s own logit for +5 and +10 min. No frozen detector involved.</p></div>
+  <div class="name"><h3>Indirect route <span class="tag frozen">judge</span></h3><p>The drawn forecast chip, read by the frozen detector. Its score tells whether the drawing carries the tornado signature.</p></div>
+</div>
+
+<h2>1. The architecture</h2>
+<div class="band">
+<div class="controls">
+  <span class="ctl"><span class="lab">bottleneck</span><span class="seg" role="group" aria-label="bottleneck"><button id="bA" aria-pressed="true">A · none</button><button id="bB" aria-pressed="false">B · transformer</button></span></span>
+  <span class="ctl"><span class="lab">channels drawn</span><span class="seg" role="group" aria-label="channels drawn"><button id="c4" aria-pressed="true">4 · VEL + DBZ</button><button id="c12" aria-pressed="false">12 · all, anchored</button></span></span>
+  <label class="chk"><input type="checkbox" id="showLoss"> show training losses</label>
+  <label class="chk"><input type="checkbox" id="compare"> highlight what is TorNet</label>
+</div>
+<div class="controls">
+  <span class="ctl"><span class="lab">trace</span><span class="seg" role="group" aria-label="trace" id="traceSeg">
+    <button data-t="none" aria-pressed="true">off</button>
+    <button data-t="direct" aria-pressed="false">direct route</button>
+    <button data-t="indirect" aria-pressed="false">indirect route</button>
+    <button data-t="gL1" aria-pressed="false">who learns from L1</button>
+    <button data-t="gDet" aria-pressed="false">… from detector CE</button>
+    <button data-t="gCls" aria-pressed="false">… from head CE</button>
+  </span></span>
+</div>
+<svg class="diag" id="diag" viewBox="0 0 900 430" role="img" aria-label="Forecaster architecture, interactive">
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  <marker id="arl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="var(--tor)"/></marker></defs>
+  <!-- edges -->
+  <path class="edge" data-e="in0-enc" d="M130 64 H160" marker-end="url(#ar)"/>
+  <path class="edge" data-e="in1-enc" d="M130 134 H160" marker-end="url(#ar)"/>
+  <path class="edge" data-e="enc-stack" d="M350 100 H385" marker-end="url(#ar)"/>
+  <path class="edge" data-e="stack-bott" d="M545 100 H580" marker-end="url(#ar)"/>
+  <path class="edge" data-e="bott-dec" d="M640 170 V215" marker-end="url(#ar)"/>
+  <path class="edge" data-e="bott-cls" d="M790 170 V215" marker-end="url(#ar)"/>
+  <path class="edge" data-e="stack-dec" d="M465 170 V262 H480" style="stroke-dasharray:4 4"/>
+  <path class="edge" data-e="dec-chip" d="M600 305 V345" marker-end="url(#ar)"/>
+  <path class="edge" data-e="cls-pout" d="M790 305 V345" marker-end="url(#ar)"/>
+  <path class="edge" data-e="chip-judge" d="M480 370 H440" marker-end="url(#ar)"/>
+  <path class="edge" data-e="judge-pjudge" d="M200 370 H165" marker-end="url(#ar)"/>
+  <text x="408" y="252" class="m">skips</text>
+  <!-- loss overlays -->
+  <g id="lossG" class="hidden">
+    <path class="loss" d="M860 260 H830" marker-end="url(#arl)"/>
+    <text x="845" y="250" text-anchor="end" class="losslbl">CE vs labels</text>
+    <path class="loss" d="M600 420 V395" marker-end="url(#arl)"/>
+    <text x="600" y="428" text-anchor="middle" class="losslbl" id="lossL1">L1: drawn VEL+DBZ vs real future scan</text>
+    <path class="loss" d="M320 400 V410 H600" />
+    <text x="320" y="422" text-anchor="middle" class="losslbl">optional: CE on judge’s logit  ·  judge’s map on the real scan weights the L1</text>
+  </g>
+  <!-- gradient overlay -->
+  <g id="gradG" class="hidden"><path class="grad" id="gradPath" d="M0 0" marker-end="url(#arl)"/></g>
+  <!-- nodes -->
+  <g class="node data" data-id="in0"><rect x="10" y="40" width="120" height="48" rx="6"/><text x="70" y="60" text-anchor="middle" class="lbl">scan −15 min</text><text x="70" y="78" text-anchor="middle" class="m">14 ch · 120×240</text></g>
+  <g class="node data" data-id="in1"><rect x="10" y="110" width="120" height="48" rx="6"/><text x="70" y="130" text-anchor="middle" class="lbl">scan −10 min</text><text x="70" y="148" text-anchor="middle" class="m">14 ch · 120×240</text></g>
+  <g class="node train" data-id="enc"><rect x="160" y="30" width="190" height="140" rx="6"/><text x="255" y="56" text-anchor="middle" class="lbl">fine-tuned encoder</text><text x="255" y="74" text-anchor="middle" class="lbl">TorNet backbone, copy 1</text><text x="255" y="98" text-anchor="middle" class="m">same weights, both scans</text><text x="255" y="118" text-anchor="middle" class="m">from Hugging Face</text><text x="255" y="138" text-anchor="middle" class="m">fine-tuned · LR × 0.1</text><text x="255" y="158" text-anchor="middle" class="m">keeps 4 maps + bottleneck</text></g>
+  <g class="node" data-id="stack"><rect x="385" y="30" width="160" height="140" rx="6"/><text x="465" y="56" text-anchor="middle" class="lbl">stack the scans</text><text x="465" y="80" text-anchor="middle" class="m">side by side, every scale</text><text x="465" y="100" text-anchor="middle" class="m">120×240×96 …</text><text x="465" y="120" text-anchor="middle" class="m">15×30×768</text><text x="465" y="144" text-anchor="middle" class="m">bottleneck 8×15×768</text></g>
+  <g class="node new" data-id="bott" id="bottNode"><rect x="580" y="30" width="300" height="140" rx="6"/><text x="730" y="56" text-anchor="middle" class="lbl" id="bottTitle">bottleneck A: pass-through</text><text x="730" y="82" text-anchor="middle" class="m" id="bottL1">the 8×15×768 features go straight on</text><text x="730" y="102" text-anchor="middle" class="m" id="bottL2">each cell knows its neighbourhood only</text><text x="730" y="122" text-anchor="middle" class="m" id="bottL3">(the convolutions’ receptive field)</text><text x="730" y="150" text-anchor="middle" class="m">feeds both heads below</text></g>
+  <g class="node new" data-id="dec"><rect x="480" y="215" width="240" height="90" rx="6"/><text x="600" y="240" text-anchor="middle" class="lbl">U-Net decoder → regression head</text><text x="600" y="262" text-anchor="middle" class="m">SMP · up to 120×240 with skips</text><text x="600" y="284" text-anchor="middle" class="m" id="decL3">draws VEL + DBZ at +5 and +10 min</text></g>
+  <g class="node new" data-id="cls" id="clsNode"><rect x="735" y="215" width="110" height="90" rx="6"/><text x="790" y="240" text-anchor="middle" class="lbl">cls head</text><text x="790" y="262" text-anchor="middle" class="m">TorNet style</text><text x="790" y="280" text-anchor="middle" class="m">1 logit per cell</text><text x="790" y="298" text-anchor="middle" class="m">→ max over cells</text></g>
+  <g class="node data" data-id="chip"><rect x="480" y="345" width="240" height="50" rx="6"/><text x="600" y="366" text-anchor="middle" class="lbl">forecast chip, per horizon</text><text x="600" y="385" text-anchor="middle" class="m" id="chipL2">VEL, DBZ drawn · other 10 ch persisted</text></g>
+  <g class="node data" data-id="pout"><rect x="735" y="345" width="110" height="50" rx="6"/><text x="790" y="366" text-anchor="middle" class="lbl">P(tornado)</text><text x="790" y="385" text-anchor="middle" class="m">direct · head + map</text></g>
+  <g class="node frozen" data-id="judge"><rect x="200" y="340" width="240" height="60" rx="6"/><text x="320" y="362" text-anchor="middle" class="lbl">frozen detector, copy 2, complete</text><text x="320" y="383" text-anchor="middle" class="m">backbone + max-pool head · weights never move</text></g>
+  <g class="node data" data-id="pjudge"><rect x="10" y="345" width="155" height="50" rx="6"/><text x="87" y="366" text-anchor="middle" class="lbl">P(tornado)</text><text x="87" y="385" text-anchor="middle" class="m">indirect · judge + map</text></g>
+</svg>
+<p class="trace" id="traceText" hidden></p>
+<div class="detail" id="detail"></div>
+</div>
+<p class="hint">Two copies of the same Hugging Face checkpoint. Copy 1 is inside the model and learns. Copy 2 stands outside and only reads chips. Both heads sit on copy 1.</p>
+
+<h2>2. Walk one sample through</h2>
+<div class="band">
+<div class="steps" id="steps"></div>
+<p class="stepText" id="stepText"></p>
+</div>
+
+<h2>3. Which samples count as prediction</h2>
+<p>Every sample has four scans about five minutes apart, each with its own tornado label. Choose how many scans the model sees; the rest are what it predicts. A tornadic sample is a <b>pre-onset</b> case only when no input scan has the tornado and the last scan does.</p>
+<div class="band">
+<div class="controls"><span class="ctl"><span class="lab">scans in</span><span class="seg" role="group" aria-label="scans in"><button data-n="1" aria-pressed="false">1</button><button data-n="2" aria-pressed="true">2</button><button data-n="3" aria-pressed="false">3</button></span></span><span class="hint" id="prefixText"></span></div>
+<div class="frames" id="frames"></div>
+<p class="hint" id="countText"></p>
+</div>
+
+<h2>4. What the probe measured</h2>
+<p>Two short runs on a capped fold B (6,000 training files, 4 epochs), scored on the 2014 test year: 2,546 samples, 220 pre-onset tornado cases. Pre-onset cases against warned storms, AUC. The frozen detector reads three chips; the trained head gives its own answer.</p>
+<div class="band">
+<div class="controls">
+  <span class="ctl"><span class="lab">horizon</span><span class="seg" role="group" aria-label="horizon" id="hSeg"><button data-h="0" aria-pressed="false">+5 min</button><button data-h="1" aria-pressed="true">+10 min</button></span></span>
+  <span class="ctl"><span class="lab">run</span><span class="seg" role="group" aria-label="run" id="rSeg"><button data-r="control" aria-pressed="false">control · plain L1</button><button data-r="variant" aria-pressed="true">variant · heat map + detector CE</button></span></span>
+</div>
+<div class="bar" id="bar">
+  <div class="axis"></div>
+  <div class="tick above ind" id="tInd"><b></b>indirect: judge on forecast<i></i></div>
+  <div class="tick above dir" id="tDir"><b></b>direct: trained head<i></i></div>
+  <div class="tick below floor" id="tFloor"><i></i><b></b>floor: judge on last real scan</div>
+  <div class="tick below ceil" id="tCeil"><i></i><b></b>ceiling: judge on real future scan</div>
+</div>
+<p class="hint" id="barText"></p>
+<div class="tbl"><table>
+<tr><th>pixel error, VEL + DBZ (normalised units)</th><th class="num">+5 min</th><th class="num">+10 min</th></tr>
+<tr><td>persistence (copy the last scan)</td><td class="num">0.404</td><td class="num">0.533</td></tr>
+<tr><td>control forecast</td><td class="num">0.387</td><td class="num">0.492</td></tr>
+<tr><td>variant forecast</td><td class="num">0.415</td><td class="num">0.510</td></tr>
+</table></div>
+<p class="hint">Read together: the control draws the closest pixels, yet the judge sees less tornado in it than in the last real scan (blur). The variant gives up a little pixel accuracy to keep the signature and gets the judge back to the floor. The direct head barely moves between runs: the loss change repaired the drawing, and only the drawing.</p>
+</div>
+
+<h2>5. The runs</h2>
+<div class="tbl"><table>
+<tr><th>config</th><th>varies</th><th>answers</th><th>status</th></tr>
+<tr><td class="mono">probe (control, variant)</td><td>6,000 files, 4 epochs</td><td>do the mechanics work; is the blur real</td><td><span class="pill done">done · section 4</span></td></tr>
+<tr><td class="mono">fold_b_control</td><td>plain L1 on VEL + DBZ, CE on the head</td><td>the floor for the loss comparison</td><td><span class="pill next">next · pod</span></td></tr>
+<tr><td class="mono">fold_b_detector</td><td>+ heat-map weighting + detector CE</td><td>does the forecast clear persistence with full fold B</td><td><span class="pill next">next · pod</span></td></tr>
+<tr><td class="mono">fold_b_detector_12ch</td><td>all 12 channels drawn, 0.1 anchor on the other 8</td><td>was the velocity + reflectivity focus right</td><td><span class="pill next">next · pod</span></td></tr>
+<tr><td class="mono">fold_b_transformer</td><td>bottleneck B, same losses as fold_b_detector</td><td>does attention at the bottleneck add anything</td><td><span class="pill">held until A clears the floor</span></td></tr>
+<tr><td class="mono">smoke_detector</td><td>fold_b_detector on 6,000 files</td><td>a fresh pod works before a long run</td><td><span class="pill">utility</span></td></tr>
+</table></div>
+<p>Dropped after the probe: the heat-map-only run (a nice-to-know ablation), the ImageNet encoder swap (TorNet is the only encoder) and the alternative pool-then-linear head. Three fold B runs on the pod are about three hours and $8. One command per row: <code>tornet-forecast configs/forecast/&lt;name&gt;.json</code>; the script is <code>src/tornet/scripts/forecast_smp.py</code>.</p>
+</div>
+
+<script>
+(function(){
+  const S = {bott:'A', ch:4, loss:false, compare:false, trace:'none', sel:'enc', step:0, nIn:2, h:1, run:'variant'};
+  const info = {
+    in0:{title:'Observed scan, 15 minutes before',state:'data',source:'TorNet NetCDF file, read by the authors’ own loader',shape:'120 × 240 × 14: six radar products on two elevation sweeps (12) plus two range-folded flags',note:'Already in the form TorNet sees internally: normalised to about [−1, 1], empty gates filled with −3. All twelve products go in.'},
+    in1:{title:'Observed scan, 10 minutes before',state:'data',source:'same file, next scan',shape:'120 × 240 × 14',note:'Two scans is the minimum for motion. The forecaster predicts the two scans after this one.'},
+    enc:{title:'Fine-tuned encoder: TorNet backbone, copy 1',state:'train',source:'Hugging Face tornet-ml/tornado_detector_baseline_v1, ported to PyTorch, weights copied and verified to 0.002 in logit',shape:'in 14 ch → maps at 120×240×48, 60×120×96, 30×60×192, 15×30×384, bottleneck 8×15×384',note:'Runs on each scan separately with the same weights. Fine-tuned at a tenth of the main learning rate. Receives gradient from every loss term, because every output passes through it. This is the part of TorNet slotted into the model.'},
+    stack:{title:'Stack the two scans',state:'glue',source:'our code, a reshape',shape:'every map doubles in channels: 96, 192, 384, 768; bottleneck 8×15×768',note:'Places the two scans’ features side by side so everything downstream sees both at once. No parameters.'},
+    bottA:{title:'Bottleneck A: none',state:'glue',source:'pass-through',shape:'8×15×768 in, 8×15×768 out',note:'Each cell’s features describe its neighbourhood, as far as the convolutions reach. The heads decide from that. Both probe runs used A.'},
+    bottB:{title:'Bottleneck B: transformer',state:'new',source:'PyTorch built-in transformer encoder, 2 layers, 8 heads, learned position embedding',shape:'120 tokens of 768 → 120 tokens of 768, reshaped back to 8×15',note:'Every cell exchanges information with every other cell before the heads look. Held until a bottleneck-A run clears the persistence floor; its config carries the same losses as fold_b_detector so the bottleneck is the only variable.'},
+    dec4:{title:'U-Net decoder and regression head, 4 channels',state:'new',source:'Segmentation Models PyTorch: UnetDecoder (256/128/64/32) + SegmentationHead',shape:'8×15×768 up to 120×240, skips from the stacked maps; out 2 horizons × 4 channels (VEL and DBZ, two sweeps each)',note:'The drawing task. Updated only by the field losses (L1, and the detector CE when on). It cannot draw the next scan without the encoder learning how the storm moves and tightens.'},
+    dec12:{title:'U-Net decoder and regression head, 12 channels',state:'new',source:'same decoder; the final 1×1 head grows from 4 to 12 output planes per horizon',shape:'out 2 horizons × 12 channels: all six products on both sweeps',note:'L1 weight 1 on VEL and DBZ, 0.1 anchor on the other eight planes. The detector CE reaches all twelve, so the frozen detector decides how much each channel matters, per pixel and per case. The anchor keeps the eight secondary planes near real values so the critic cannot be gamed with unreal textures. Only valid with the detector CE on; the script refuses the config otherwise.'},
+    cls:{title:'Classification head, TorNet style',state:'new',source:'the authors’ head design from the torch port: 1×1 conv 512 → 1×1 conv 256 → 1×1 conv to one logit per horizon per cell → max over cells',shape:'8×15×768 → 8×15×2 likelihood map → 2 logits',note:'Same decision rule as the original TorNet: the strongest location decides. Reads 768 stacked channels, not 384, so it starts from random weights. Updated only by its own cross-entropy. Never sees the drawn forecast.'},
+    chip4:{title:'Forecast chip, one per horizon',state:'data',source:'assembled from the regression output and the last observed scan',shape:'120 × 240 × 14: drawn VEL and DBZ, the other ten channels and the range-folded flags carried forward from scan −10',note:'A complete radar scan as TorNet expects it, so the judge can read it. The copied channels are 5 or 10 minutes stale, which costs about 0.08 logit on average against the real scan.'},
+    chip12:{title:'Forecast chip, one per horizon',state:'data',source:'assembled from the regression output and the last observed scan',shape:'120 × 240 × 14: all twelve products drawn, only the two range-folded flags carried forward from scan −10',note:'Nearly the whole chip is drawn. The gaming check is per-product pixel error: if the judge’s score rises while the secondary products drift away from the real scan, the critic is being fooled and the anchor needs to be heavier.'},
+    pout:{title:'Direct route: the trained head’s answer',state:'data',source:'the classification head',shape:'P(tornado at +5), P(tornado at +10), plus the 8×15 map',note:'Learned directly from the prediction target. In the probe this was the stronger predictor: 0.752 at +10 min against a floor of 0.732. “Better” means better than the published TorNet on the latest real scan, never better than TorNet given the true future scan.'},
+    judge:{title:'Frozen detector: TorNet copy 2, complete',state:'frozen',source:'the same Hugging Face checkpoint, backbone and head, weights never updated',shape:'reads a 120×240×14 chip, returns a logit and its 8×15 map',note:'Used three ways: it scores persistence, forecast and truth in evaluation; its map on the real future scan can weight the L1; and optionally its cross-entropy on the forecast chip is a training loss. In that last role gradients pass back through it like light through a fixed lens, into the decoder and encoder, while its own weights stay put.'},
+    pjudge:{title:'Indirect route: the judge’s answer on the forecast',state:'data',source:'frozen detector on the forecast chip',shape:'P(tornado) per horizon, plus the map',note:'If this is high where the head is high, the drawn forecast carries the tornado signature. In the probe plain L1 left it at 0.59 (far below the floor: blur); the detector-aware loss brought it to 0.73 at +10 min, exactly the floor, not yet above it.'}
+  };
+  const stateTag = {train:['train','fine-tuned from TorNet'],frozen:['frozen','frozen TorNet'],new:['new','new, random start'],data:['data','data'],glue:['data','no parameters']};
+  const detail = document.getElementById('detail');
+  function key(id){ if(id==='bott') return S.bott==='A'?'bottA':'bottB'; if(id==='dec') return S.ch===4?'dec4':'dec12'; if(id==='chip') return S.ch===4?'chip4':'chip12'; return id; }
+  function renderDetail(){
+    const d = info[key(S.sel)]; const t = stateTag[d.state];
+    detail.innerHTML = `<h3>${d.title} <span class="tag ${t[0]}">${t[1]}</span></h3>
+      <dl><dt>comes from</dt><dd>${d.source}</dd></dl><dl><dt>shapes</dt><dd>${d.shape}</dd></dl><p class="note">${d.note}</p>`;
+    document.querySelectorAll('.node').forEach(n=>n.classList.toggle('sel', n.dataset.id===S.sel));
+  }
+  function renderBott(){
+    const A = S.bott==='A';
+    document.getElementById('bottTitle').textContent = A?'bottleneck A: pass-through':'bottleneck B: transformer';
+    document.getElementById('bottL1').textContent = A?'the 8×15×768 features go straight on':'2 attention layers over the 120 cells';
+    document.getElementById('bottL2').textContent = A?'each cell knows its neighbourhood only':'every cell can look at every other cell';
+    document.getElementById('bottL3').textContent = A?'(the convolutions’ receptive field)':'learned position embedding · new weights';
+    document.getElementById('bottNode').classList.toggle('new', !A);
+    document.getElementById('bA').setAttribute('aria-pressed', A); document.getElementById('bB').setAttribute('aria-pressed', !A);
+  }
+  function renderCh(){
+    const four = S.ch===4;
+    document.getElementById('decL3').textContent = four?'draws VEL + DBZ at +5 and +10 min':'draws all 12 channels at +5 and +10 min';
+    document.getElementById('chipL2').textContent = four?'VEL, DBZ drawn · other 10 ch persisted':'12 ch drawn · 2 range-folded flags persisted';
+    document.getElementById('lossL1').textContent = four?'L1: drawn VEL+DBZ vs real future scan':'L1: VEL+DBZ weight 1 · other 8 planes weight 0.1 (anchor)';
+    document.getElementById('c4').setAttribute('aria-pressed', four); document.getElementById('c12').setAttribute('aria-pressed', !four);
+  }
+  const traces = {
+    none:{nodes:null, edges:null, upd:[], pass:[], grad:'', text:''},
+    direct:{nodes:['in0','in1','enc','stack','bott','cls','pout'], edges:['in0-enc','in1-enc','enc-stack','stack-bott','bott-cls','cls-pout'], upd:[], pass:[], grad:'',
+      text:'<b>Direct route.</b> Scans → fine-tuned encoder → stacked features → bottleneck → classification head → P(tornado). The frozen detector is not on this path. At evaluation its floor and ceiling stand beside this number for comparison only.'},
+    indirect:{nodes:['in0','in1','enc','stack','bott','dec','chip','judge','pjudge'], edges:['in0-enc','in1-enc','enc-stack','stack-bott','bott-dec','stack-dec','dec-chip','chip-judge','judge-pjudge'], upd:[], pass:[], grad:'',
+      text:'<b>Indirect route.</b> Scans → fine-tuned encoder → stacked features → bottleneck → U-Net decoder → forecast chip → frozen detector → P(tornado). The frozen detector reads the drawing the same way it reads a real scan.'},
+    gL1:{nodes:['enc','stack','bott','dec','chip'], edges:['enc-stack','stack-bott','bott-dec','stack-dec','dec-chip'], upd:['dec','enc'], pass:[], grad:'M600 428 V308',
+      text:'<b>L1 on the drawn chip.</b> Attached to the regression output. Gradient flows back into the <b>decoder</b> and on into the <b>fine-tuned encoder</b> (and the transformer, in B). It never reaches the classification head. In the variant the frozen detector’s map on the real future scan multiplies this loss, but no gradient passes through the detector for that.'},
+    gDet:{nodes:['enc','stack','bott','dec','chip','judge'], edges:['enc-stack','stack-bott','bott-dec','stack-dec','dec-chip','chip-judge'], upd:['dec','enc'], pass:['judge'], grad:'M320 428 V403 M440 362 H478 M600 343 V308',
+      text:'<b>Detector CE.</b> Attached to the frozen detector’s logit on the forecast chip. Gradient passes <b>through</b> the frozen detector (dotted: its weights do not move) into the drawn channels, then into the <b>decoder</b> and the <b>fine-tuned encoder</b>. It can only touch the channels that were drawn, so with 4 channels its whole message is “move velocity and reflectivity so that I see a tornado”. This is the term that fixed the blur in the probe.'},
+    gCls:{nodes:['enc','stack','bott','cls','pout'], edges:['enc-stack','stack-bott','bott-cls','cls-pout'], upd:['cls','enc'], pass:[], grad:'M860 262 H848 M790 343 V308',
+      text:'<b>Head CE.</b> Attached to the classification head’s logits. Updates the <b>classification head</b> and the <b>fine-tuned encoder</b> (and the transformer, in B). Identical in control and variant, which is why the direct route barely moved between them: the only change it felt came through the shared encoder.'}
+  };
+  function renderOverlays(){
+    const tr = traces[S.trace]; const grad = S.trace.startsWith('g');
+    document.getElementById('lossG').classList.toggle('hidden', !(S.loss || grad));
+    const tornetParts = new Set(['enc','judge','cls','in0','in1','chip','pjudge','pout']);
+    const upd = new Set(tr.upd); if(S.bott==='B' && grad) upd.add('bott');
+    document.querySelectorAll('.node').forEach(n=>{
+      const id = n.dataset.id;
+      const dimC = S.compare && !tornetParts.has(id);
+      const dimT = tr.nodes && !tr.nodes.includes(id);
+      n.classList.toggle('dim', dimC || dimT);
+      n.classList.toggle('upd', upd.has(id));
+      n.classList.toggle('pass', tr.pass.includes(id));
+    });
+    document.querySelectorAll('.edge').forEach(e=>{
+      const [a,b]=e.dataset.e.split('-');
+      const dimC = S.compare && !(tornetParts.has(a)&&tornetParts.has(b));
+      const dimT = tr.edges && !tr.edges.includes(e.dataset.e);
+      e.classList.toggle('dim', dimC || dimT);
+      e.classList.toggle('hot', !!tr.edges && tr.edges.includes(e.dataset.e));
+    });
+    document.getElementById('gradG').classList.toggle('hidden', !tr.grad);
+    document.getElementById('gradPath').setAttribute('d', tr.grad || 'M0 0');
+    const tt = document.getElementById('traceText'); tt.hidden = !tr.text; tt.innerHTML = tr.text;
+    document.querySelectorAll('#traceSeg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.t===S.trace));
+  }
+  document.querySelectorAll('.node').forEach(n=>{ n.addEventListener('click',()=>{S.sel=n.dataset.id; renderDetail();}); n.setAttribute('tabindex','0'); n.setAttribute('role','button'); n.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();S.sel=n.dataset.id;renderDetail();}}); });
+  document.getElementById('bA').onclick=()=>{S.bott='A';renderBott();renderOverlays();renderDetail();};
+  document.getElementById('bB').onclick=()=>{S.bott='B';renderBott();renderOverlays();renderDetail();};
+  document.getElementById('c4').onclick=()=>{S.ch=4;renderCh();renderDetail();renderStep();};
+  document.getElementById('c12').onclick=()=>{S.ch=12;renderCh();renderDetail();renderStep();};
+  document.getElementById('showLoss').onchange=e=>{S.loss=e.target.checked;renderOverlays();};
+  document.getElementById('compare').onchange=e=>{S.compare=e.target.checked;renderOverlays();};
+  document.querySelectorAll('#traceSeg button').forEach(b=>b.onclick=()=>{S.trace=b.dataset.t;renderOverlays();});
+
+  // steps
+  const steps = [
+    {ids:['in0','in1'],text:()=>'1 · Two scans of one storm, from 15 and 10 minutes before the moment we care about, are loaded straight from the TorNet file and put into the form TorNet expects.'},
+    {ids:['enc'],text:()=>'2 · The fine-tuned encoder (TorNet backbone, copy 1) processes each scan with the same weights, keeping the feature maps at every scale, not just the final 8 × 15 grid.'},
+    {ids:['stack','bott'],text:()=>'3 · The two scans’ features are stacked side by side at every scale. In B a transformer lets the 120 bottleneck cells look at each other first; in A nothing happens here.'},
+    {ids:['dec','chip'],text:()=>S.ch===4?'4 · The U-Net decoder climbs back to 120 × 240 using the stacked maps as skips and draws velocity and reflectivity for +5 and +10 minutes. Each drawing is dropped into the last observed scan to make a full chip.':'4 · The U-Net decoder climbs back to 120 × 240 and draws all twelve channels for +5 and +10 minutes. Only the two range-folded flags are copied from the last observed scan to complete the chip.'},
+    {ids:['cls','pout'],text:()=>'5 · Direct route: the classification head scores every bottleneck cell for each horizon and keeps the maximum. The trained answer, with its likelihood map.'},
+    {ids:['judge','pjudge'],text:()=>'6 · Indirect route: the frozen detector (copy 2) reads the forecast chip and gives its own answer and map. In evaluation it also reads the last observed scan (floor) and the real future scan (ceiling).'},
+    {ids:['dec','cls','enc'],text:()=>'7 · Training, one total loss: L1 between the drawn and the real future scan'+(S.ch===12?' (weight 1 on VEL and DBZ, 0.1 on the rest)':'')+', cross-entropy between the head’s logits and the labels, and optionally the frozen detector’s cross-entropy on the forecast. Each term updates the parts that produced its output; the shared encoder gets all of them. Nothing updates copy 2.'}
+  ];
+  const stepsEl = document.getElementById('steps'), stepText = document.getElementById('stepText');
+  steps.forEach((s,i)=>{ const b=document.createElement('button'); b.textContent=(i+1); b.setAttribute('aria-pressed', i===0); b.onclick=()=>{S.step=i;renderStep();}; stepsEl.appendChild(b); });
+  function renderStep(){
+    const s = steps[S.step]; stepText.textContent = s.text();
+    stepsEl.querySelectorAll('button').forEach((b,i)=>b.setAttribute('aria-pressed', i===S.step));
+    document.querySelectorAll('.node').forEach(n=>n.classList.toggle('step', s.ids.includes(n.dataset.id)));
+  }
+
+  // label explorer
+  const patterns = [['0001',125],['0011',83],['0111',37],['1111',27],['0000',null]];
+  const framesEl = document.getElementById('frames');
+  function renderFrames(){
+    const n = S.nIn; const outs = 4-n;
+    document.getElementById('prefixText').textContent = `scans 0–${n-1} in, scans ${n}–3 out · horizons ${Array.from({length:outs},(_,i)=>'+'+(5*(i+1))).join(', ')} min`;
+    document.querySelectorAll('[data-n]').forEach(b=>b.setAttribute('aria-pressed', +b.dataset.n===n));
+    let html = '<div class="h">pattern</div><div class="h">f0 · −15</div><div class="h">f1 · −10</div><div class="h">f2 · −5</div><div class="h">f3 · 0</div><div class="h">test 2021–22</div>';
+    let pre=0, ongoing=0;
+    patterns.forEach(([p,c])=>{
+      const inHas = p.slice(0,n).includes('1'), last = p[3]==='1';
+      let cls = c===null ? 'negatives' : (!inHas && last ? 'pre-onset' : 'ongoing');
+      if(c!==null){ if(cls==='pre-onset') pre+=c; else ongoing+=c; }
+      html += `<div class="mono">${p}</div>`;
+      for(let i=0;i<4;i++){ html += `<div class="cell${p[i]==='1'?' t':''}${i<n?' in':''}">${p[i]}</div>`; }
+      html += `<div class="n${cls==='pre-onset'?' pre':''}">${c===null?'warned + null storms':`${c} · <b>${cls}</b>`}</div>`;
+    });
+    framesEl.innerHTML = html;
+    document.getElementById('countText').textContent = `With ${n} scan${n>1?'s':''} in: ${pre} pre-onset tornado cases out of 272, ${ongoing} ongoing (tornado already visible to the model; reported separately). Dashed boxes are what the model sees. The probe used two scans in, on the 2014 test year (220 pre-onset cases).`;
+  }
+  document.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{S.nIn=+b.dataset.n;renderFrames();});
+
+  // probe results: pre-onset WC AUC, capped fold B, 2014 test year
+  const R = {
+    0:{floor:0.753, ceil:0.771, control:{ind:0.599, dir:0.747}, variant:{ind:0.708, dir:0.753}},
+    1:{floor:0.732, ceil:0.798, control:{ind:0.593, dir:0.749}, variant:{ind:0.732, dir:0.752}}
+  };
+  const LO=0.56, HI=0.82;
+  function pos(v){ return (6 + 88*(v-LO)/(HI-LO)).toFixed(1)+'%'; }
+  function setTick(id, v){ const el=document.getElementById(id); el.style.left=pos(v); el.querySelector('b').textContent=v.toFixed(3); }
+  function renderBar(){
+    const r = R[S.h], run = r[S.run];
+    setTick('tFloor', r.floor); setTick('tCeil', r.ceil); setTick('tInd', run.ind); setTick('tDir', run.dir);
+    document.querySelectorAll('#hSeg button').forEach(b=>b.setAttribute('aria-pressed', +b.dataset.h===S.h));
+    document.querySelectorAll('#rSeg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.r===S.run));
+    const fmt=d=>(d>=0?'+':'−')+Math.abs(d).toFixed(3);
+    let t = `Against the floor: indirect ${fmt(run.ind-r.floor)}, direct ${fmt(run.dir-r.floor)}. The ceiling is ${fmt(r.ceil-r.floor)} above the floor. `;
+    if(S.run==='control') t += 'Plain L1 blurs the couplet away; the judge sees less tornado in the drawing than in the last real scan.';
+    else t += S.h===1 ? 'The detector-aware loss puts the drawing exactly on the floor (−0.001, not significant). The head is above it (+0.020, interval +0.001 to +0.040).' : 'The drawing is still 0.044 under the floor at the shortest horizon; the head sits on the floor.';
+    document.getElementById('barText').textContent = t;
+  }
+  document.querySelectorAll('#hSeg button').forEach(b=>b.onclick=()=>{S.h=+b.dataset.h;renderBar();});
+  document.querySelectorAll('#rSeg button').forEach(b=>b.onclick=()=>{S.run=b.dataset.r;renderBar();});
+
+  renderBott(); renderCh(); renderOverlays(); renderDetail(); renderStep(); renderFrames(); renderBar();
+})();
+</script>

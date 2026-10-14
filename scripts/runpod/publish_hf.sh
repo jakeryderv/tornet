@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# Repackage TorNet as Parquet and publish it on the Hugging Face Hub, from a CPU pod with the
+# TorNet volume at /workspace. Phases, each idempotent:
+#   convert [years...]  netCDF -> Parquet shards on the container disk ($OUT), given years
+#                       (default all ten); a partition-year whose metadata file exists is skipped
+#   catalog             merge the per-year metadata into catalog.parquet and copy the card
+#   upload              hf upload-large-folder (resumable) to $HF_REPO, then stop the pod
+# The pod is NOT stopped after convert/catalog: stopping wipes the container disk.
+# Usage: cd /workspace/tornet-repo && UV_PROJECT_ENVIRONMENT=/root/venv setsid nohup \
+#   bash scripts/runpod/publish_hf.sh convert 2013 2014 2015 > /workspace/publish_hf.log 2>&1 < /dev/null &
+set -uo pipefail
+export TORNET_ROOT="${TORNET_ROOT:-/workspace/tornet}"
+REPO="${REPO:-/workspace/tornet-repo}"
+OUT="${OUT:-/root/hf_tornet}"
+HF_REPO="${HF_REPO:-jakeryderv/tornet}"
+WORKERS="${WORKERS:-$(( $(free -g | awk '/^Mem:/{print $2}') / 3 ))}"
+cd "$REPO"
+log() { echo "=== $(date -Is) $*"; }
+stop_pod() {
+  id=$(tr '\0' '\n' < /proc/1/environ | sed -n 's/^RUNPOD_POD_ID=//p')
+  [ -n "$id" ] || { log "no pod id"; return; }
+  log "stopping pod $id"; sync
+  runpodctl pod stop "$id" || runpodctl stop pod "$id" || log "stop failed"
+}
+command -v uv >/dev/null 2>&1 || { curl -LsSf https://astral.sh/uv/install.sh | sh; export PATH="$HOME/.local/bin:$PATH"; }
+phase="${1:-convert}"; shift || true
+case "$phase" in
+  convert)
+    log "syncing environment"; uv sync --quiet || { log "uv sync failed"; exit 1; }
+    years=("$@"); [ ${#years[@]} -gt 0 ] || years=(2013 2014 2015 2016 2017 2018 2019 2020 2021 2022)
+    log "convert years ${years[*]} with $WORKERS workers into $OUT"
+    for y in "${years[@]}"; do
+      for p in train test; do
+        if [ -f "$OUT/metadata/$p-$y.parquet" ]; then log "$p/$y exists, skipping"; continue; fi
+        log "convert $p/$y"
+        uv run tornet-to-parquet convert --out "$OUT" --partitions "$p" --years "$y" --workers "$WORKERS" \
+          || { log "CONVERT FAILED $p/$y"; exit 1; }
+      done
+    done
+    log "convert done: $(du -sh "$OUT" | cut -f1) in $OUT"
+    ;;
+  catalog)
+    uv run tornet-to-parquet catalog --out "$OUT" || { log "CATALOG FAILED"; exit 1; }
+    cp docs/hf_dataset_card.md "$OUT/README.md"
+    log "catalog done"
+    ;;
+  upload)
+    [ -f "$OUT/catalog.parquet" ] || { log "no catalog.parquet: run the catalog phase first"; exit 1; }
+    log "upload $OUT -> $HF_REPO"
+    uv run hf upload-large-folder "$HF_REPO" "$OUT" --repo-type dataset --num-workers "${UPLOAD_WORKERS:-16}" \
+      && log "upload done" || log "UPLOAD FAILED (rerun: it resumes)"
+    [ "${STOP_POD:-1}" = "1" ] && stop_pod
+    ;;
+  *) log "unknown phase $phase"; exit 2 ;;
+esac
+log "done $phase"

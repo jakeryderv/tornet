@@ -1010,6 +1010,16 @@ roughly 3 minutes per fold-A epoch and about 2.5 hours for the whole three-fold-
 
 ---
 
+## 5b. The dataset on the Hub (2026-10-14)
+
+TorNet v1.1 is published as `jakeryderv/tornet` (public, CC BY 4.0 as released): Parquet shards
+per partition and year, every netCDF field kept, radar as float16 in physical units (lossless
+round trip), plus a `catalog` config with every scalar field. `load_dataset("jakeryderv/tornet",
+"2015")` fetches one year; `data_files` patterns make a fold. Built by `tornet-to-parquet` on a
+32-vCPU CPU pod in about 45 min, verified by a full read of every shard and exact comparison of
+100 random samples, uploaded with `hf upload` (the Hub's 100 GB private cap forced the repo
+public before the last commit). Successor work reads from there: `~/dev/projects/tornado-onset`.
+
 ## 6. References
 
 > ViT and ViT-hybrid come from the same paper. There is no single "CNN paper"; cite the specific

@@ -248,6 +248,12 @@ at run time rather than at import.
   reached 10–16 MB/s.
 - Reference artifacts in `results/`: the pretrained model's per-sample predictions and score report
   on the 2013–2014 test partition.
+- `tornet-to-parquet` (new): repackages the dataset as Parquet shards (256 samples each, zstd,
+  float16 radar arrays, every netCDF field plus the catalog's site and location) with
+  `convert` / `integrity` / `verify` / `catalog` commands; `scripts/runpod/publish_hf.sh` runs
+  the whole chain on a CPU pod and uploads. The result is the public dataset
+  `jakeryderv/tornet` on the Hugging Face Hub (2026-10-14; 203,133 samples, 107 GB, configs per
+  year plus `catalog`; card in `docs/hf_dataset_card.md`).
 - Forecaster runs in `results/forecast_probe/` (capped fold B, two configs) and
   `results/forecast_fold_b/` (full fold B, three configs, 2026-10-14): histories, `results.json`,
   per-view predictions, likelihood maps and `summary.json`; checkpoints stay under `experiments/`.
